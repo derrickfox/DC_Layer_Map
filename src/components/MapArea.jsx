@@ -21,6 +21,66 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 import exportData from '../../dc_layer_lab_export.json';
 
+const historicalEventsData = {
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      properties: {
+        NAME: "Assassination of Abraham Lincoln",
+        YEAR: "1865",
+        SUMMARY: "President Abraham Lincoln was assassinated by John Wilkes Booth while attending a play at Ford's Theatre."
+      },
+      geometry: { type: "Point", coordinates: [-77.0258, 38.8967] }
+    },
+    {
+      type: "Feature",
+      properties: {
+        NAME: "\"I Have a Dream\" Speech",
+        YEAR: "1963",
+        SUMMARY: "Dr. Martin Luther King Jr. delivered his historic speech during the March on Washington for Jobs and Freedom at the Lincoln Memorial."
+      },
+      geometry: { type: "Point", coordinates: [-77.0502, 38.8893] }
+    },
+    {
+      type: "Feature",
+      properties: {
+        NAME: "Burning of Washington",
+        YEAR: "1814",
+        SUMMARY: "British forces set fire to many public buildings, including the White House and the Capitol, during the War of 1812."
+      },
+      geometry: { type: "Point", coordinates: [-77.0365, 38.8977] }
+    },
+    {
+      type: "Feature",
+      properties: {
+        NAME: "Watergate Break-in",
+        YEAR: "1972",
+        SUMMARY: "Five men were arrested for breaking into the DNC headquarters at the Watergate complex, sparking a major political scandal."
+      },
+      geometry: { type: "Point", coordinates: [-77.0544, 38.8995] }
+    },
+    {
+      type: "Feature",
+      properties: {
+        NAME: "Bonus Army Encampment",
+        YEAR: "1932",
+        SUMMARY: "Thousands of WWI veterans gathered at Anacostia Flats to demand cash-payment redemption of their service certificates."
+      },
+      geometry: { type: "Point", coordinates: [-76.9858, 38.8733] }
+    },
+    {
+      type: "Feature",
+      properties: {
+        NAME: "Woman Suffrage Procession",
+        YEAR: "1913",
+        SUMMARY: "The first suffragist parade in Washington, D.C. marched down Pennsylvania Avenue from the Capitol."
+      },
+      geometry: { type: "Point", coordinates: [-77.0091, 38.8899] }
+    }
+  ]
+};
+
 const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
   const dcCenter = [38.9072, -77.0369];
   const favorites = exportData.favorites || [];
@@ -70,7 +130,19 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
     if (activeLayers.museums && !museumsData) {
       fetch('https://opendata.dc.gov/api/download/v1/items/2e65fc16edc3481989d2cc17e6f8c533/geojson?layers=54')
         .then(res => res.json())
-        .then(data => setMuseumsData(data))
+        .then(data => {
+          data.features.push({
+            type: "Feature",
+            properties: {
+              DCGISPLACE_NAMES_PTNAME: "Daughters of the American Revolution Museum"
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [-77.0395, 38.8923]
+            }
+          });
+          setMuseumsData(data);
+        })
         .catch(err => console.error("Error fetching museums data:", err));
     }
   }, [activeLayers.museums, museumsData]);
@@ -148,6 +220,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
             const radiusY = latDiff * 0.2;
             const radiusX = lngDiff * 0.2;
 
+            // Custom overrides for neighborhoods that are poorly placed or sized by the auto-calculation
+            const customOverrides = {
+              "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
+              "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
+              "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
+              "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 }
+            };
+
             return neighborhoods.map((name, i) => {
               // Check if this specific neighborhood is toggled off
               if (hiddenNeighborhoods && hiddenNeighborhoods.has(name)) {
@@ -156,7 +236,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
 
               // Distribute individual neighborhood hotspots around the cluster center
               let pos = [center.lat, center.lng];
-              if (N > 1) {
+              let finalRadius = radiusMeters;
+
+              if (customOverrides[name]) {
+                pos = customOverrides[name].center;
+                finalRadius = customOverrides[name].radius;
+              } else if (N > 1) {
                 const angle = (i / N) * Math.PI * 2;
                 pos = [
                   center.lat + Math.sin(angle) * radiusY,
@@ -177,12 +262,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
                 <Circle
                   key={`${featureIndex}-${i}`}
                   center={pos}
-                  radius={radiusMeters * (isSelected ? 1.5 : 1.2)}
+                  radius={finalRadius * (isSelected ? 1.5 : 1.2)}
                   pathOptions={{
                     color: isSelected ? '#ffffff' : color,
                     weight: isSelected ? 2 : 0,
                     fillColor: color,
-                    fillOpacity: isSelected ? 0.9 : 0.6,
+                    fillOpacity: isSelected ? 0.7 : 0.3,
                     className: isSelected ? 'blurry-node-selected' : 'blurry-node'
                   }}
                   eventHandlers={{
@@ -267,6 +352,44 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip'
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* Historical Data Layer */}
+      {activeLayers.historical && (
+        <GeoJSON 
+          data={historicalEventsData}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 8,
+              fillColor: '#f59e0b', // amber
+              color: '#fbbf24',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const { NAME, YEAR, SUMMARY } = feature.properties;
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 500px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #fbbf24;">★</span> ${NAME}
+                 </div>
+                 <div style="font-weight: 600; font-size: 13px; color: #fbbf24; margin-bottom: 6px;">
+                   ${YEAR}
+                 </div>
+                 <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${SUMMARY}
+                 </div>
+               </div>`, 
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip historical-tooltip'
               }
             );
           }}

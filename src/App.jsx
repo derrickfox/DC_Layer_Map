@@ -35,6 +35,9 @@ function App() {
         
         const sortedNames = Array.from(allNames).sort();
         setNeighborhoodList(sortedNames);
+        
+        const initialHidden = new Set(sortedNames.filter(name => name !== "Woodley Park"));
+        setHiddenNeighborhoods(initialHidden);
       })
       .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
   }, []);
