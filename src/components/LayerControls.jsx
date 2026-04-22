@@ -1,7 +1,14 @@
-import React from 'react';
-import { Layers, MapPin, History, Sparkles, Map } from 'lucide-react';
+import React, { useState } from 'react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark } from 'lucide-react';
 
-const LayerControls = ({ activeLayers, toggleLayer }) => {
+const LayerControls = ({ 
+  activeLayers, 
+  toggleLayer, 
+  neighborhoodList = [], 
+  hiddenNeighborhoods = new Set(), 
+  toggleNeighborhoodVisibility 
+}) => {
+  const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
   return (
     <div 
       className="glass-panel"
@@ -46,13 +53,109 @@ const LayerControls = ({ activeLayers, toggleLayer }) => {
           Historical Data
         </button>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button 
+              className={`glass-button ${activeLayers.neighborhoods ? 'active' : ''}`}
+              onClick={() => toggleLayer('neighborhoods')}
+              style={{ justifyContent: 'flex-start', padding: '12px 16px', flex: 1 }}
+            >
+              <Map size={18} />
+              Neighborhoods
+            </button>
+            <button
+              className="glass-button"
+              onClick={() => setIsNeighborhoodsExpanded(!isNeighborhoodsExpanded)}
+              style={{ padding: '12px', flexShrink: 0 }}
+              title="Expand Neighborhoods"
+            >
+              {isNeighborhoodsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
+          
+          {isNeighborhoodsExpanded && (
+            <div style={{ 
+              maxHeight: '200px', 
+              overflowY: 'auto', 
+              background: 'rgba(15, 23, 42, 0.4)', 
+              borderRadius: '8px',
+              padding: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px',
+              marginTop: '4px'
+            }}>
+              {neighborhoodList.length === 0 ? (
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', padding: '8px', textAlign: 'center' }}>
+                  Loading neighborhoods...
+                </div>
+              ) : (
+                neighborhoodList.map(name => {
+                  const isHidden = hiddenNeighborhoods.has(name);
+                  return (
+                    <div 
+                      key={name} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        fontSize: '13px',
+                        color: isHidden ? 'var(--text-secondary)' : 'var(--text-primary)',
+                        background: 'transparent'
+                      }}
+                    >
+                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                        {name}
+                      </span>
+                      <button
+                        onClick={() => toggleNeighborhoodVisibility(name)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: isHidden ? 'var(--text-secondary)' : 'var(--text-primary)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '4px'
+                        }}
+                      >
+                        {isHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+
         <button 
-          className={`glass-button ${activeLayers.neighborhoods ? 'active' : ''}`}
-          onClick={() => toggleLayer('neighborhoods')}
+          className={`glass-button ${activeLayers.parks ? 'active' : ''}`}
+          onClick={() => toggleLayer('parks')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <Map size={18} />
-          Neighborhoods
+          <TreePine size={18} />
+          Parks
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.squares ? 'active' : ''}`}
+          onClick={() => toggleLayer('squares')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <CircleDot size={18} />
+          Squares & Circles
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.museums ? 'active' : ''}`}
+          onClick={() => toggleLayer('museums')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <Landmark size={18} />
+          Museums
         </button>
 
         <button 

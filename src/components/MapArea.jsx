@@ -21,21 +21,73 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 import exportData from '../../dc_layer_lab_export.json';
 
-const MapArea = ({ activeLayers }) => {
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
   const dcCenter = [38.9072, -77.0369];
   const favorites = exportData.favorites || [];
-  const [geoJsonData, setGeoJsonData] = useState(null);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
+  const [parksData, setParksData] = useState(null);
+  const [squaresData, setSquaresData] = useState(null);
+  const [museumsData, setMuseumsData] = useState(null);
 
   useEffect(() => {
-    // Only fetch if layer is active and we don't have the data yet
-    if (activeLayers.neighborhoods && !geoJsonData) {
-      fetch('https://raw.githubusercontent.com/alulsh/dc-micromobility-by-neighborhood/main/dc-neighborhoods.geojson')
-        .then(res => res.json())
-        .then(data => setGeoJsonData(data))
-        .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
+    if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
+      const p1 = fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/9/query?where=1%3D1&outFields=*&outSR=4326&f=geojson').then(res => res.json());
+      const p2 = fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/10/query?where=1%3D1&outFields=*&outSR=4326&f=geojson').then(res => res.json());
+      
+      Promise.all([p1, p2])
+        .then(([localParks, nationalParks]) => {
+          const allFeatures = [
+            ...(localParks.features || []),
+            ...(nationalParks.features || [])
+          ];
+
+          const isSquareOrCircle = (name) => {
+            if (!name) return false;
+            const n = name.toLowerCase();
+            return n.includes('square') || n.includes('circle') || n.includes('triangle');
+          };
+
+          const pFeatures = [];
+          const sFeatures = [];
+
+          allFeatures.forEach(f => {
+            const name = f.properties?.NAME || "";
+            if (isSquareOrCircle(name)) {
+              sFeatures.push(f);
+            } else {
+              pFeatures.push(f);
+            }
+          });
+
+          setParksData({ type: "FeatureCollection", features: pFeatures });
+          setSquaresData({ type: "FeatureCollection", features: sFeatures });
+        })
+        .catch(err => console.error("Error fetching parks/squares data:", err));
     }
-  }, [activeLayers.neighborhoods, geoJsonData]);
+  }, [activeLayers.parks, activeLayers.squares, parksData, squaresData]);
+
+  useEffect(() => {
+    if (activeLayers.museums && !museumsData) {
+      fetch('https://opendata.dc.gov/api/download/v1/items/2e65fc16edc3481989d2cc17e6f8c533/geojson?layers=54')
+        .then(res => res.json())
+        .then(data => setMuseumsData(data))
+        .catch(err => console.error("Error fetching museums data:", err));
+    }
+  }, [activeLayers.museums, museumsData]);
+
+  const parksStyle = {
+    fillColor: '#22c55e',
+    fillOpacity: 0.4,
+    color: '#4ade80',
+    weight: 2,
+  };
+
+  const squaresStyle = {
+    fillColor: '#0ea5e9',
+    fillOpacity: 0.4,
+    color: '#38bdf8',
+    weight: 2,
+  };
 
   return (
     <MapContainer 
@@ -97,6 +149,11 @@ const MapArea = ({ activeLayers }) => {
             const radiusX = lngDiff * 0.2;
 
             return neighborhoods.map((name, i) => {
+              // Check if this specific neighborhood is toggled off
+              if (hiddenNeighborhoods && hiddenNeighborhoods.has(name)) {
+                return null;
+              }
+
               // Distribute individual neighborhood hotspots around the cluster center
               let pos = [center.lat, center.lng];
               if (N > 1) {
@@ -148,6 +205,72 @@ const MapArea = ({ activeLayers }) => {
             });
           })}
         </>
+      )}
+
+      {/* Parks Layer */}
+      {activeLayers.parks && parksData && (
+        <GeoJSON 
+          data={parksData}
+          style={parksStyle}
+          onEachFeature={(feature, layer) => {
+            const name = feature.properties?.NAME || "Park";
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary);"><span style="color: #4ade80; margin-right: 4px;">•</span>${name}</div>`, 
+              {
+                permanent: false,
+                direction: 'center',
+                className: 'custom-tooltip'
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* Squares & Circles Layer */}
+      {activeLayers.squares && squaresData && (
+        <GeoJSON 
+          data={squaresData}
+          style={squaresStyle}
+          onEachFeature={(feature, layer) => {
+            const name = feature.properties?.NAME || "Square/Circle";
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary);"><span style="color: #38bdf8; margin-right: 4px;">•</span>${name}</div>`, 
+              {
+                permanent: false,
+                direction: 'center',
+                className: 'custom-tooltip'
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* Museums Layer */}
+      {activeLayers.museums && museumsData && (
+        <GeoJSON 
+          data={museumsData}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: '#8b5cf6', // purple
+              color: '#a78bfa',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.8
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const name = feature.properties?.DCGISPLACE_NAMES_PTNAME || "Museum";
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary);"><span style="color: #a78bfa; margin-right: 4px;">•</span>${name}</div>`, 
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip'
+              }
+            );
+          }}
+        />
       )}
 
       <ZoomWidget />
