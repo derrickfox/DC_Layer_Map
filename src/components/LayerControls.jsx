@@ -7,6 +7,7 @@ const LayerControls = ({
   neighborhoodList = [], 
   hiddenNeighborhoods = new Set(), 
   toggleNeighborhoodVisibility,
+  toggleAllNeighborhoodsVisibility,
   searchQuery,
   setSearchQuery
 }) => {
@@ -27,13 +28,10 @@ const LayerControls = ({
       }}
     >
       <div>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <Layers size={24} className="text-gradient" />
           <span className="text-gradient">DC Layer Lab</span>
         </h2>
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-          Toggle map layers and explore custom datasets.
-        </p>
         <div style={{ position: 'relative' }}>
           <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
@@ -46,7 +44,7 @@ const LayerControls = ({
               padding: '10px 12px 10px 36px',
               borderRadius: '8px',
               border: '1px solid var(--border-glass)',
-              background: 'rgba(15, 23, 42, 0.4)',
+              background: 'rgba(255, 255, 255, 0.8)',
               color: 'var(--text-primary)',
               fontSize: '14px',
               outline: 'none',
@@ -57,49 +55,45 @@ const LayerControls = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <button 
-          className={`glass-button ${activeLayers.favorites ? 'active-blue' : ''}`}
-          onClick={() => toggleLayer('favorites')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <MapPin size={18} color={activeLayers.favorites ? "#ffffff" : "#3b82f6"} />
-          My Favorites
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.historical ? 'active-amber' : ''}`}
-          onClick={() => toggleLayer('historical')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <History size={18} color={activeLayers.historical ? "#ffffff" : "#fbbf24"} />
-          Historical Data
-        </button>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ display: 'flex', gap: '4px' }}>
             <button 
               className={`glass-button ${activeLayers.neighborhoods ? 'active-orange' : ''}`}
               onClick={() => toggleLayer('neighborhoods')}
-              style={{ justifyContent: 'flex-start', padding: '12px 16px', flex: 1 }}
+              style={{ justifyContent: 'space-between', padding: '12px 16px', width: '100%' }}
             >
-              <Map size={18} color={activeLayers.neighborhoods ? "#ffffff" : "#f97316"} />
-              Neighborhoods
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Map size={18} color={activeLayers.neighborhoods ? "#ffffff" : "#f97316"} />
+                Neighborhoods
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: '-4px' }}>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (toggleAllNeighborhoodsVisibility) toggleAllNeighborhoodsVisibility();
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', padding: '4px' }}
+                  title={hiddenNeighborhoods.size === neighborhoodList.length && neighborhoodList.length > 0 ? "Show all neighborhoods" : "Hide all neighborhoods"}
+                >
+                  {hiddenNeighborhoods.size === neighborhoodList.length && neighborhoodList.length > 0 ? <EyeOff size={18} /> : <Eye size={18} />}
+                </div>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsNeighborhoodsExpanded(!isNeighborhoodsExpanded);
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', padding: '4px' }}
+                  title="Expand Neighborhoods"
+                >
+                  {isNeighborhoodsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </div>
+              </div>
             </button>
-            <button
-              className="glass-button"
-              onClick={() => setIsNeighborhoodsExpanded(!isNeighborhoodsExpanded)}
-              style={{ padding: '12px', flexShrink: 0 }}
-              title="Expand Neighborhoods"
-            >
-              {isNeighborhoodsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </button>
-          </div>
           
           {isNeighborhoodsExpanded && (
             <div style={{ 
               maxHeight: '200px', 
               overflowY: 'auto', 
-              background: 'rgba(15, 23, 42, 0.4)', 
+              background: 'rgba(255, 255, 255, 0.8)', 
               borderRadius: '8px',
               padding: '8px',
               display: 'flex',
@@ -154,24 +148,6 @@ const LayerControls = ({
         </div>
 
         <button 
-          className={`glass-button ${activeLayers.parks ? 'active-green' : ''}`}
-          onClick={() => toggleLayer('parks')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <TreePine size={18} color={activeLayers.parks ? "#ffffff" : "#4ade80"} />
-          Parks
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.squares ? 'active-skyblue' : ''}`}
-          onClick={() => toggleLayer('squares')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <CircleDot size={18} color={activeLayers.squares ? "#ffffff" : "#38bdf8"} />
-          Squares & Circles
-        </button>
-
-        <button 
           className={`glass-button ${activeLayers.museums ? 'active-purple' : ''}`}
           onClick={() => toggleLayer('museums')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
@@ -205,6 +181,33 @@ const LayerControls = ({
         >
           <Globe size={18} color={activeLayers.embassies ? "#ffffff" : "#ef4444"} />
           Embassies & Consulates
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.historical ? 'active-amber' : ''}`}
+          onClick={() => toggleLayer('historical')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <History size={18} color={activeLayers.historical ? "#ffffff" : "#fbbf24"} />
+          Historical Data
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.parks ? 'active-green' : ''}`}
+          onClick={() => toggleLayer('parks')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <TreePine size={18} color={activeLayers.parks ? "#ffffff" : "#4ade80"} />
+          Parks
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.squares ? 'active-skyblue' : ''}`}
+          onClick={() => toggleLayer('squares')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <CircleDot size={18} color={activeLayers.squares ? "#ffffff" : "#38bdf8"} />
+          Squares & Circles
         </button>
       </div>
     </div>

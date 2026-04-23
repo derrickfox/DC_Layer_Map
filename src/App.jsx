@@ -5,15 +5,14 @@ import './index.css';
 
 function App() {
   const [activeLayers, setActiveLayers] = useState({
-    favorites: true,
     historical: false,
-    neighborhoods: false,
+    neighborhoods: true,
     parks: false,
     squares: false,
-    museums: false,
-    events: false,
-    monuments: false,
-    embassies: false
+    museums: true,
+    events: true,
+    monuments: true,
+    embassies: true
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);
@@ -21,6 +20,7 @@ function App() {
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedNeighborhoods, setSelectedNeighborhoods] = useState(new Set());
 
   useEffect(() => {
     // Fetch geojson and extract individual neighborhood names
@@ -39,9 +39,6 @@ function App() {
         
         const sortedNames = Array.from(allNames).sort();
         setNeighborhoodList(sortedNames);
-        
-        const initialHidden = new Set(sortedNames.filter(name => name !== "Woodley Park"));
-        setHiddenNeighborhoods(initialHidden);
       })
       .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
 
@@ -71,6 +68,14 @@ function App() {
     });
   };
 
+  const toggleAllNeighborhoodsVisibility = () => {
+    if (hiddenNeighborhoods.size === neighborhoodList.length && neighborhoodList.length > 0) {
+      setHiddenNeighborhoods(new Set());
+    } else {
+      setHiddenNeighborhoods(new Set(neighborhoodList));
+    }
+  };
+
   return (
     <>
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -80,6 +85,8 @@ function App() {
           hiddenNeighborhoods={hiddenNeighborhoods}
           dcBoundary={dcBoundary}
           searchQuery={searchQuery}
+          selectedNeighborhoods={selectedNeighborhoods}
+          setSelectedNeighborhoods={setSelectedNeighborhoods}
         />
         <LayerControls 
           activeLayers={activeLayers} 
@@ -87,6 +94,7 @@ function App() {
           neighborhoodList={neighborhoodList}
           hiddenNeighborhoods={hiddenNeighborhoods}
           toggleNeighborhoodVisibility={toggleNeighborhoodVisibility}
+          toggleAllNeighborhoodsVisibility={toggleAllNeighborhoodsVisibility}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
         />

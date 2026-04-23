@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -140,7 +140,23 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "Mary McLeod Bethune Memorial", TYPE: "Memorial", SUMMARY: "Honors the educator and civil rights activist, located in Lincoln Park." }, geometry: { type: "Point", coordinates: [-76.9892, 38.8900] } },
     { type: "Feature", properties: { NAME: "Emancipation Memorial", TYPE: "Memorial", SUMMARY: "Also known as the Freedman's Memorial, located in Lincoln Park." }, geometry: { type: "Point", coordinates: [-76.9880, 38.8898] } },
     { type: "Feature", properties: { NAME: "Women's Titanic Memorial", TYPE: "Memorial", SUMMARY: "Honors the men who gave their lives so women and children could be saved." }, geometry: { type: "Point", coordinates: [-77.0180, 38.8718] } },
-    { type: "Feature", properties: { NAME: "Mahatma Gandhi Memorial", TYPE: "Statue", SUMMARY: "Statue of the Indian independence leader near the Indian Embassy." }, geometry: { type: "Point", coordinates: [-77.0494, 38.9103] } }
+    { type: "Feature", properties: { NAME: "Mahatma Gandhi Memorial", TYPE: "Statue", SUMMARY: "Statue of the Indian independence leader near the Indian Embassy." }, geometry: { type: "Point", coordinates: [-77.0494, 38.9103] } },
+    { type: "Feature", properties: { NAME: "General Philip Sheridan Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the Civil War Union general in Sheridan Circle." }, geometry: { type: "Point", coordinates: [-77.0506, 38.9114] } },
+    { type: "Feature", properties: { NAME: "General George Meade Memorial", TYPE: "Memorial", SUMMARY: "Honors the victorious Union commander at the Battle of Gettysburg." }, geometry: { type: "Point", coordinates: [-77.0163, 38.8924] } },
+    { type: "Feature", properties: { NAME: "Stephenson Grand Army of the Republic Memorial", TYPE: "Memorial", SUMMARY: "Honors Dr. Benjamin F. Stephenson, founder of the Grand Army of the Republic." }, geometry: { type: "Point", coordinates: [-77.0210, 38.8932] } },
+    { type: "Feature", properties: { NAME: "Nuns of the Battlefield Memorial", TYPE: "Memorial", SUMMARY: "Honors the various orders of nuns who nursed soldiers during the Civil War." }, geometry: { type: "Point", coordinates: [-77.0401, 38.9054] } },
+    { type: "Feature", properties: { NAME: "General Winfield Scott Hancock Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the Union general known for his leadership at Gettysburg." }, geometry: { type: "Point", coordinates: [-77.0219, 38.8936] } },
+    { type: "Feature", properties: { NAME: "General John A. Rawlins Statue", TYPE: "Statue", SUMMARY: "Statue of Ulysses S. Grant's chief of staff during the Civil War." }, geometry: { type: "Point", coordinates: [-77.0416, 38.8965] } },
+    { type: "Feature", properties: { NAME: "Major General George B. McClellan Statue", TYPE: "Statue", SUMMARY: "Equestrian statue honoring the commander of the Army of the Potomac." }, geometry: { type: "Point", coordinates: [-77.0460, 38.9160] } },
+    { type: "Feature", properties: { NAME: "Major General Nathanael Greene Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the Continental Army major general in Stanton Park." }, geometry: { type: "Point", coordinates: [-76.9961, 38.8938] } },
+    { type: "Feature", properties: { NAME: "Commodore John Barry Memorial", TYPE: "Memorial", SUMMARY: "Statue of the 'Father of the American Navy' in Franklin Square." }, geometry: { type: "Point", coordinates: [-77.0312, 38.9023] } },
+    { type: "Feature", properties: { NAME: "Benjamin Franklin Statue", TYPE: "Statue", SUMMARY: "Statue honoring the Founding Father at the Old Post Office Pavilion." }, geometry: { type: "Point", coordinates: [-77.0284, 38.8944] } },
+    { type: "Feature", properties: { NAME: "Major General Artemas Ward Statue", TYPE: "Statue", SUMMARY: "Statue of the first commander of the Continental Army in Ward Circle." }, geometry: { type: "Point", coordinates: [-77.0863, 38.9385] } },
+    { type: "Feature", properties: { NAME: "Bernardo de Gálvez Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the Spanish military leader who aided the American colonies." }, geometry: { type: "Point", coordinates: [-77.0463, 38.8967] } },
+    { type: "Feature", properties: { NAME: "John Witherspoon Statue", TYPE: "Statue", SUMMARY: "Statue of the clergyman and signer of the Declaration of Independence." }, geometry: { type: "Point", coordinates: [-77.0416, 38.9073] } },
+    { type: "Feature", properties: { NAME: "General Casimir Pulaski Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the Polish nobleman who fought in the Revolutionary War." }, geometry: { type: "Point", coordinates: [-77.0305, 38.8964] } },
+    { type: "Feature", properties: { NAME: "Alexander Hamilton Statue", TYPE: "Statue", SUMMARY: "Statue of the Founding Father and Revolutionary War officer at the Treasury Building." }, geometry: { type: "Point", coordinates: [-77.0337, 38.8973] } },
+    { type: "Feature", properties: { NAME: "Nathan Hale Statue", TYPE: "Statue", SUMMARY: "Statue of the American Revolutionary War spy." }, geometry: { type: "Point", coordinates: [-77.0255, 38.8935] } }
   ]
 };
 
@@ -227,10 +243,17 @@ const embassiesData = {
   ]
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, searchQuery }) => {
-  const dcCenter = [38.9072, -77.0369];
-  const favorites = exportData.favorites || [];
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
+const MapEvents = ({ onMapClick }) => {
+  useMapEvents({
+    click: () => {
+      if (onMapClick) onMapClick();
+    },
+  });
+  return null;
+};
+
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
+  const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
   const [museumsData, setMuseumsData] = useState(null);
@@ -310,7 +333,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
   return (
     <MapContainer 
       center={dcCenter} 
-      zoom={12} 
+      zoom={14} 
       style={{ height: '100%', width: '100%', zIndex: 0 }}
       zoomControl={false}
     >
@@ -318,6 +341,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
+      <MapEvents onMapClick={() => setSelectedNeighborhoods(new Set())} />
       
       {/* DC Boundary Layer */}
       {dcBoundary && (
@@ -334,32 +358,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
         />
       )}
       
-      {activeLayers.favorites && favorites
-        .filter(fav => {
-          if (!searchQuery) return true;
-          const q = searchQuery.toLowerCase();
-          return (
-            (fav.name && fav.name.toLowerCase().includes(q)) || 
-            (fav.address && fav.address.toLowerCase().includes(q))
-          );
-        })
-        .map(fav => (
-        <Marker key={fav.id} position={[fav.lat, fav.lng]}>
-          <Popup>
-            <div style={{ padding: '8px', minWidth: '150px' }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {fav.name}
-              </h3>
-              <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                {fav.address}
-              </p>
-              <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--accent-hover)' }}>
-                Saved: {new Date(fav.createdAt).toLocaleDateString()}
-              </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+
 
       {/* Neighborhoods Layer */}
       {activeLayers.neighborhoods && geoJsonData && (
@@ -375,7 +374,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
             .flatMap((feature, featureIndex) => {
             const rawNames = feature.properties?.NBH_NAMES || 'Unknown Neighborhood';
             const clusterName = feature.properties?.NAME || 'Neighborhood Cluster';
-            const neighborhoods = rawNames.split(',').map(n => n.trim());
+            const neighborhoods = rawNames.split(',')
+              .map(n => n.trim())
+              .filter(n => n !== 'Anacostia River'); // Remove river from neighborhood list
             const N = neighborhoods.length;
             
             // Calculate cluster bounds to position individual hotspots
@@ -398,7 +399,21 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
               "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
               "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 },
               "Palisades": { center: [38.9280, -77.0980], radius: 500 },
-              "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 }
+              "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
+              "Columbia Heights": { center: [38.9283, -77.0327], radius: 500 },
+              "Mt. Pleasant": { center: [38.9317, -77.0383], radius: 450 },
+              "Dupont Circle": { center: [38.9096, -77.0434], radius: 500 },
+              "Kalorama Heights": { center: [38.9174, -77.0505], radius: 450 },
+              "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
+              "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
+              "Georgetown": { center: [38.9048, -77.0628], radius: 550 },
+              "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
+              "National Mall": { center: [38.8895, -77.0230], radius: 600 },
+              "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
+              "Connecticut Avenue/K Street": { center: [38.9020, -77.0396], radius: 500 },
+              "Union Station": { center: [38.8977, -77.0068], radius: 450 },
+              "Truxton Circle": { center: [38.9100, -77.0100], radius: 450 },
+              "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 }
             };
 
             return neighborhoods.map((name, i) => {
@@ -429,7 +444,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
                 hash = name.charCodeAt(j) + ((hash << 5) - hash);
               }
               const color = colors[Math.abs(hash) % colors.length];
-              const isSelected = selectedNeighborhood === name;
+              const isSelected = selectedNeighborhoods.has(name);
 
               return (
                 <Circle
@@ -444,19 +459,21 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
                     className: isSelected ? 'blurry-node-selected' : 'blurry-node'
                   }}
                   eventHandlers={{
-                    click: () => setSelectedNeighborhood(name)
+                    click: () => {
+                      setSelectedNeighborhoods(prev => {
+                        const newSet = new Set(prev);
+                        if (newSet.has(name)) {
+                          newSet.delete(name);
+                        } else {
+                          newSet.add(name);
+                        }
+                        return newSet;
+                      });
+                    }
                   }}
                 >
-                  <Tooltip sticky direction="top" opacity={0.95}>
-                    <div style={{ fontFamily: "'Outfit', sans-serif", minWidth: '120px' }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', marginBottom: '4px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '4px' }}>
-                        {clusterName}
-                      </div>
-                      <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
-                        <span style={{ color: 'var(--accent-primary)', marginRight: '4px' }}>•</span> 
-                        {name}
-                      </div>
-                    </div>
+                  <Tooltip permanent direction="center" className="neighborhood-label">
+                    {name}
                   </Tooltip>
                 </Circle>
               );
@@ -575,7 +592,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
           }}
           onEachFeature={(feature, layer) => {
             const { NAME, YEAR, SUMMARY } = feature.properties;
-            const tooltipContent = `<div style="font-family: 'Outfit', sans-serif; max-width: 500px;">
+            const tooltipContent = `<div style="font-family: 'Outfit', sans-serif; max-width: 1500px;">
                  <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
                    <span style="color: #fbbf24;">★</span> ${NAME}
                  </div>
@@ -624,7 +641,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
             const { NAME, TYPE, SUMMARY } = feature.properties;
             
             const tooltipContent = `
-              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 200px;">
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
                 <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(20, 184, 166, 0.3); padding-bottom: 4px;">
                   <span style="color: #14b8a6; margin-right: 4px;">•</span>${NAME}
                 </div>
@@ -674,7 +691,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
           onEachFeature={(feature, layer) => {
             const { NAME, TYPE, SUMMARY } = feature.properties;
             layer.bindTooltip(
-              `<div style="font-family: 'Outfit', sans-serif; max-width: 400px;">
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 1200px;">
                  <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
                    <span style="color: #f472b6;">🎟️</span> ${NAME}
                  </div>
@@ -721,7 +738,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
             const { NAME, TYPE, SUMMARY } = feature.properties;
             
             const tooltipContent = `
-              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 200px;">
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
                 <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 4px;">
                   <span style="color: #ef4444; margin-right: 4px;">•</span>${NAME}
                 </div>
