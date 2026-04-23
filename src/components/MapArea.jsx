@@ -761,7 +761,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'center',
                 className: 'custom-tooltip',
-                sticky: true
+                sticky: true,
+                offset: [10, -20]
               }
             );
           }}
@@ -788,7 +789,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'center',
                 className: 'custom-tooltip',
-                sticky: true
+                sticky: true,
+                offset: [10, -20]
               }
             );
           }}
@@ -825,7 +827,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip',
-                sticky: true
+                sticky: true,
+                offset: [10, -20]
               }
             );
             layer.on({
@@ -887,7 +890,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip historical-tooltip',
-                offset: [0, -6],
+                offset: [10, -20],
                 sticky: true
               }
             );
@@ -942,7 +945,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip',
-                offset: [0, -6],
+                offset: [10, -20],
                 sticky: true
               }
             );
@@ -992,7 +995,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip events-tooltip',
-                offset: [0, -6],
+                offset: [10, -20],
                 sticky: true
               }
             );
@@ -1047,7 +1050,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip',
-                offset: [0, -6],
+                offset: [10, -20],
                 sticky: true
               }
             );
@@ -1129,7 +1132,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'top',
               className: 'custom-tooltip',
-              offset: [0, -6],
+              offset: [10, -20],
               sticky: true
             });
           }}
@@ -1207,7 +1210,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'center',
               className: 'custom-tooltip',
-              sticky: true
+              sticky: true,
+              offset: [10, -20]
             });
             
             // Bring to front on hover
@@ -1296,7 +1300,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'center',
               className: 'custom-tooltip',
-              sticky: true
+              sticky: true,
+              offset: [10, -20]
             });
             
             // Bring to front on hover
@@ -1390,7 +1395,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'top',
               className: 'custom-tooltip',
-              sticky: true
+              sticky: true,
+              offset: [10, -20]
             });
             
             layer.on({
@@ -1459,7 +1465,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'top',
               className: 'custom-tooltip',
-              sticky: true
+              sticky: true,
+              offset: [10, -20]
             });
             layer.on({
               mouseover: (e) => {
@@ -1528,7 +1535,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'top',
               className: 'custom-tooltip',
-              sticky: true
+              sticky: true,
+              offset: [10, -20]
             });
             layer.on({
               mouseover: (e) => {
@@ -1599,7 +1607,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'center',
               className: 'custom-tooltip',
-              sticky: true
+              sticky: true,
+              offset: [10, -20]
             });
             layer.on({
               mouseover: (e) => {
