@@ -1605,7 +1605,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             `;
             layer.bindTooltip(tooltipContent, {
               permanent: false,
-              direction: 'center',
+              direction: 'top',
               className: 'custom-tooltip',
               sticky: true,
               offset: [10, -20]
