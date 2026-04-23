@@ -101,16 +101,8 @@ function App() {
 
   const handleSearchChange = (newQuery) => {
     if (searchQuery === '' && newQuery !== '') {
-      // Starting a search: remember current layers and turn on searchable layers
+      // Starting a search: remember current layers
       setPreviousActiveLayers(activeLayers);
-      setActiveLayers(prev => {
-        const next = { ...prev };
-        // Enable all layers so search works across the whole dataset
-        Object.keys(next).forEach(key => {
-          next[key] = true;
-        });
-        return next;
-      });
     } else if (searchQuery !== '' && newQuery === '') {
       // Cleared search: restore previous layers
       if (previousActiveLayers) {
@@ -120,8 +112,6 @@ function App() {
     }
     setSearchQuery(newQuery);
   };
-
-
   return (
     <>
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
