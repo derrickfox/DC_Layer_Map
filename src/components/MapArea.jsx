@@ -105,6 +105,8 @@ const CustomTopographyLayer = () => {
 };
 
 
+import metroLinesData from '../data/metro-lines.json';
+import metroStationsData from '../data/metro-stations.json';
 import exportData from '../../dc_layer_lab_export.json';
 
 const historicalEventsData = {
@@ -1362,6 +1364,141 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               mouseout: (e) => {
                 const l = e.target;
                 l.setStyle({ weight: 3, color: laneColor });
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.metro && metroLinesData && (
+        <GeoJSON
+          key={`metrolines-${Date.now()}`}
+          data={metroLinesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const props = feature.properties || {};
+            const lineName = (props.NAME || "").toLowerCase();
+            return lineName.includes(searchQuery);
+          }}
+          style={(feature) => {
+            const props = feature.properties;
+            const lineName = (props.NAME || "red").toLowerCase();
+            let lineColor = '#ef4444'; // default red
+            
+            if (lineName.includes('blue')) lineColor = '#3b82f6';
+            else if (lineName.includes('orange')) lineColor = '#f97316';
+            else if (lineName.includes('green')) lineColor = '#22c55e';
+            else if (lineName.includes('yellow')) lineColor = '#eab308';
+            else if (lineName.includes('silver')) lineColor = '#94a3b8';
+            else if (lineName.includes('red')) lineColor = '#ef4444';
+            
+            return {
+              color: lineColor,
+              weight: 5,
+              opacity: 0.8
+            };
+          }}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties;
+            const name = props.NAME || "Metro Line";
+            const lineName = name.toLowerCase();
+            let lineColor = '#ef4444';
+            if (lineName.includes('blue')) lineColor = '#3b82f6';
+            else if (lineName.includes('orange')) lineColor = '#f97316';
+            else if (lineName.includes('green')) lineColor = '#22c55e';
+            else if (lineName.includes('yellow')) lineColor = '#eab308';
+            else if (lineName.includes('silver')) lineColor = '#94a3b8';
+            else if (lineName.includes('red')) lineColor = '#ef4444';
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px;">
+                <div style="font-weight: 700; font-size: 14px; color: ${lineColor}; text-transform: capitalize;">
+                  ${name} Line
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip'
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({ weight: 8, opacity: 1 });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) { l.bringToFront(); }
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({ weight: 5, opacity: 0.8 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.metro && metroStationsData && (
+        <GeoJSON
+          key={`metrostations-${Date.now()}`}
+          data={metroStationsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const props = feature.properties || {};
+            const stationName = (props.NAME || "").toLowerCase();
+            const linesStr = (props.LINE || "").toLowerCase();
+            return stationName.includes(searchQuery) || linesStr.includes(searchQuery);
+          }}
+          pointToLayer={(feature, latlng) => {
+            const props = feature.properties;
+            const linesStr = (props.LINE || "red").toLowerCase();
+            
+            // Pick primary color based on first mentioned line
+            let primaryColor = '#ef4444';
+            if (linesStr.includes('red')) primaryColor = '#ef4444';
+            else if (linesStr.includes('blue')) primaryColor = '#3b82f6';
+            else if (linesStr.includes('orange')) primaryColor = '#f97316';
+            else if (linesStr.includes('green')) primaryColor = '#22c55e';
+            else if (linesStr.includes('yellow')) primaryColor = '#eab308';
+            else if (linesStr.includes('silver')) primaryColor = '#94a3b8';
+
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: '#ffffff',
+              color: primaryColor,
+              weight: 3,
+              opacity: 1,
+              fillOpacity: 1
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties;
+            const name = props.NAME || "Metro Station";
+            const linesStr = props.LINE || "";
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 250px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px;">
+                  ${name}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary);">
+                  Lines: <span style="font-weight: 600; text-transform: capitalize;">${linesStr}</span>
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip'
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(6);
               }
             });
           }}
