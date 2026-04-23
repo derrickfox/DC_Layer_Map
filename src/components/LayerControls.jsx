@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike } from 'lucide-react';
 
 const LayerControls = ({ 
   activeLayers, 
@@ -244,6 +244,15 @@ const LayerControls = ({
         >
           <ShieldAlert size={18} color={activeLayers.crime ? "#ffffff" : "#e11d48"} />
           Crime Index
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.bikeLanes ? 'active-emerald' : ''}`}
+          onClick={() => toggleLayer('bikeLanes')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <Bike size={18} color={activeLayers.bikeLanes ? "#ffffff" : "#10b981"} />
+          Bike Lanes
         </button>
       </div>
     </div>

@@ -16,7 +16,8 @@ function App() {
     floodZones: false,
     topography: false,
     propertyValues: false,
-    crime: false
+    crime: false,
+    bikeLanes: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);

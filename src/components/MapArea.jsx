@@ -345,6 +345,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [museumsData, setMuseumsData] = useState(null);
   const [propertyValuesData, setPropertyValuesData] = useState(null);
   const [crimeData, setCrimeData] = useState(null);
+  const [bikeLanesData, setBikeLanesData] = useState(null);
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
@@ -473,6 +474,15 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching crime data:", err));
     }
   }, [activeLayers.crime, crimeData]);
+
+  useEffect(() => {
+    if (activeLayers.bikeLanes && !bikeLanesData) {
+      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Bikes_Trails_WebMercator/MapServer/2/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+        .then(res => res.json())
+        .then(data => setBikeLanesData(data))
+        .catch(err => console.error("Error fetching bike lanes data:", err));
+    }
+  }, [activeLayers.bikeLanes, bikeLanesData]);
 
   const parksStyle = {
     fillColor: '#22c55e',
@@ -1170,6 +1180,88 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                   color: '#ffffff',
                   fillOpacity: 0.65
                 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.bikeLanes && bikeLanesData && (
+        <GeoJSON
+          key={`bikelanes-${Date.now()}`}
+          data={bikeLanesData}
+          style={(feature) => {
+            const props = feature.properties;
+            let laneColor = '#86efac'; // Paler green for conventional/unprotected
+            let isProtected = false;
+            
+            if (props.BIKELANE_DUAL_PROTECTED || props.BIKELANE_PROTECTED) {
+              laneColor = '#16a34a'; // Dark green for protected
+              isProtected = true;
+            } else if (props.BIKELANE_DUAL_BUFFERED || props.BIKELANE_BUFFERED) {
+              laneColor = '#22c55e'; // Medium green for buffered
+            }
+            
+            return {
+              color: laneColor,
+              weight: 3,
+              opacity: 0.8,
+              dashArray: isProtected ? '' : '5, 5'
+            };
+          }}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties;
+            const name = props.ROUTENAME || "Bike Lane";
+            
+            let laneType = 'Unprotected / Other';
+            let laneColor = '#86efac'; 
+            let hoverColor = '#4ade80';
+            let tooltipColor = '#22c55e';
+
+            if (props.BIKELANE_DUAL_PROTECTED || props.BIKELANE_PROTECTED) {
+              laneType = 'Protected';
+              laneColor = '#16a34a';
+              hoverColor = '#15803d';
+              tooltipColor = '#16a34a';
+            } else if (props.BIKELANE_DUAL_BUFFERED || props.BIKELANE_BUFFERED) {
+              laneType = 'Buffered';
+              laneColor = '#22c55e';
+              hoverColor = '#16a34a';
+              tooltipColor = '#16a34a';
+            } else if (props.BIKELANE_CONTRAFLOW) {
+              laneType = 'Contraflow';
+            } else if (props.BIKELANE_CONVENTIONAL) {
+              laneType = 'Conventional';
+            }
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid ${laneColor}; padding-bottom: 4px;">
+                  <span style="color: ${tooltipColor}; margin-right: 4px;">•</span>${name}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: ${tooltipColor}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  Bicycle Lane
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.3;">
+                  Type: <strong>${laneType}</strong>
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip'
+            });
+            
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({ weight: 5, color: hoverColor });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) { l.bringToFront(); }
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({ weight: 3, color: laneColor });
               }
             });
           }}
