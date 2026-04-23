@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain } from 'lucide-react';
 
 const LayerControls = ({ 
   activeLayers, 
@@ -217,6 +217,15 @@ const LayerControls = ({
         >
           <Waves size={18} color={activeLayers.floodZones ? "#ffffff" : "#3b82f6"} />
           Flood Zones
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.topography ? 'active-red' : ''}`}
+          onClick={() => toggleLayer('topography')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <Mountain size={18} color={activeLayers.topography ? "#ffffff" : "#ef4444"} />
+          Topography
         </button>
       </div>
     </div>

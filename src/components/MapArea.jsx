@@ -252,7 +252,7 @@ const MapEvents = ({ onMapClick }) => {
   return null;
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, topographyData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -818,6 +818,61 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 </div>
                 <div style="font-size: 11px; font-weight: 600; color: ${color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
                   ${subty || zone || 'Unknown Zone'}
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              offset: [0, -6]
+            });
+          }}
+        />
+      )}
+
+      {/* Topography Heatmap Layer */}
+      {activeLayers.topography && topographyData && (
+        <GeoJSON
+          key={`topography-${searchQuery}`}
+          data={topographyData}
+          pointToLayer={(feature, latlng) => {
+            const elevation = feature.properties?.ELEVATION || 0;
+            let color = '#3b82f6'; // Deep blue (lowest)
+            
+            // Map elevation to color (max ~430 ft in DC)
+            if (elevation >= 350) {
+              color = '#7f1d1d'; // Deep red
+            } else if (elevation >= 250) {
+              color = '#b91c1c'; // Red
+            } else if (elevation >= 150) {
+              color = '#ea580c'; // Orange
+            } else if (elevation >= 100) {
+              color = '#fbbf24'; // Yellow
+            } else if (elevation >= 50) {
+              color = '#22c55e'; // Green
+            } else {
+              color = '#1d4ed8'; // Deep blue
+            }
+
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: color,
+              color: color,
+              weight: 1,
+              opacity: 0.9,
+              fillOpacity: 0.7
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const elevation = feature.properties?.ELEVATION || 0;
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 4px;">
+                  <span style="color: #ef4444; margin-right: 4px;">•</span>Topography (Spot Elevation)
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #ef4444; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  Elevation: ${Math.round(elevation)} ft
                 </div>
               </div>
             `;
