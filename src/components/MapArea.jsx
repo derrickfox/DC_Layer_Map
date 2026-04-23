@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.heat';
 
 // Fix for default marker icons in Vite + Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -253,36 +252,7 @@ const MapEvents = ({ onMapClick }) => {
   return null;
 };
 
-const HeatmapLayer = ({ points }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!points || points.length === 0) return;
-
-    const heatLayer = L.heatLayer(points, {
-      radius: 25,
-      blur: 20,
-      maxZoom: 15,
-      max: 430, // Max elevation in DC is ~430 ft
-      gradient: {
-        0.0: '#1d4ed8', // deep blue
-        0.15: '#3b82f6', // blue
-        0.3: '#22c55e', // green
-        0.5: '#fbbf24', // yellow
-        0.7: '#ea580c', // orange
-        1.0: '#7f1d1d'  // deep red
-      }
-    }).addTo(map);
-
-    return () => {
-      map.removeLayer(heatLayer);
-    };
-  }, [points, map]);
-
-  return null;
-};
-
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, topographyData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -861,14 +831,15 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
-      {/* Topography Heatmap Layer */}
-      {activeLayers.topography && topographyData && (
-        <HeatmapLayer 
-          points={topographyData.features.map(f => [
-            f.geometry.coordinates[1], // lat
-            f.geometry.coordinates[0], // lng
-            f.properties?.ELEVATION || 0 // intensity
-          ])} 
+      {/* Topography Layer (USGS 3DEP DEM) */}
+      {activeLayers.topography && (
+        <WMSTileLayer
+          url="https://elevation.nationalmap.gov/arcgis/services/3DEPElevation/ImageServer/WMSServer"
+          layers="3DEPElevation:Hillshade Elevation Tinted"
+          format="image/png"
+          transparent={true}
+          opacity={0.65}
+          attribution="USGS 3DEP Elevation"
         />
       )}
 

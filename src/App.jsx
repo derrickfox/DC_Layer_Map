@@ -20,7 +20,6 @@ function App() {
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [dcBoundary, setDcBoundary] = useState(null);
   const [floodZonesData, setFloodZonesData] = useState(null);
-  const [topographyData, setTopographyData] = useState(null);
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,12 +56,6 @@ function App() {
       .then(res => res.json())
       .then(data => setFloodZonesData(data))
       .catch(err => console.error("Error fetching Flood Zones:", err));
-
-    // Fetch Topography (Sampled)
-    fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Elevation_WebMercator/MapServer/1/query?where=MOD(OBJECTID,300)%3D0&outFields=ELEVATION&outSR=4326&f=geojson')
-      .then(res => res.json())
-      .then(data => setTopographyData(data))
-      .catch(err => console.error("Error fetching Topography:", err));
   }, []);
 
   const toggleLayer = (layerId) => {
@@ -101,7 +94,6 @@ function App() {
           hiddenNeighborhoods={hiddenNeighborhoods}
           dcBoundary={dcBoundary}
           floodZonesData={floodZonesData}
-          topographyData={topographyData}
           searchQuery={searchQuery}
           selectedNeighborhoods={selectedNeighborhoods}
           setSelectedNeighborhoods={setSelectedNeighborhoods}
