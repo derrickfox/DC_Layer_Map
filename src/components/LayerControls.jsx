@@ -79,6 +79,8 @@ const LayerControls = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '20px',
+        maxHeight: 'calc(100vh - 48px)',
+        overflowY: 'auto',
         transition: 'all 0.3s ease'
       }}
     >
