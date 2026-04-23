@@ -631,10 +631,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
       minZoom={11}
       style={{ height: '100%', width: '100%', zIndex: 0 }}
       zoomControl={false}
-      wheelPxPerZoomLevel={90}
+      wheelPxPerZoomLevel={75}
       zoomSnap={0.1}
       zoomDelta={0.1}
-      wheelDebounceTime={30}
+      wheelDebounceTime={20}
     >
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
