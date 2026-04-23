@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.heat';
 
 // Fix for default marker icons in Vite + Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -249,6 +250,35 @@ const MapEvents = ({ onMapClick }) => {
       if (onMapClick) onMapClick();
     },
   });
+  return null;
+};
+
+const HeatmapLayer = ({ points }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!points || points.length === 0) return;
+
+    const heatLayer = L.heatLayer(points, {
+      radius: 25,
+      blur: 20,
+      maxZoom: 15,
+      max: 430, // Max elevation in DC is ~430 ft
+      gradient: {
+        0.0: '#1d4ed8', // deep blue
+        0.15: '#3b82f6', // blue
+        0.3: '#22c55e', // green
+        0.5: '#fbbf24', // yellow
+        0.7: '#ea580c', // orange
+        1.0: '#7f1d1d'  // deep red
+      }
+    }).addTo(map);
+
+    return () => {
+      map.removeLayer(heatLayer);
+    };
+  }, [points, map]);
+
   return null;
 };
 
@@ -833,56 +863,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       {/* Topography Heatmap Layer */}
       {activeLayers.topography && topographyData && (
-        <GeoJSON
-          key={`topography-${searchQuery}`}
-          data={topographyData}
-          pointToLayer={(feature, latlng) => {
-            const elevation = feature.properties?.ELEVATION || 0;
-            let color = '#3b82f6'; // Deep blue (lowest)
-            
-            // Map elevation to color (max ~430 ft in DC)
-            if (elevation >= 350) {
-              color = '#7f1d1d'; // Deep red
-            } else if (elevation >= 250) {
-              color = '#b91c1c'; // Red
-            } else if (elevation >= 150) {
-              color = '#ea580c'; // Orange
-            } else if (elevation >= 100) {
-              color = '#fbbf24'; // Yellow
-            } else if (elevation >= 50) {
-              color = '#22c55e'; // Green
-            } else {
-              color = '#1d4ed8'; // Deep blue
-            }
-
-            return L.circleMarker(latlng, {
-              radius: 6,
-              fillColor: color,
-              color: color,
-              weight: 1,
-              opacity: 0.9,
-              fillOpacity: 0.7
-            });
-          }}
-          onEachFeature={(feature, layer) => {
-            const elevation = feature.properties?.ELEVATION || 0;
-            const tooltipContent = `
-              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
-                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 4px;">
-                  <span style="color: #ef4444; margin-right: 4px;">•</span>Topography (Spot Elevation)
-                </div>
-                <div style="font-size: 11px; font-weight: 600; color: #ef4444; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                  Elevation: ${Math.round(elevation)} ft
-                </div>
-              </div>
-            `;
-            layer.bindTooltip(tooltipContent, {
-              permanent: false,
-              direction: 'top',
-              className: 'custom-tooltip',
-              offset: [0, -6]
-            });
-          }}
+        <HeatmapLayer 
+          points={topographyData.features.map(f => [
+            f.geometry.coordinates[1], // lat
+            f.geometry.coordinates[0], // lng
+            f.properties?.ELEVATION || 0 // intensity
+          ])} 
         />
       )}
 
