@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves } from 'lucide-react';
 
 const LayerControls = ({ 
   activeLayers, 
@@ -208,6 +208,15 @@ const LayerControls = ({
         >
           <CircleDot size={18} color={activeLayers.squares ? "#ffffff" : "#38bdf8"} />
           Squares & Circles
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.floodZones ? 'active-blue' : ''}`}
+          onClick={() => toggleLayer('floodZones')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <Waves size={18} color={activeLayers.floodZones ? "#ffffff" : "#3b82f6"} />
+          Flood Zones
         </button>
       </div>
     </div>

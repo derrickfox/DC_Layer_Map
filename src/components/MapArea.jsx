@@ -252,7 +252,7 @@ const MapEvents = ({ onMapClick }) => {
   return null;
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -760,6 +760,39 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, s
                 offset: [0, -6]
               }
             );
+          }}
+        />
+      )}
+
+      {/* Flood Zones Layer */}
+      {activeLayers.floodZones && floodZonesData && (
+        <GeoJSON
+          key={`floodZones-${searchQuery}`}
+          data={floodZonesData}
+          style={{
+            fillColor: '#3b82f6', // blue
+            color: '#2563eb',
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.4
+          }}
+          onEachFeature={(feature, layer) => {
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(59, 130, 246, 0.3); padding-bottom: 4px;">
+                  <span style="color: #3b82f6; margin-right: 4px;">•</span>Flood Zone
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${feature.properties?.ZONE_SUBTY || feature.properties?.FLD_ZONE || 'Unknown Zone'}
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              offset: [0, -6]
+            });
           }}
         />
       )}

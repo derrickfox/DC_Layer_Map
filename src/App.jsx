@@ -12,11 +12,13 @@ function App() {
     museums: true,
     events: true,
     monuments: true,
-    embassies: true
+    embassies: true,
+    floodZones: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);
   const [dcBoundary, setDcBoundary] = useState(null);
+  const [floodZonesData, setFloodZonesData] = useState(null);
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,6 +49,12 @@ function App() {
       .then(res => res.json())
       .then(data => setDcBoundary(data))
       .catch(err => console.error("Error fetching DC Boundary:", err));
+      
+    // Fetch Flood Zones
+    fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Flood/MapServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+      .then(res => res.json())
+      .then(data => setFloodZonesData(data))
+      .catch(err => console.error("Error fetching Flood Zones:", err));
   }, []);
 
   const toggleLayer = (layerId) => {
@@ -84,6 +92,7 @@ function App() {
           geoJsonData={geoJsonData}
           hiddenNeighborhoods={hiddenNeighborhoods}
           dcBoundary={dcBoundary}
+          floodZonesData={floodZonesData}
           searchQuery={searchQuery}
           selectedNeighborhoods={selectedNeighborhoods}
           setSelectedNeighborhoods={setSelectedNeighborhoods}
