@@ -769,21 +769,55 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         <GeoJSON
           key={`floodZones-${searchQuery}`}
           data={floodZonesData}
-          style={{
-            fillColor: '#3b82f6', // blue
-            color: '#2563eb',
-            weight: 1,
-            opacity: 0.8,
-            fillOpacity: 0.4
+          style={(feature) => {
+            const zone = feature.properties?.FLD_ZONE;
+            const subty = feature.properties?.ZONE_SUBTY;
+            let fillColor = '#3b82f6';
+            let color = '#2563eb';
+            
+            if (zone === 'A' || zone === 'AE' || subty === 'FLOODWAY') {
+              fillColor = '#ef4444';
+              color = '#dc2626';
+            } else if (zone === '0.2 PCT ANNUAL CHANCE FLOOD HAZARD' || subty === '0.2 PCT ANNUAL CHANCE FLOOD HAZARD') {
+              fillColor = '#f97316';
+              color = '#ea580c';
+            } else if (zone === 'X' || subty === 'AREA OF MINIMAL FLOOD HAZARD' || subty === 'AREA WITH REDUCED FLOOD RISK DUE TO LEVEE') {
+              fillColor = '#22c55e';
+              color = '#16a34a';
+            }
+
+            return {
+              fillColor,
+              color,
+              weight: 1,
+              opacity: 0.8,
+              fillOpacity: 0.5
+            };
           }}
           onEachFeature={(feature, layer) => {
+            const zone = feature.properties?.FLD_ZONE;
+            const subty = feature.properties?.ZONE_SUBTY;
+            let color = '#3b82f6';
+            let riskLevel = 'Low Risk';
+            
+            if (zone === 'A' || zone === 'AE' || subty === 'FLOODWAY') {
+              color = '#ef4444';
+              riskLevel = 'High Risk';
+            } else if (zone === '0.2 PCT ANNUAL CHANCE FLOOD HAZARD' || subty === '0.2 PCT ANNUAL CHANCE FLOOD HAZARD') {
+              color = '#f97316';
+              riskLevel = 'Moderate Risk';
+            } else if (zone === 'X' || subty === 'AREA OF MINIMAL FLOOD HAZARD' || subty === 'AREA WITH REDUCED FLOOD RISK DUE TO LEVEE') {
+              color = '#22c55e';
+              riskLevel = 'Minimal Risk';
+            }
+
             const tooltipContent = `
               <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
-                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(59, 130, 246, 0.3); padding-bottom: 4px;">
-                  <span style="color: #3b82f6; margin-right: 4px;">•</span>Flood Zone
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid ${color}4d; padding-bottom: 4px;">
+                  <span style="color: ${color}; margin-right: 4px;">•</span>Flood Zone: ${riskLevel}
                 </div>
-                <div style="font-size: 11px; font-weight: 600; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                  ${feature.properties?.ZONE_SUBTY || feature.properties?.FLD_ZONE || 'Unknown Zone'}
+                <div style="font-size: 11px; font-weight: 600; color: ${color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${subty || zone || 'Unknown Zone'}
                 </div>
               </div>
             `;

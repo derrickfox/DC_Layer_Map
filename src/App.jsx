@@ -51,7 +51,7 @@ function App() {
       .catch(err => console.error("Error fetching DC Boundary:", err));
       
     // Fetch Flood Zones
-    fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Flood/MapServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+    fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Flood/MapServer/73/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
       .then(res => res.json())
       .then(data => setFloodZonesData(data))
       .catch(err => console.error("Error fetching Flood Zones:", err));
