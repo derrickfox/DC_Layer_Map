@@ -81,7 +81,153 @@ const historicalEventsData = {
   ]
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
+const ticketedEventsData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "Capital One Arena", TYPE: "Arena", SUMMARY: "Major indoor arena for sports and large concerts." }, geometry: { type: "Point", coordinates: [-77.0209, 38.8981] } },
+    { type: "Feature", properties: { NAME: "Nationals Park", TYPE: "Stadium", SUMMARY: "Baseball park and venue for major outdoor events." }, geometry: { type: "Point", coordinates: [-77.0074, 38.8730] } },
+    { type: "Feature", properties: { NAME: "9:30 Club", TYPE: "Music Venue", SUMMARY: "Iconic nightclub and concert venue for live music." }, geometry: { type: "Point", coordinates: [-77.0235, 38.9180] } },
+    { type: "Feature", properties: { NAME: "The Anthem", TYPE: "Music Venue", SUMMARY: "Large concert hall and events venue at the District Wharf." }, geometry: { type: "Point", coordinates: [-77.0264, 38.8797] } },
+    { type: "Feature", properties: { NAME: "Kennedy Center", TYPE: "Performing Arts", SUMMARY: "Premier performing arts center on the Potomac River." }, geometry: { type: "Point", coordinates: [-77.0560, 38.8954] } },
+    { type: "Feature", properties: { NAME: "Warner Theatre", TYPE: "Theater", SUMMARY: "Historic venue hosting concerts, comedy, and theater." }, geometry: { type: "Point", coordinates: [-77.0305, 38.8961] } },
+    { type: "Feature", properties: { NAME: "DAR Constitution Hall", TYPE: "Concert Hall", SUMMARY: "Historic concert hall and event venue near the White House." }, geometry: { type: "Point", coordinates: [-77.0416, 38.8936] } },
+    { type: "Feature", properties: { NAME: "Folger Theatre", TYPE: "Theater", SUMMARY: "Acclaimed intimate venue for classical theater, specifically Shakespeare." }, geometry: { type: "Point", coordinates: [-77.0035, 38.8884] } },
+    { type: "Feature", properties: { NAME: "Ford's Theatre", TYPE: "Theater", SUMMARY: "Historic working theater producing plays year-round, alongside its museum." }, geometry: { type: "Point", coordinates: [-77.0258, 38.8966] } },
+    { type: "Feature", properties: { NAME: "Black Cat", TYPE: "Music Venue", SUMMARY: "Legendary independent music venue on 14th Street hosting indie and alternative bands." }, geometry: { type: "Point", coordinates: [-77.0316, 38.9150] } }
+  ]
+};
+
+const monumentsData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "Washington Monument", TYPE: "Monument", SUMMARY: "Iconic obelisk honoring the first U.S. president." }, geometry: { type: "Point", coordinates: [-77.0353, 38.8895] } },
+    { type: "Feature", properties: { NAME: "Lincoln Memorial", TYPE: "Memorial", SUMMARY: "Monument honoring Abraham Lincoln, located at the western end of the National Mall." }, geometry: { type: "Point", coordinates: [-77.0502, 38.8893] } },
+    { type: "Feature", properties: { NAME: "Thomas Jefferson Memorial", TYPE: "Memorial", SUMMARY: "Neoclassical memorial building honoring the third U.S. president." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8814] } },
+    { type: "Feature", properties: { NAME: "Martin Luther King Jr. Memorial", TYPE: "Memorial", SUMMARY: "Stone of Hope memorial honoring the civil rights leader." }, geometry: { type: "Point", coordinates: [-77.0443, 38.8861] } },
+    { type: "Feature", properties: { NAME: "Franklin Delano Roosevelt Memorial", TYPE: "Memorial", SUMMARY: "Sprawling memorial spanning four outdoor rooms representing his four terms." }, geometry: { type: "Point", coordinates: [-77.0433, 38.8827] } },
+    { type: "Feature", properties: { NAME: "World War II Memorial", TYPE: "Memorial", SUMMARY: "Honors the 16 million people who served in the U.S. armed forces during WWII." }, geometry: { type: "Point", coordinates: [-77.0405, 38.8894] } },
+    { type: "Feature", properties: { NAME: "Vietnam Veterans Memorial", TYPE: "Memorial", SUMMARY: "A black granite wall inscribed with the names of over 58,000 servicemembers." }, geometry: { type: "Point", coordinates: [-77.0477, 38.8913] } },
+    { type: "Feature", properties: { NAME: "Korean War Veterans Memorial", TYPE: "Memorial", SUMMARY: "Features 19 stainless steel statues of soldiers on patrol." }, geometry: { type: "Point", coordinates: [-77.0475, 38.8878] } },
+    { type: "Feature", properties: { NAME: "Albert Einstein Memorial", TYPE: "Statue", SUMMARY: "A monumental bronze statue of Albert Einstein seated." }, geometry: { type: "Point", coordinates: [-77.0484, 38.8923] } },
+    { type: "Feature", properties: { NAME: "African American Civil War Memorial", TYPE: "Memorial", SUMMARY: "Honors the service of the United States Colored Troops during the Civil War." }, geometry: { type: "Point", coordinates: [-77.0256, 38.9166] } },
+    { type: "Feature", properties: { NAME: "Ulysses S. Grant Memorial", TYPE: "Memorial", SUMMARY: "One of the largest equestrian statues in the U.S., honoring the 18th President." }, geometry: { type: "Point", coordinates: [-77.0136, 38.8899] } },
+    { type: "Feature", properties: { NAME: "James A. Garfield Monument", TYPE: "Monument", SUMMARY: "Monument honoring the 20th President of the United States." }, geometry: { type: "Point", coordinates: [-77.0142, 38.8883] } },
+    { type: "Feature", properties: { NAME: "Peace Monument", TYPE: "Monument", SUMMARY: "Also known as the Naval Monument, dedicated to naval personnel who died at sea during the Civil War." }, geometry: { type: "Point", coordinates: [-77.0135, 38.8906] } },
+    { type: "Feature", properties: { NAME: "Robert A. Taft Memorial", TYPE: "Memorial", SUMMARY: "Features a bell tower honoring the U.S. Senator." }, geometry: { type: "Point", coordinates: [-77.0116, 38.8920] } },
+    { type: "Feature", properties: { NAME: "George Mason Memorial", TYPE: "Memorial", SUMMARY: "Honors the author of the Virginia Declaration of Rights." }, geometry: { type: "Point", coordinates: [-77.0396, 38.8804] } },
+    { type: "Feature", properties: { NAME: "Signers of the Declaration of Independence Memorial", TYPE: "Memorial", SUMMARY: "Granite stones honoring the 56 signers of the Declaration of Independence." }, geometry: { type: "Point", coordinates: [-77.0435, 38.8906] } },
+    { type: "Feature", properties: { NAME: "John Paul Jones Memorial", TYPE: "Memorial", SUMMARY: "Statue of the American Revolution naval hero." }, geometry: { type: "Point", coordinates: [-77.0402, 38.8885] } },
+    { type: "Feature", properties: { NAME: "First Division Monument", TYPE: "Monument", SUMMARY: "Honors soldiers of the U.S. Army's First Infantry Division." }, geometry: { type: "Point", coordinates: [-77.0387, 38.8962] } },
+    { type: "Feature", properties: { NAME: "Second Division Memorial", TYPE: "Memorial", SUMMARY: "Commemorates the 2nd Infantry Division." }, geometry: { type: "Point", coordinates: [-77.0382, 38.8953] } },
+    { type: "Feature", properties: { NAME: "Boy Scout Memorial", TYPE: "Memorial", SUMMARY: "Features a male scout, female scout, and an adult scouter." }, geometry: { type: "Point", coordinates: [-77.0374, 38.8942] } },
+    { type: "Feature", properties: { NAME: "General William Tecumseh Sherman Monument", TYPE: "Monument", SUMMARY: "Equestrian statue of the Civil War general." }, geometry: { type: "Point", coordinates: [-77.0336, 38.8966] } },
+    { type: "Feature", properties: { NAME: "Andrew Jackson Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the 7th President in Lafayette Square." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8996] } },
+    { type: "Feature", properties: { NAME: "Marquis de Lafayette Statue", TYPE: "Statue", SUMMARY: "Honors the French hero of the American Revolution." }, geometry: { type: "Point", coordinates: [-77.0357, 38.8990] } },
+    { type: "Feature", properties: { NAME: "Comte de Rochambeau Statue", TYPE: "Statue", SUMMARY: "Honors the French commander during the Revolutionary War." }, geometry: { type: "Point", coordinates: [-77.0373, 38.8990] } },
+    { type: "Feature", properties: { NAME: "Baron von Steuben Statue", TYPE: "Statue", SUMMARY: "Honors the Prussian drillmaster of the Continental Army." }, geometry: { type: "Point", coordinates: [-77.0373, 38.9002] } },
+    { type: "Feature", properties: { NAME: "General Thaddeus Kosciuszko Statue", TYPE: "Statue", SUMMARY: "Honors the Polish military engineer and Revolutionary War hero." }, geometry: { type: "Point", coordinates: [-77.0357, 38.9002] } },
+    { type: "Feature", properties: { NAME: "Admiral David G. Farragut Statue", TYPE: "Statue", SUMMARY: "Statue of the Civil War naval hero in Farragut Square." }, geometry: { type: "Point", coordinates: [-77.0397, 38.9020] } },
+    { type: "Feature", properties: { NAME: "Major General James B. McPherson Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the Civil War general in McPherson Square." }, geometry: { type: "Point", coordinates: [-77.0334, 38.9018] } },
+    { type: "Feature", properties: { NAME: "Major General George H. Thomas Statue", TYPE: "Statue", SUMMARY: "Equestrian statue located in Thomas Circle." }, geometry: { type: "Point", coordinates: [-77.0326, 38.9056] } },
+    { type: "Feature", properties: { NAME: "Major General John A. Logan Statue", TYPE: "Statue", SUMMARY: "Equestrian statue located in Logan Circle." }, geometry: { type: "Point", coordinates: [-77.0298, 38.9097] } },
+    { type: "Feature", properties: { NAME: "Dupont Circle Fountain", TYPE: "Monument", SUMMARY: "Fountain honoring Samuel Francis Du Pont." }, geometry: { type: "Point", coordinates: [-77.0434, 38.9096] } },
+    { type: "Feature", properties: { NAME: "General Winfield Scott Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the general in Scott Circle." }, geometry: { type: "Point", coordinates: [-77.0365, 38.9075] } },
+    { type: "Feature", properties: { NAME: "George Washington Equestrian Statue", TYPE: "Statue", SUMMARY: "Depicts George Washington at the Battle of Princeton, in Washington Circle." }, geometry: { type: "Point", coordinates: [-77.0502, 38.9027] } },
+    { type: "Feature", properties: { NAME: "National Law Enforcement Officers Memorial", TYPE: "Memorial", SUMMARY: "Honors federal, state, and local law enforcement officers." }, geometry: { type: "Point", coordinates: [-77.0172, 38.8967] } },
+    { type: "Feature", properties: { NAME: "Japanese American Memorial to Patriotism", TYPE: "Memorial", SUMMARY: "Commemorates Japanese American patriotism during World War II." }, geometry: { type: "Point", coordinates: [-77.0108, 38.8967] } },
+    { type: "Feature", properties: { NAME: "Victims of Communism Memorial", TYPE: "Memorial", SUMMARY: "A bronze replica of the Goddess of Democracy." }, geometry: { type: "Point", coordinates: [-77.0122, 38.8978] } },
+    { type: "Feature", properties: { NAME: "Christopher Columbus Memorial", TYPE: "Memorial", SUMMARY: "Features a statue of Columbus in front of Union Station." }, geometry: { type: "Point", coordinates: [-77.0061, 38.8966] } },
+    { type: "Feature", properties: { NAME: "Mary McLeod Bethune Memorial", TYPE: "Memorial", SUMMARY: "Honors the educator and civil rights activist, located in Lincoln Park." }, geometry: { type: "Point", coordinates: [-76.9892, 38.8900] } },
+    { type: "Feature", properties: { NAME: "Emancipation Memorial", TYPE: "Memorial", SUMMARY: "Also known as the Freedman's Memorial, located in Lincoln Park." }, geometry: { type: "Point", coordinates: [-76.9880, 38.8898] } },
+    { type: "Feature", properties: { NAME: "Women's Titanic Memorial", TYPE: "Memorial", SUMMARY: "Honors the men who gave their lives so women and children could be saved." }, geometry: { type: "Point", coordinates: [-77.0180, 38.8718] } },
+    { type: "Feature", properties: { NAME: "Mahatma Gandhi Memorial", TYPE: "Statue", SUMMARY: "Statue of the Indian independence leader near the Indian Embassy." }, geometry: { type: "Point", coordinates: [-77.0494, 38.9103] } }
+  ]
+};
+
+const embassiesData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "Embassy of the United Kingdom", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the United Kingdom to the United States." }, geometry: { type: "Point", coordinates: [-77.0626, 38.9213] } },
+    { type: "Feature", properties: { NAME: "Embassy of Japan", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Japan to the United States." }, geometry: { type: "Point", coordinates: [-77.0544, 38.9174] } },
+    { type: "Feature", properties: { NAME: "Embassy of Canada", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Canada to the United States." }, geometry: { type: "Point", coordinates: [-77.0182, 38.8926] } },
+    { type: "Feature", properties: { NAME: "Embassy of France", TYPE: "Embassy", SUMMARY: "Diplomatic mission of France to the United States." }, geometry: { type: "Point", coordinates: [-77.0865, 38.9171] } },
+    { type: "Feature", properties: { NAME: "Embassy of Germany", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Germany to the United States." }, geometry: { type: "Point", coordinates: [-77.0863, 38.9133] } },
+    { type: "Feature", properties: { NAME: "Embassy of Italy", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Italy to the United States." }, geometry: { type: "Point", coordinates: [-77.0605, 38.9189] } },
+    { type: "Feature", properties: { NAME: "Embassy of Mexico", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Mexico to the United States." }, geometry: { type: "Point", coordinates: [-77.0427, 38.8997] } },
+    { type: "Feature", properties: { NAME: "Embassy of Brazil", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Brazil to the United States." }, geometry: { type: "Point", coordinates: [-77.0560, 38.9169] } },
+    { type: "Feature", properties: { NAME: "Embassy of Australia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Australia to the United States." }, geometry: { type: "Point", coordinates: [-77.0366, 38.9080] } },
+    { type: "Feature", properties: { NAME: "Embassy of South Korea", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the Republic of Korea to the United States." }, geometry: { type: "Point", coordinates: [-77.0543, 38.9157] } },
+    { type: "Feature", properties: { NAME: "Embassy of India", TYPE: "Embassy", SUMMARY: "Diplomatic mission of India to the United States." }, geometry: { type: "Point", coordinates: [-77.0514, 38.9126] } },
+    { type: "Feature", properties: { NAME: "Embassy of Spain", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Spain to the United States." }, geometry: { type: "Point", coordinates: [-77.0487, 38.9009] } },
+    { type: "Feature", properties: { NAME: "Embassy of China", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the People's Republic of China to the United States." }, geometry: { type: "Point", coordinates: [-77.0652, 38.9427] } },
+    { type: "Feature", properties: { NAME: "Embassy of South Africa", TYPE: "Embassy", SUMMARY: "Diplomatic mission of South Africa to the United States." }, geometry: { type: "Point", coordinates: [-77.0561, 38.9126] } },
+    { type: "Feature", properties: { NAME: "Embassy of the Netherlands", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the Netherlands to the United States." }, geometry: { type: "Point", coordinates: [-77.0664, 38.9458] } },
+    { type: "Feature", properties: { NAME: "Embassy of Argentina", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Argentina to the United States." }, geometry: { type: "Point", coordinates: [-77.0450, 38.9097] } },
+    { type: "Feature", properties: { NAME: "Embassy of Sweden", TYPE: "Embassy", SUMMARY: "Located at the House of Sweden." }, geometry: { type: "Point", coordinates: [-77.0583, 38.9022] } },
+    { type: "Feature", properties: { NAME: "Embassy of Ireland", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Ireland to the United States." }, geometry: { type: "Point", coordinates: [-77.0520, 38.9142] } },
+    { type: "Feature", properties: { NAME: "Embassy of Switzerland", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Switzerland to the United States." }, geometry: { type: "Point", coordinates: [-77.0552, 38.9272] } },
+    { type: "Feature", properties: { NAME: "Embassy of Turkey", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Turkey to the United States." }, geometry: { type: "Point", coordinates: [-77.0532, 38.9148] } },
+    { type: "Feature", properties: { NAME: "Embassy of Indonesia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Indonesia to the United States." }, geometry: { type: "Point", coordinates: [-77.0437, 38.9089] } },
+    { type: "Feature", properties: { NAME: "Embassy of Saudi Arabia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Saudi Arabia to the United States." }, geometry: { type: "Point", coordinates: [-77.0566, 38.8996] } },
+    { type: "Feature", properties: { NAME: "Embassy of Afghanistan", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Afghanistan to the United States." }, geometry: { type: "Point", coordinates: [-77.0468, 38.9185] } },
+    { type: "Feature", properties: { NAME: "Embassy of Algeria", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Algeria to the United States." }, geometry: { type: "Point", coordinates: [-77.0524, 38.9152] } },
+    { type: "Feature", properties: { NAME: "Embassy of Armenia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Armenia to the United States." }, geometry: { type: "Point", coordinates: [-77.0519, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of Austria", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Austria to the United States." }, geometry: { type: "Point", coordinates: [-77.0654, 38.9430] } },
+    { type: "Feature", properties: { NAME: "Embassy of the Bahamas", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the Bahamas to the United States." }, geometry: { type: "Point", coordinates: [-77.0520, 38.9140] } },
+    { type: "Feature", properties: { NAME: "Embassy of Bahrain", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Bahrain to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9441] } },
+    { type: "Feature", properties: { NAME: "Embassy of Bangladesh", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Bangladesh to the United States." }, geometry: { type: "Point", coordinates: [-77.0665, 38.9461] } },
+    { type: "Feature", properties: { NAME: "Embassy of Belgium", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Belgium to the United States." }, geometry: { type: "Point", coordinates: [-77.0640, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of Bolivia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Bolivia to the United States." }, geometry: { type: "Point", coordinates: [-77.0522, 38.9135] } },
+    { type: "Feature", properties: { NAME: "Embassy of Bulgaria", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Bulgaria to the United States." }, geometry: { type: "Point", coordinates: [-77.0465, 38.9145] } },
+    { type: "Feature", properties: { NAME: "Embassy of Chile", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Chile to the United States." }, geometry: { type: "Point", coordinates: [-77.0425, 38.9090] } },
+    { type: "Feature", properties: { NAME: "Embassy of Colombia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Colombia to the United States." }, geometry: { type: "Point", coordinates: [-77.0460, 38.9110] } },
+    { type: "Feature", properties: { NAME: "Embassy of Costa Rica", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Costa Rica to the United States." }, geometry: { type: "Point", coordinates: [-77.0525, 38.9160] } },
+    { type: "Feature", properties: { NAME: "Embassy of Croatia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Croatia to the United States." }, geometry: { type: "Point", coordinates: [-77.0530, 38.9130] } },
+    { type: "Feature", properties: { NAME: "Embassy of Cuba", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Cuba to the United States." }, geometry: { type: "Point", coordinates: [-77.0370, 38.9260] } },
+    { type: "Feature", properties: { NAME: "Embassy of the Czech Republic", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the Czech Republic to the United States." }, geometry: { type: "Point", coordinates: [-77.0668, 38.9465] } },
+    { type: "Feature", properties: { NAME: "Embassy of Denmark", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Denmark to the United States." }, geometry: { type: "Point", coordinates: [-77.0600, 38.9220] } },
+    { type: "Feature", properties: { NAME: "Embassy of Ecuador", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Ecuador to the United States." }, geometry: { type: "Point", coordinates: [-77.0390, 38.9280] } },
+    { type: "Feature", properties: { NAME: "Embassy of Egypt", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Egypt to the United States." }, geometry: { type: "Point", coordinates: [-77.0670, 38.9460] } },
+    { type: "Feature", properties: { NAME: "Embassy of El Salvador", TYPE: "Embassy", SUMMARY: "Diplomatic mission of El Salvador to the United States." }, geometry: { type: "Point", coordinates: [-77.0420, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of Ethiopia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Ethiopia to the United States." }, geometry: { type: "Point", coordinates: [-77.0580, 38.9450] } },
+    { type: "Feature", properties: { NAME: "Embassy of Finland", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Finland to the United States." }, geometry: { type: "Point", coordinates: [-77.0630, 38.9240] } },
+    { type: "Feature", properties: { NAME: "Embassy of Greece", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Greece to the United States." }, geometry: { type: "Point", coordinates: [-77.0510, 38.9155] } },
+    { type: "Feature", properties: { NAME: "Embassy of Haiti", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Haiti to the United States." }, geometry: { type: "Point", coordinates: [-77.0520, 38.9110] } },
+    { type: "Feature", properties: { NAME: "Embassy of Honduras", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Honduras to the United States." }, geometry: { type: "Point", coordinates: [-77.0520, 38.9410] } },
+    { type: "Feature", properties: { NAME: "Embassy of Hungary", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Hungary to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9460] } },
+    { type: "Feature", properties: { NAME: "Embassy of Iceland", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Iceland to the United States." }, geometry: { type: "Point", coordinates: [-77.0583, 38.9022] } },
+    { type: "Feature", properties: { NAME: "Embassy of Iraq", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Iraq to the United States." }, geometry: { type: "Point", coordinates: [-77.0530, 38.9120] } },
+    { type: "Feature", properties: { NAME: "Embassy of Israel", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Israel to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9430] } },
+    { type: "Feature", properties: { NAME: "Embassy of Jamaica", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Jamaica to the United States." }, geometry: { type: "Point", coordinates: [-77.0420, 38.9080] } },
+    { type: "Feature", properties: { NAME: "Embassy of Jordan", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Jordan to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9450] } },
+    { type: "Feature", properties: { NAME: "Embassy of Kenya", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Kenya to the United States." }, geometry: { type: "Point", coordinates: [-77.0510, 38.9140] } },
+    { type: "Feature", properties: { NAME: "Embassy of Kuwait", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Kuwait to the United States." }, geometry: { type: "Point", coordinates: [-77.0665, 38.9440] } },
+    { type: "Feature", properties: { NAME: "Embassy of Lebanon", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Lebanon to the United States." }, geometry: { type: "Point", coordinates: [-77.0550, 38.9220] } },
+    { type: "Feature", properties: { NAME: "Embassy of Malaysia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Malaysia to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9455] } },
+    { type: "Feature", properties: { NAME: "Embassy of Morocco", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Morocco to the United States." }, geometry: { type: "Point", coordinates: [-77.0425, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of New Zealand", TYPE: "Embassy", SUMMARY: "Diplomatic mission of New Zealand to the United States." }, geometry: { type: "Point", coordinates: [-77.0620, 38.9180] } },
+    { type: "Feature", properties: { NAME: "Embassy of Nigeria", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Nigeria to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9460] } },
+    { type: "Feature", properties: { NAME: "Embassy of Norway", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Norway to the United States." }, geometry: { type: "Point", coordinates: [-77.0625, 38.9220] } },
+    { type: "Feature", properties: { NAME: "Embassy of Pakistan", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Pakistan to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9445] } },
+    { type: "Feature", properties: { NAME: "Embassy of Peru", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Peru to the United States." }, geometry: { type: "Point", coordinates: [-77.0420, 38.9080] } },
+    { type: "Feature", properties: { NAME: "Embassy of the Philippines", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the Philippines to the United States." }, geometry: { type: "Point", coordinates: [-77.0410, 38.9080] } },
+    { type: "Feature", properties: { NAME: "Embassy of Poland", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Poland to the United States." }, geometry: { type: "Point", coordinates: [-77.0350, 38.9240] } },
+    { type: "Feature", properties: { NAME: "Embassy of Portugal", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Portugal to the United States." }, geometry: { type: "Point", coordinates: [-77.0520, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of Romania", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Romania to the United States." }, geometry: { type: "Point", coordinates: [-77.0530, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of Russia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Russia to the United States." }, geometry: { type: "Point", coordinates: [-77.0720, 38.9240] } },
+    { type: "Feature", properties: { NAME: "Embassy of Senegal", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Senegal to the United States." }, geometry: { type: "Point", coordinates: [-77.0510, 38.9170] } },
+    { type: "Feature", properties: { NAME: "Embassy of Serbia", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Serbia to the United States." }, geometry: { type: "Point", coordinates: [-77.0515, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Embassy of Singapore", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Singapore to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9450] } },
+    { type: "Feature", properties: { NAME: "Embassy of Sri Lanka", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Sri Lanka to the United States." }, geometry: { type: "Point", coordinates: [-77.0520, 38.9160] } },
+    { type: "Feature", properties: { NAME: "Embassy of Thailand", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Thailand to the United States." }, geometry: { type: "Point", coordinates: [-77.0610, 38.9210] } },
+    { type: "Feature", properties: { NAME: "Embassy of the United Arab Emirates", TYPE: "Embassy", SUMMARY: "Diplomatic mission of the UAE to the United States." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9465] } },
+    { type: "Feature", properties: { NAME: "Embassy of Uruguay", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Uruguay to the United States." }, geometry: { type: "Point", coordinates: [-77.0440, 38.9050] } },
+    { type: "Feature", properties: { NAME: "Embassy of Venezuela", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Venezuela to the United States." }, geometry: { type: "Point", coordinates: [-77.0600, 38.9030] } },
+    { type: "Feature", properties: { NAME: "Embassy of Vietnam", TYPE: "Embassy", SUMMARY: "Diplomatic mission of Vietnam to the United States." }, geometry: { type: "Point", coordinates: [-77.0470, 38.9140] } }
+  ]
+};
+
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, searchQuery }) => {
   const dcCenter = [38.9072, -77.0369];
   const favorites = exportData.favorites || [];
   const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
@@ -169,11 +315,35 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
       zoomControl={false}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
       
-      {activeLayers.favorites && favorites.map(fav => (
+      {/* DC Boundary Layer */}
+      {dcBoundary && (
+        <GeoJSON 
+          data={dcBoundary}
+          interactive={false}
+          style={{
+            color: 'var(--accent-primary)',
+            weight: 3,
+            opacity: 0.8,
+            fillColor: 'transparent',
+            dashArray: '8, 8'
+          }}
+        />
+      )}
+      
+      {activeLayers.favorites && favorites
+        .filter(fav => {
+          if (!searchQuery) return true;
+          const q = searchQuery.toLowerCase();
+          return (
+            (fav.name && fav.name.toLowerCase().includes(q)) || 
+            (fav.address && fav.address.toLowerCase().includes(q))
+          );
+        })
+        .map(fav => (
         <Marker key={fav.id} position={[fav.lat, fav.lng]}>
           <Popup>
             <div style={{ padding: '8px', minWidth: '150px' }}>
@@ -191,17 +361,18 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
         </Marker>
       ))}
 
-      {/* Placeholders for other layers */}
-      {activeLayers.historical && (
-        <Marker position={[38.8895, -77.0353]}>
-           <Popup>Washington Monument (Historical Data layer)</Popup>
-        </Marker>
-      )}
-
       {/* Neighborhoods Layer */}
       {activeLayers.neighborhoods && geoJsonData && (
         <>
-          {geoJsonData.features.flatMap((feature, featureIndex) => {
+          {geoJsonData.features
+            .filter(feature => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              const names = feature.properties?.NBH_NAMES || '';
+              const clusterName = feature.properties?.NAME || '';
+              return names.toLowerCase().includes(q) || clusterName.toLowerCase().includes(q);
+            })
+            .flatMap((feature, featureIndex) => {
             const rawNames = feature.properties?.NBH_NAMES || 'Unknown Neighborhood';
             const clusterName = feature.properties?.NAME || 'Neighborhood Cluster';
             const neighborhoods = rawNames.split(',').map(n => n.trim());
@@ -225,7 +396,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
               "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
               "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
               "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
-              "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 }
+              "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 },
+              "Palisades": { center: [38.9280, -77.0980], radius: 500 },
+              "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 }
             };
 
             return neighborhoods.map((name, i) => {
@@ -295,7 +468,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
       {/* Parks Layer */}
       {activeLayers.parks && parksData && (
         <GeoJSON 
+          key={`parks-${searchQuery}`}
           data={parksData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const name = feature.properties?.NAME || "";
+            return name.toLowerCase().includes(q);
+          }}
           style={parksStyle}
           onEachFeature={(feature, layer) => {
             const name = feature.properties?.NAME || "Park";
@@ -314,7 +494,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
       {/* Squares & Circles Layer */}
       {activeLayers.squares && squaresData && (
         <GeoJSON 
+          key={`squares-${searchQuery}`}
           data={squaresData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const name = feature.properties?.NAME || "";
+            return name.toLowerCase().includes(q);
+          }}
           style={squaresStyle}
           onEachFeature={(feature, layer) => {
             const name = feature.properties?.NAME || "Square/Circle";
@@ -333,7 +520,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
       {/* Museums Layer */}
       {activeLayers.museums && museumsData && (
         <GeoJSON 
+          key={`museums-${searchQuery}`}
           data={museumsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const name = feature.properties?.DCGISPLACE_NAMES_PTNAME || "";
+            return name.toLowerCase().includes(q);
+          }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
               radius: 6,
@@ -361,7 +555,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
       {/* Historical Data Layer */}
       {activeLayers.historical && (
         <GeoJSON 
+          key={`historical-${searchQuery}`}
           data={historicalEventsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const { NAME = "", SUMMARY = "" } = feature.properties || {};
+            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q);
+          }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
               radius: 8,
@@ -374,13 +575,111 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
           }}
           onEachFeature={(feature, layer) => {
             const { NAME, YEAR, SUMMARY } = feature.properties;
-            layer.bindTooltip(
-              `<div style="font-family: 'Outfit', sans-serif; max-width: 500px;">
+            const tooltipContent = `<div style="font-family: 'Outfit', sans-serif; max-width: 500px;">
                  <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
                    <span style="color: #fbbf24;">★</span> ${NAME}
                  </div>
                  <div style="font-weight: 600; font-size: 13px; color: #fbbf24; margin-bottom: 6px;">
-                   ${YEAR}
+                   Built: ${YEAR || 'Unknown'}
+                 </div>
+                 <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${SUMMARY}
+                 </div>
+               </div>`;
+            layer.bindTooltip(
+              tooltipContent,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip historical-tooltip',
+                offset: [0, -6]
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* Monuments & Memorials Layer */}
+      {activeLayers.monuments && monumentsData && (
+        <GeoJSON 
+          key={`monuments-${searchQuery}`}
+          data={monumentsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const { NAME = "", SUMMARY = "", TYPE = "" } = feature.properties || {};
+            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q) || TYPE.toLowerCase().includes(q);
+          }}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: '#0d9488', // teal
+              color: '#14b8a6',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.8
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const { NAME, TYPE, SUMMARY } = feature.properties;
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 200px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(20, 184, 166, 0.3); padding-bottom: 4px;">
+                  <span style="color: #14b8a6; margin-right: 4px;">•</span>${NAME}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #14b8a6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${TYPE}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.3;">
+                  ${SUMMARY}
+                </div>
+              </div>
+            `;
+
+            layer.bindTooltip(
+              tooltipContent,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip',
+                offset: [0, -6]
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* Ticketed Events Layer */}
+      {activeLayers.events && (
+        <GeoJSON 
+          key={`events-${searchQuery}`}
+          data={ticketedEventsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const { NAME = "", SUMMARY = "", TYPE = "" } = feature.properties || {};
+            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q) || TYPE.toLowerCase().includes(q);
+          }}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 7,
+              fillColor: '#ec4899', // pink-500
+              color: '#f472b6',    // pink-400
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const { NAME, TYPE, SUMMARY } = feature.properties;
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 400px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #f472b6;">🎟️</span> ${NAME}
+                 </div>
+                 <div style="font-weight: 600; font-size: 13px; color: #f472b6; margin-bottom: 6px;">
+                   ${TYPE}
                  </div>
                  <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
                    ${SUMMARY}
@@ -389,7 +688,59 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods }) => {
               {
                 permanent: false,
                 direction: 'top',
-                className: 'custom-tooltip historical-tooltip'
+                className: 'custom-tooltip events-tooltip',
+                offset: [0, -6]
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* Embassies & Consulates Layer */}
+      {activeLayers.embassies && embassiesData && (
+        <GeoJSON 
+          key={`embassies-${searchQuery}`}
+          data={embassiesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const { NAME = "", SUMMARY = "", TYPE = "" } = feature.properties || {};
+            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q) || TYPE.toLowerCase().includes(q);
+          }}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: '#ef4444', // red
+              color: '#dc2626',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.8
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const { NAME, TYPE, SUMMARY } = feature.properties;
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 200px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(239, 68, 68, 0.3); padding-bottom: 4px;">
+                  <span style="color: #ef4444; margin-right: 4px;">•</span>${NAME}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #ef4444; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${TYPE}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.3;">
+                  ${SUMMARY}
+                </div>
+              </div>
+            `;
+
+            layer.bindTooltip(
+              tooltipContent,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip',
+                offset: [0, -6]
               }
             );
           }}

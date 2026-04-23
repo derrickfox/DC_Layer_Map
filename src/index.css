@@ -73,6 +73,16 @@ body {
   box-shadow: 0 0 12px var(--accent-glow);
 }
 
+.glass-button.active-blue { background: #3b82f6; color: #ffffff; border-color: #2563eb; box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
+.glass-button.active-amber { background: #fbbf24; color: #ffffff; border-color: #d97706; box-shadow: 0 0 12px rgba(251, 191, 36, 0.4); }
+.glass-button.active-orange { background: #f97316; color: #ffffff; border-color: #ea580c; box-shadow: 0 0 12px rgba(249, 115, 22, 0.4); }
+.glass-button.active-green { background: #4ade80; color: #ffffff; border-color: #16a34a; box-shadow: 0 0 12px rgba(74, 222, 128, 0.4); }
+.glass-button.active-skyblue { background: #38bdf8; color: #ffffff; border-color: #0284c7; box-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
+.glass-button.active-purple { background: #a78bfa; color: #ffffff; border-color: #7c3aed; box-shadow: 0 0 12px rgba(167, 139, 250, 0.4); }
+.glass-button.active-pink { background: #f472b6; color: #ffffff; border-color: #db2777; box-shadow: 0 0 12px rgba(244, 114, 182, 0.4); }
+.glass-button.active-teal { background: #14b8a6; color: #ffffff; border-color: #0d9488; box-shadow: 0 0 12px rgba(20, 184, 166, 0.4); }
+.glass-button.active-red { background: #ef4444; color: #ffffff; border-color: #dc2626; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;

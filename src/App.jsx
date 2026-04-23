@@ -8,15 +8,19 @@ function App() {
     favorites: true,
     historical: false,
     neighborhoods: false,
-    aiGenerated: false,
     parks: false,
     squares: false,
-    museums: false
+    museums: false,
+    events: false,
+    monuments: false,
+    embassies: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);
+  const [dcBoundary, setDcBoundary] = useState(null);
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     // Fetch geojson and extract individual neighborhood names
@@ -40,6 +44,12 @@ function App() {
         setHiddenNeighborhoods(initialHidden);
       })
       .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
+
+    // Fetch DC Boundary
+    fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries_WebMercator/MapServer/10/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+      .then(res => res.json())
+      .then(data => setDcBoundary(data))
+      .catch(err => console.error("Error fetching DC Boundary:", err));
   }, []);
 
   const toggleLayer = (layerId) => {
@@ -68,6 +78,8 @@ function App() {
           activeLayers={activeLayers} 
           geoJsonData={geoJsonData}
           hiddenNeighborhoods={hiddenNeighborhoods}
+          dcBoundary={dcBoundary}
+          searchQuery={searchQuery}
         />
         <LayerControls 
           activeLayers={activeLayers} 
@@ -75,6 +87,8 @@ function App() {
           neighborhoodList={neighborhoodList}
           hiddenNeighborhoods={hiddenNeighborhoods}
           toggleNeighborhoodVisibility={toggleNeighborhoodVisibility}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
         />
       </div>
     </>

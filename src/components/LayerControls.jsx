@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search } from 'lucide-react';
 
 const LayerControls = ({ 
   activeLayers, 
   toggleLayer, 
   neighborhoodList = [], 
   hiddenNeighborhoods = new Set(), 
-  toggleNeighborhoodVisibility 
+  toggleNeighborhoodVisibility,
+  searchQuery,
+  setSearchQuery
 }) => {
   const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
   return (
@@ -29,38 +31,58 @@ const LayerControls = ({
           <Layers size={24} className="text-gradient" />
           <span className="text-gradient">DC Layer Lab</span>
         </h2>
-        <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+        <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
           Toggle map layers and explore custom datasets.
         </p>
+        <div style={{ position: 'relative' }}>
+          <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Search active layers..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 12px 10px 36px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-glass)',
+              background: 'rgba(15, 23, 42, 0.4)',
+              color: 'var(--text-primary)',
+              fontSize: '14px',
+              outline: 'none',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <button 
-          className={`glass-button ${activeLayers.favorites ? 'active' : ''}`}
+          className={`glass-button ${activeLayers.favorites ? 'active-blue' : ''}`}
           onClick={() => toggleLayer('favorites')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <MapPin size={18} />
+          <MapPin size={18} color={activeLayers.favorites ? "#ffffff" : "#3b82f6"} />
           My Favorites
         </button>
 
         <button 
-          className={`glass-button ${activeLayers.historical ? 'active' : ''}`}
+          className={`glass-button ${activeLayers.historical ? 'active-amber' : ''}`}
           onClick={() => toggleLayer('historical')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <History size={18} />
+          <History size={18} color={activeLayers.historical ? "#ffffff" : "#fbbf24"} />
           Historical Data
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ display: 'flex', gap: '4px' }}>
             <button 
-              className={`glass-button ${activeLayers.neighborhoods ? 'active' : ''}`}
+              className={`glass-button ${activeLayers.neighborhoods ? 'active-orange' : ''}`}
               onClick={() => toggleLayer('neighborhoods')}
               style={{ justifyContent: 'flex-start', padding: '12px 16px', flex: 1 }}
             >
-              <Map size={18} />
+              <Map size={18} color={activeLayers.neighborhoods ? "#ffffff" : "#f97316"} />
               Neighborhoods
             </button>
             <button
@@ -132,51 +154,58 @@ const LayerControls = ({
         </div>
 
         <button 
-          className={`glass-button ${activeLayers.parks ? 'active' : ''}`}
+          className={`glass-button ${activeLayers.parks ? 'active-green' : ''}`}
           onClick={() => toggleLayer('parks')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <TreePine size={18} />
+          <TreePine size={18} color={activeLayers.parks ? "#ffffff" : "#4ade80"} />
           Parks
         </button>
 
         <button 
-          className={`glass-button ${activeLayers.squares ? 'active' : ''}`}
+          className={`glass-button ${activeLayers.squares ? 'active-skyblue' : ''}`}
           onClick={() => toggleLayer('squares')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <CircleDot size={18} />
+          <CircleDot size={18} color={activeLayers.squares ? "#ffffff" : "#38bdf8"} />
           Squares & Circles
         </button>
 
         <button 
-          className={`glass-button ${activeLayers.museums ? 'active' : ''}`}
+          className={`glass-button ${activeLayers.museums ? 'active-purple' : ''}`}
           onClick={() => toggleLayer('museums')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <Landmark size={18} />
+          <Landmark size={18} color={activeLayers.museums ? "#ffffff" : "#a78bfa"} />
           Museums
         </button>
 
         <button 
-          className={`glass-button ${activeLayers.aiGenerated ? 'active' : ''}`}
-          onClick={() => toggleLayer('aiGenerated')}
+          className={`glass-button ${activeLayers.events ? 'active-pink' : ''}`}
+          onClick={() => toggleLayer('events')}
           style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
         >
-          <Sparkles size={18} />
-          AI Generated Layers
+          <Ticket size={18} color={activeLayers.events ? "#ffffff" : "#f472b6"} />
+          Ticketed Events
         </button>
-      </div>
 
-      <div style={{ 
-        marginTop: 'auto', 
-        paddingTop: '20px', 
-        borderTop: '1px solid var(--border-glass)',
-        fontSize: '12px',
-        color: 'var(--text-secondary)',
-        textAlign: 'center'
-      }}>
-        Powered by Antigravity Applets
+        <button 
+          className={`glass-button ${activeLayers.monuments ? 'active-teal' : ''}`}
+          onClick={() => toggleLayer('monuments')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <Flag size={18} color={activeLayers.monuments ? "#ffffff" : "#14b8a6"} />
+          Statues & Memorials
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.embassies ? 'active-red' : ''}`}
+          onClick={() => toggleLayer('embassies')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <Globe size={18} color={activeLayers.embassies ? "#ffffff" : "#ef4444"} />
+          Embassies & Consulates
+        </button>
       </div>
     </div>
   );
