@@ -1,5 +1,20 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Pencil, Check, X } from 'lucide-react';
+
+const initialFilters = [
+  { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
+  { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
+  { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
+  { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
+  { id: 'historical', label: 'Historical Data', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
+  { id: 'parks', label: 'Parks', icon: TreePine, color: '#4ade80', activeClass: 'active-green' },
+  { id: 'squares', label: 'Squares & Circles', icon: CircleDot, color: '#38bdf8', activeClass: 'active-skyblue' },
+  { id: 'floodZones', label: 'Flood Zones', icon: Waves, color: '#3b82f6', activeClass: 'active-blue' },
+  { id: 'topography', label: 'Topography', icon: Mountain, color: '#ef4444', activeClass: 'active-red' },
+  { id: 'propertyValues', label: 'Average Property Values', icon: DollarSign, color: '#10b981', activeClass: 'active-emerald' },
+  { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' },
+  { id: 'bikeLanes', label: 'Bike Lanes', icon: Bike, color: '#10b981', activeClass: 'active-emerald' }
+];
 
 const LayerControls = ({ 
   activeLayers, 
@@ -9,29 +24,105 @@ const LayerControls = ({
   toggleNeighborhoodVisibility,
   toggleAllNeighborhoodsVisibility,
   searchQuery,
-  setSearchQuery
+  setSearchQuery,
+  isLeftAligned,
+  setIsLeftAligned
 }) => {
   const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [filtersOrder, setFiltersOrder] = useState(initialFilters);
+  const [draggedItemIndex, setDraggedItemIndex] = useState(null);
+  const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
+
+  const handleDragStart = (e, index) => {
+    if (!isEditMode) return;
+    setDraggedItemIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => {
+      e.target.style.opacity = '0.5';
+    }, 0);
+  };
+
+  const handleDragEnter = (e, index) => {
+    if (!isEditMode) return;
+    setDragOverItemIndex(index);
+  };
+
+  const handleDragEnd = (e) => {
+    if (!isEditMode) return;
+    e.target.style.opacity = '1';
+    
+    if (draggedItemIndex !== null && dragOverItemIndex !== null && draggedItemIndex !== dragOverItemIndex) {
+      const newFilters = [...filtersOrder];
+      const draggedItem = newFilters[draggedItemIndex];
+      newFilters.splice(draggedItemIndex, 1);
+      newFilters.splice(dragOverItemIndex, 0, draggedItem);
+      setFiltersOrder(newFilters);
+    }
+    
+    setDraggedItemIndex(null);
+    setDragOverItemIndex(null);
+  };
   return (
     <div 
       className="glass-panel"
       style={{
         position: 'absolute',
         top: '24px',
-        right: '24px',
+        right: isLeftAligned ? 'auto' : '24px',
+        left: isLeftAligned ? '24px' : 'auto',
         width: '320px',
         padding: '24px',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px'
+        gap: '20px',
+        transition: 'all 0.3s ease'
       }}
     >
       <div>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-          <Layers size={24} className="text-gradient" />
-          <span className="text-gradient">DC Layer Lab</span>
-        </h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+            <Layers size={24} className="text-gradient" />
+            <span className="text-gradient">DC Layer Lab</span>
+          </h2>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => setIsEditMode(!isEditMode)}
+              style={{
+                background: isEditMode ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                border: isEditMode ? '1px solid rgba(34, 197, 94, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px',
+                color: isEditMode ? '#4ade80' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title={isEditMode ? 'Save order' : 'Edit filter order'}
+            >
+              {isEditMode ? <Check size={16} /> : <Pencil size={16} />}
+            </button>
+            <button 
+              onClick={() => setIsLeftAligned(!isLeftAligned)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title={`Move panel to ${isLeftAligned ? 'right' : 'left'}`}
+            >
+              <ArrowLeftRight size={16} />
+            </button>
+          </div>
+        </div>
         <div style={{ position: 'relative' }}>
           <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
@@ -41,7 +132,7 @@ const LayerControls = ({
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: '100%',
-              padding: '10px 12px 10px 36px',
+              padding: '10px 36px 10px 36px',
               borderRadius: '8px',
               border: '1px solid var(--border-glass)',
               background: 'rgba(255, 255, 255, 0.8)',
@@ -51,6 +142,28 @@ const LayerControls = ({
               boxSizing: 'border-box'
             }}
           />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              style={{ 
+                position: 'absolute', 
+                right: '12px', 
+                top: '50%', 
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-secondary)'
+              }}
+              title="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -147,113 +260,46 @@ const LayerControls = ({
           )}
         </div>
 
-        <button 
-          className={`glass-button ${activeLayers.museums ? 'active-purple' : ''}`}
-          onClick={() => toggleLayer('museums')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Landmark size={18} color={activeLayers.museums ? "#ffffff" : "#a78bfa"} />
-          Museums
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.events ? 'active-pink' : ''}`}
-          onClick={() => toggleLayer('events')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Ticket size={18} color={activeLayers.events ? "#ffffff" : "#f472b6"} />
-          Ticketed Events
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.monuments ? 'active-teal' : ''}`}
-          onClick={() => toggleLayer('monuments')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Flag size={18} color={activeLayers.monuments ? "#ffffff" : "#14b8a6"} />
-          Statues & Memorials
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.embassies ? 'active-red' : ''}`}
-          onClick={() => toggleLayer('embassies')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Globe size={18} color={activeLayers.embassies ? "#ffffff" : "#ef4444"} />
-          Embassies & Consulates
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.historical ? 'active-amber' : ''}`}
-          onClick={() => toggleLayer('historical')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <History size={18} color={activeLayers.historical ? "#ffffff" : "#fbbf24"} />
-          Historical Data
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.parks ? 'active-green' : ''}`}
-          onClick={() => toggleLayer('parks')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <TreePine size={18} color={activeLayers.parks ? "#ffffff" : "#4ade80"} />
-          Parks
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.squares ? 'active-skyblue' : ''}`}
-          onClick={() => toggleLayer('squares')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <CircleDot size={18} color={activeLayers.squares ? "#ffffff" : "#38bdf8"} />
-          Squares & Circles
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.floodZones ? 'active-blue' : ''}`}
-          onClick={() => toggleLayer('floodZones')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Waves size={18} color={activeLayers.floodZones ? "#ffffff" : "#3b82f6"} />
-          Flood Zones
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.topography ? 'active-red' : ''}`}
-          onClick={() => toggleLayer('topography')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Mountain size={18} color={activeLayers.topography ? "#ffffff" : "#ef4444"} />
-          Topography
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.propertyValues ? 'active-emerald' : ''}`}
-          onClick={() => toggleLayer('propertyValues')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <DollarSign size={18} color={activeLayers.propertyValues ? "#ffffff" : "#10b981"} />
-          Average Property Values
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.crime ? 'active-rose' : ''}`}
-          onClick={() => toggleLayer('crime')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <ShieldAlert size={18} color={activeLayers.crime ? "#ffffff" : "#e11d48"} />
-          Crime Index
-        </button>
-
-        <button 
-          className={`glass-button ${activeLayers.bikeLanes ? 'active-emerald' : ''}`}
-          onClick={() => toggleLayer('bikeLanes')}
-          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
-        >
-          <Bike size={18} color={activeLayers.bikeLanes ? "#ffffff" : "#10b981"} />
-          Bike Lanes
-        </button>
+        {filtersOrder.map((filter, index) => {
+          const isActive = activeLayers[filter.id];
+          const isDraggingOver = dragOverItemIndex === index;
+          const Icon = filter.icon;
+          
+          return (
+            <div
+              key={filter.id}
+              draggable={isEditMode}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragEnter={(e) => handleDragEnter(e, index)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e) => e.preventDefault()}
+              style={{
+                position: 'relative',
+                transform: isDraggingOver && isEditMode && draggedItemIndex !== index ? (draggedItemIndex > index ? 'translateY(-4px)' : 'translateY(4px)') : 'translateY(0)',
+                transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                zIndex: isDraggingOver ? 10 : 1
+              }}
+            >
+              <button 
+                className={`glass-button ${isActive ? filter.activeClass : ''}`}
+                onClick={() => !isEditMode && toggleLayer(filter.id)}
+                style={{ 
+                  justifyContent: 'flex-start', 
+                  padding: '12px 16px',
+                  width: '100%',
+                  cursor: isEditMode ? 'grab' : 'pointer',
+                  border: isEditMode && isDraggingOver && draggedItemIndex !== index ? '1px dashed var(--accent-primary)' : ''
+                }}
+              >
+                {isEditMode && (
+                  <GripVertical size={16} color="var(--text-secondary)" style={{ marginRight: '4px', cursor: 'grab' }} />
+                )}
+                <Icon size={18} color={isActive ? "#ffffff" : filter.color} />
+                {filter.label}
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

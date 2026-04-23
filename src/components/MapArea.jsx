@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
@@ -338,7 +338,46 @@ const MapEvents = ({ onMapClick }) => {
   return null;
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods }) => {
+const NEIGHBORHOOD_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
+
+const customOverrides = {
+  "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
+  "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
+  "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
+  "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 },
+  "Palisades": { center: [38.9280, -77.1080], radius: 500 },
+  "Dalecarlia": { center: [38.9380, -77.1080], radius: 450 },
+  "Kent": { center: [38.9320, -77.1060], radius: 450 },
+  "American University Park": { center: [38.9480, -77.0930], radius: 500 },
+  "Berkley": { center: [38.9170, -77.0940], radius: 450 },
+  "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
+  "Columbia Heights": { center: [38.9283, -77.0327], radius: 500 },
+  "Mt. Pleasant": { center: [38.9317, -77.0383], radius: 450 },
+  "Dupont Circle": { center: [38.9096, -77.0434], radius: 500 },
+  "Kalorama Heights": { center: [38.9174, -77.0505], radius: 450 },
+  "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
+  "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
+  "Georgetown": { center: [38.9048, -77.0628], radius: 550 },
+  "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
+  "National Mall": { center: [38.8895, -77.0230], radius: 600 },
+  "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
+  "Connecticut Avenue/K Street": { center: [38.9020, -77.0396], radius: 500 },
+  "Union Station": { center: [38.8977, -77.0068], radius: 450 },
+  "Truxton Circle": { center: [38.9100, -77.0100], radius: 450 },
+  "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 },
+  "Foxhall Crescent": { center: [38.9230, -77.0890], radius: 450 },
+  "Spring Valley": { center: [38.9380, -77.0950], radius: 500 },
+  "Foxhall Village": { center: [38.9110, -77.0810], radius: 400 },
+  "Georgetown Reservoir": { center: [38.9123, -77.0928], radius: 450 },
+  "Trinidad": { center: [38.9050, -76.9880], radius: 450 },
+  "Ivy City": { center: [38.9130, -76.9850], radius: 450 },
+  "Carver Langston": { center: [38.8990, -76.9780], radius: 400 },
+  "Stanton Park": { center: [38.8930, -76.9930], radius: 400 },
+  "Kingman Park": { center: [38.8960, -76.9700], radius: 450 },
+  "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 }
+};
+
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -484,6 +523,90 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     }
   }, [activeLayers.bikeLanes, bikeLanesData]);
 
+  const neighborhoodColorMap = useMemo(() => {
+    if (!geoJsonData || !geoJsonData.features) return {};
+    
+    try {
+      // 1. Extract nodes
+      const nodes = [];
+    geoJsonData.features.forEach((feature) => {
+      const rawNames = feature.properties?.NBH_NAMES || 'Unknown Neighborhood';
+      const neighborhoods = rawNames.split(',').map(n => n.trim()).filter(n => n !== 'Anacostia River');
+      const N = neighborhoods.length;
+      
+      const layer = L.geoJSON(feature);
+      const bounds = layer.getBounds();
+      const center = bounds.getCenter();
+      
+      const latDiff = bounds.getNorth() - bounds.getSouth();
+      const lngDiff = bounds.getEast() - bounds.getWest();
+      const radiusY = latDiff * 0.2;
+      const radiusX = lngDiff * 0.2;
+
+      neighborhoods.forEach((name, i) => {
+        let pos = [center.lat, center.lng];
+        if (customOverrides[name]) {
+          pos = customOverrides[name].center;
+        } else if (N > 1) {
+          const angle = (i / N) * Math.PI * 2;
+          pos = [
+            center.lat + Math.sin(angle) * radiusY,
+            center.lng + Math.cos(angle) * radiusX
+          ];
+        }
+        nodes.push({ name, pos });
+      });
+    });
+
+    // 2. Greedy Graph Coloring
+    const colorMap = {};
+    const thresholdSq = 0.02 * 0.02; // Roughly 2km distance threshold
+    
+    nodes.forEach((node) => {
+      // Find colors of neighbors
+      const neighborColors = new Set();
+      nodes.forEach((other) => {
+        if (other.name === node.name || !colorMap[other.name]) return;
+        const dLat = node.pos[0] - other.pos[0];
+        const dLng = node.pos[1] - other.pos[1];
+        if (dLat * dLat + dLng * dLng < thresholdSq) {
+          neighborColors.add(colorMap[other.name]);
+        }
+      });
+      
+      // Pick preferred color index based on string hash
+      let hash = 0;
+      for (let j = 0; j < node.name.length; j++) {
+        hash = node.name.charCodeAt(j) + ((hash << 5) - hash);
+      }
+      const preferredIdx = Math.abs(hash) % NEIGHBORHOOD_COLORS.length;
+
+      // Find an available color, starting from the preferred index
+      let bestColor = null;
+      for (let offset = 0; offset < NEIGHBORHOOD_COLORS.length; offset++) {
+        const idx = (preferredIdx + offset) % NEIGHBORHOOD_COLORS.length;
+        const color = NEIGHBORHOOD_COLORS[idx];
+        if (!neighborColors.has(color)) {
+          bestColor = color;
+          break;
+        }
+      }
+      
+      // If all colors used by neighbors, fallback to preferred color
+      if (!bestColor) {
+         bestColor = NEIGHBORHOOD_COLORS[preferredIdx];
+      }
+      
+      colorMap[node.name] = bestColor;
+    });
+
+    return colorMap;
+    } catch (e) {
+      console.error("COLOR MAP ERROR:", e);
+      return {};
+    }
+  }, [geoJsonData]);
+
   const parksStyle = {
     fillColor: '#22c55e',
     fillOpacity: 0.4,
@@ -502,6 +625,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     <MapContainer 
       center={dcCenter} 
       zoom={14} 
+      minZoom={11}
       style={{ height: '100%', width: '100%', zIndex: 0 }}
       zoomControl={false}
     >
@@ -560,30 +684,6 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             const radiusY = latDiff * 0.2;
             const radiusX = lngDiff * 0.2;
 
-            // Custom overrides for neighborhoods that are poorly placed or sized by the auto-calculation
-            const customOverrides = {
-              "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
-              "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
-              "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
-              "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 },
-              "Palisades": { center: [38.9280, -77.0980], radius: 500 },
-              "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
-              "Columbia Heights": { center: [38.9283, -77.0327], radius: 500 },
-              "Mt. Pleasant": { center: [38.9317, -77.0383], radius: 450 },
-              "Dupont Circle": { center: [38.9096, -77.0434], radius: 500 },
-              "Kalorama Heights": { center: [38.9174, -77.0505], radius: 450 },
-              "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
-              "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
-              "Georgetown": { center: [38.9048, -77.0628], radius: 550 },
-              "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
-              "National Mall": { center: [38.8895, -77.0230], radius: 600 },
-              "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
-              "Connecticut Avenue/K Street": { center: [38.9020, -77.0396], radius: 500 },
-              "Union Station": { center: [38.8977, -77.0068], radius: 450 },
-              "Truxton Circle": { center: [38.9100, -77.0100], radius: 450 },
-              "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 }
-            };
-
             return neighborhoods.map((name, i) => {
               // Check if this specific neighborhood is toggled off
               if (hiddenNeighborhoods && hiddenNeighborhoods.has(name)) {
@@ -605,13 +705,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 ];
               }
 
-              // Color hash based on individual neighborhood name
-              const colors = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
-              let hash = 0;
-              for (let j = 0; j < name.length; j++) {
-                hash = name.charCodeAt(j) + ((hash << 5) - hash);
-              }
-              const color = colors[Math.abs(hash) % colors.length];
+              // Get spatially-aware color
+              const color = neighborhoodColorMap[name] || NEIGHBORHOOD_COLORS[0];
               const isSelected = selectedNeighborhoods.has(name);
 
               return (
@@ -715,6 +810,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
+              pane: 'markerPane',
               radius: 6,
               fillColor: '#8b5cf6', // purple
               color: '#a78bfa',
@@ -750,6 +846,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
+              pane: 'markerPane',
               radius: 8,
               fillColor: '#f59e0b', // amber
               color: '#fbbf24',
@@ -797,6 +894,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
+              pane: 'markerPane',
               radius: 6,
               fillColor: '#0d9488', // teal
               color: '#14b8a6',
@@ -848,6 +946,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
+              pane: 'markerPane',
               radius: 7,
               fillColor: '#ec4899', // pink-500
               color: '#f472b6',    // pink-400
@@ -894,6 +993,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
+              pane: 'markerPane',
               radius: 6,
               fillColor: '#ef4444', // red
               color: '#dc2626',
@@ -1268,7 +1368,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
-      <ZoomWidget />
+      <ZoomWidget isLeftAligned={isLeftAligned} />
     </MapContainer>
   );
 };

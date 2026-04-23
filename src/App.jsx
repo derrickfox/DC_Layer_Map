@@ -28,20 +28,30 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState(new Set());
 
+  const [isLeftAligned, setIsLeftAligned] = useState(false);
+
   useEffect(() => {
     // Fetch geojson and extract individual neighborhood names
     fetch('https://raw.githubusercontent.com/alulsh/dc-micromobility-by-neighborhood/main/dc-neighborhoods.geojson')
       .then(res => res.json())
       .then(data => {
-        setGeoJsonData(data);
         
         // Extract unique neighborhoods
         const allNames = new Set();
         data.features.forEach(feature => {
-          const rawNames = feature.properties?.NBH_NAMES || '';
+          let rawNames = feature.properties?.NBH_NAMES || '';
+          
+          // Inject missing neighborhoods that the DC dataset grouped together
+          if (rawNames.includes('Spring Valley, Palisades')) {
+            rawNames += ', Kent, Berkley, Dalecarlia';
+            feature.properties.NBH_NAMES = rawNames;
+          }
+
           const names = rawNames.split(',').map(n => n.trim()).filter(n => n);
           names.forEach(n => allNames.add(n));
         });
+        
+        setGeoJsonData(data);
         
         const sortedNames = Array.from(allNames).sort();
         setNeighborhoodList(sortedNames);
@@ -100,6 +110,7 @@ function App() {
           searchQuery={searchQuery}
           selectedNeighborhoods={selectedNeighborhoods}
           setSelectedNeighborhoods={setSelectedNeighborhoods}
+          isLeftAligned={isLeftAligned}
         />
         <LayerControls 
           activeLayers={activeLayers} 
@@ -110,6 +121,8 @@ function App() {
           toggleAllNeighborhoodsVisibility={toggleAllNeighborhoodsVisibility}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          isLeftAligned={isLeftAligned}
+          setIsLeftAligned={setIsLeftAligned}
         />
       </div>
     </>

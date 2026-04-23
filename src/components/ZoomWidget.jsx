@@ -2,7 +2,7 @@ import React from 'react';
 import { useMap } from 'react-leaflet';
 import { Plus, Minus } from 'lucide-react';
 
-const ZoomWidget = () => {
+const ZoomWidget = ({ isLeftAligned }) => {
   const map = useMap();
 
   return (
@@ -11,13 +11,15 @@ const ZoomWidget = () => {
       style={{
         position: 'absolute',
         bottom: '24px',
-        right: '24px',
+        right: isLeftAligned ? '24px' : 'auto',
+        left: isLeftAligned ? 'auto' : '24px',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         borderRadius: '12px',
-        padding: 0
+        padding: 0,
+        transition: 'all 0.3s ease'
       }}
     >
       <button 
