@@ -18,7 +18,8 @@ function App() {
     propertyValues: false,
     crime: false,
     bikeLanes: false,
-    metro: false
+    metro: false,
+    zoning: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);

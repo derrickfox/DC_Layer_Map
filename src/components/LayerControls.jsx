@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Pencil, Check, X, TrainFront } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Pencil, Check, X, TrainFront, Building2 } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -14,7 +14,8 @@ const initialFilters = [
   { id: 'propertyValues', label: 'Average Property Values', icon: DollarSign, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' },
   { id: 'bikeLanes', label: 'Bike Lanes', icon: Bike, color: '#10b981', activeClass: 'active-emerald' },
-  { id: 'metro', label: 'Metro', icon: TrainFront, color: '#f87171', activeClass: 'active-red' }
+  { id: 'metro', label: 'Metro', icon: TrainFront, color: '#f87171', activeClass: 'active-red' },
+  { id: 'zoning', label: 'Zoning & Land Use', icon: Building2, color: '#fb923c', activeClass: 'active-orange' }
 ];
 
 const LayerControls = ({ 

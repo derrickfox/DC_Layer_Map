@@ -107,6 +107,7 @@ const CustomTopographyLayer = () => {
 
 import metroLinesData from '../data/metro-lines.json';
 import metroStationsData from '../data/metro-stations.json';
+import zoningData from '../data/dc-zoning.json';
 import exportData from '../../dc_layer_lab_export.json';
 
 const historicalEventsData = {
@@ -1499,6 +1500,82 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               mouseout: (e) => {
                 const l = e.target;
                 l.setRadius(6);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.zoning && zoningData && (
+        <GeoJSON
+          key="zoning-layer"
+          data={zoningData}
+          style={(feature) => {
+            const district = feature.properties.ZONE_DISTRICT || '';
+            let fillColor = '#ffffff';
+            let fillOpacity = 0.4;
+            
+            if (district.includes('Residential')) {
+              fillColor = '#fbbf24'; // amber/yellow
+            } else if (district.includes('Mixed-Use') || district.includes('Neighborhood')) {
+              fillColor = '#c084fc'; // purple
+            } else if (district.includes('Commercial') || district.includes('Downtown')) {
+              fillColor = '#ef4444'; // red
+            } else if (district.includes('Production') || district.includes('Industrial')) {
+              fillColor = '#9ca3af'; // gray
+            } else if (district.includes('Special Purpose')) {
+              fillColor = '#3b82f6'; // blue
+            } else if (district.includes('Unzoned')) {
+              fillOpacity = 0;
+            }
+
+            return {
+              color: fillColor,
+              weight: 1,
+              opacity: 0.8,
+              fillColor: fillColor,
+              fillOpacity: fillOpacity
+            };
+          }}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties;
+            const label = props.ZONING_LABEL || "Unknown Zone";
+            const district = props.ZONE_DISTRICT || "Unknown District";
+            const desc = props.ZONE_DESCRIPTION || "";
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 250px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px;">
+                  ${label}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">
+                  ${district}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">
+                  ${desc}
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'center',
+              className: 'custom-tooltip'
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 2,
+                  fillOpacity: 0.6
+                });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 1,
+                  fillOpacity: 0.4
+                });
               }
             });
           }}
