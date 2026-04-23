@@ -656,13 +656,6 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
       {activeLayers.neighborhoods && geoJsonData && (
         <>
           {geoJsonData.features
-            .filter(feature => {
-              if (!searchQuery) return true;
-              const q = searchQuery.toLowerCase();
-              const names = feature.properties?.NBH_NAMES || '';
-              const clusterName = feature.properties?.NAME || '';
-              return names.toLowerCase().includes(q) || clusterName.toLowerCase().includes(q);
-            })
             .flatMap((feature, featureIndex) => {
             const rawNames = feature.properties?.NBH_NAMES || 'Unknown Neighborhood';
             const clusterName = feature.properties?.NAME || 'Neighborhood Cluster';
@@ -841,8 +834,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
-            const { NAME = "", SUMMARY = "" } = feature.properties || {};
-            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q);
+            const name = feature.properties?.NAME || "";
+            const summary = feature.properties?.SUMMARY || "";
+            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q);
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
@@ -889,8 +883,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
-            const { NAME = "", SUMMARY = "", TYPE = "" } = feature.properties || {};
-            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q) || TYPE.toLowerCase().includes(q);
+            const name = feature.properties?.NAME || "";
+            const summary = feature.properties?.SUMMARY || "";
+            const type = feature.properties?.TYPE || "";
+            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q) || type.toLowerCase().includes(q);
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
@@ -941,8 +937,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
-            const { NAME = "", SUMMARY = "", TYPE = "" } = feature.properties || {};
-            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q) || TYPE.toLowerCase().includes(q);
+            const name = feature.properties?.NAME || "";
+            const summary = feature.properties?.SUMMARY || "";
+            const type = feature.properties?.TYPE || "";
+            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q) || type.toLowerCase().includes(q);
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
@@ -988,8 +986,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
-            const { NAME = "", SUMMARY = "", TYPE = "" } = feature.properties || {};
-            return NAME.toLowerCase().includes(q) || SUMMARY.toLowerCase().includes(q) || TYPE.toLowerCase().includes(q);
+            const name = feature.properties?.NAME || "";
+            const summary = feature.properties?.SUMMARY || "";
+            const type = feature.properties?.TYPE || "";
+            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q) || type.toLowerCase().includes(q);
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {

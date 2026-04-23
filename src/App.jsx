@@ -26,6 +26,7 @@ function App() {
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [previousActiveLayers, setPreviousActiveLayers] = useState(null);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState(new Set());
 
   const [isLeftAligned, setIsLeftAligned] = useState(false);
@@ -98,6 +99,29 @@ function App() {
     }
   };
 
+  const handleSearchChange = (newQuery) => {
+    if (searchQuery === '' && newQuery !== '') {
+      // Starting a search: remember current layers and turn on searchable layers
+      setPreviousActiveLayers(activeLayers);
+      setActiveLayers(prev => {
+        const next = { ...prev };
+        // Enable all layers so search works across the whole dataset
+        Object.keys(next).forEach(key => {
+          next[key] = true;
+        });
+        return next;
+      });
+    } else if (searchQuery !== '' && newQuery === '') {
+      // Cleared search: restore previous layers
+      if (previousActiveLayers) {
+        setActiveLayers(previousActiveLayers);
+        setPreviousActiveLayers(null);
+      }
+    }
+    setSearchQuery(newQuery);
+  };
+
+
   return (
     <>
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -120,7 +144,7 @@ function App() {
           toggleNeighborhoodVisibility={toggleNeighborhoodVisibility}
           toggleAllNeighborhoodsVisibility={toggleAllNeighborhoodsVisibility}
           searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
+          setSearchQuery={handleSearchChange}
           isLeftAligned={isLeftAligned}
           setIsLeftAligned={setIsLeftAligned}
         />
