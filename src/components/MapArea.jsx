@@ -108,6 +108,7 @@ const CustomTopographyLayer = () => {
 import metroLinesData from '../data/metro-lines.json';
 import metroStationsData from '../data/metro-stations.json';
 import zoningData from '../data/dc-zoning.json';
+import federalPropertyData from '../data/federal-property.json';
 import exportData from '../../dc_layer_lab_export.json';
 
 const historicalEventsData = {
@@ -1547,6 +1548,66 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               mouseout: (e) => {
                 const l = e.target;
                 l.setRadius(6);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.federal && federalPropertyData && (
+        <GeoJSON
+          key="federal-layer"
+          data={federalPropertyData}
+          style={() => ({
+            fillColor: '#3b82f6',
+            color: '#2563eb',
+            weight: 1,
+            opacity: 0.8,
+            fillOpacity: 0.4
+          })}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties;
+            const agency = props.AGENCY || props.Agency_Name || "Federal Agency";
+            const propName = props.PROPERTY_NAME || props.Property_Name || "";
+            const address = props.ADDRESS || props.Address || "";
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 250px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px;">
+                  ${agency}
+                </div>
+                ${propName ? `
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">
+                  ${propName}
+                </div>` : ''}
+                ${address ? `
+                <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.8;">
+                  ${address}
+                </div>` : ''}
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 2,
+                  fillOpacity: 0.6
+                });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 1,
+                  fillOpacity: 0.4
+                });
               }
             });
           }}

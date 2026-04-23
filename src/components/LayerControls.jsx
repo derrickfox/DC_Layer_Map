@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Pencil, Check, X, TrainFront, Building2 } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Pencil, Check, X, TrainFront, Building2, Building } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
   { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
+  { id: 'federal', label: 'Federal Footprint', icon: Building2, color: '#3b82f6', activeClass: 'active-blue' },
   { id: 'historical', label: 'Historical Data', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
   { id: 'parks', label: 'Parks', icon: TreePine, color: '#4ade80', activeClass: 'active-green' },
   { id: 'squares', label: 'Squares & Circles', icon: CircleDot, color: '#38bdf8', activeClass: 'active-skyblue' },
@@ -15,7 +16,7 @@ const initialFilters = [
   { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' },
   { id: 'bikeLanes', label: 'Bike Lanes', icon: Bike, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'metro', label: 'Metro', icon: TrainFront, color: '#f87171', activeClass: 'active-red' },
-  { id: 'zoning', label: 'Zoning & Land Use', icon: Building2, color: '#fb923c', activeClass: 'active-orange' }
+  { id: 'zoning', label: 'Zoning & Land Use', icon: Building, color: '#fb923c', activeClass: 'active-orange' }
 ];
 
 const LayerControls = ({ 
