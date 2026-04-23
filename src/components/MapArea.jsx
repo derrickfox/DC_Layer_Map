@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
+import 'esri-leaflet';
+import { imageMapLayer } from 'esri-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Vite + Leaflet
@@ -18,6 +20,90 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
+
+// Custom Canvas Layer to decode Mapzen Terrain-RGB and apply a Red-to-Blue heatmap
+const TerrainHeatmapLayer = L.GridLayer.extend({
+  createTile: function (coords, done) {
+    const tile = L.DomUtil.create('canvas', 'leaflet-tile');
+    const size = this.getTileSize();
+    tile.width = size.x;
+    tile.height = size.y;
+
+    const ctx = tile.getContext('2d', { willReadFrequently: true });
+    
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, size.x, size.y);
+      const imageData = ctx.getImageData(0, 0, size.x, size.y);
+      const data = imageData.data;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+        
+        if (a === 0) continue;
+
+        // Mapzen Terrarium formula
+        const elevation = (r * 256 + g + b / 256) - 32768;
+        
+        let outR = 0, outG = 0, outB = 255, outA = 160;
+        
+        if (elevation <= 1) {
+          outA = 0; // Hide water completely
+        } else {
+          // Normalize 0 to 130m
+          const ratio = Math.max(0, Math.min(1, elevation / 130));
+          
+          if (ratio < 0.25) {
+            outR = 0; outG = Math.round((ratio / 0.25) * 255); outB = 255;
+          } else if (ratio < 0.5) {
+            outR = 0; outG = 255; outB = Math.round(255 - ((ratio - 0.25) / 0.25) * 255);
+          } else if (ratio < 0.75) {
+            outR = Math.round(((ratio - 0.5) / 0.25) * 255); outG = 255; outB = 0;
+          } else {
+            outR = 255; outG = Math.round(255 - ((ratio - 0.75) / 0.25) * 255); outB = 0;
+          }
+        }
+
+        data[i] = outR;
+        data[i + 1] = outG;
+        data[i + 2] = outB;
+        data[i + 3] = outA;
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      done(null, tile);
+    };
+    img.onerror = (err) => {
+      done(err, tile);
+    };
+    img.src = `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${coords.z}/${coords.x}/${coords.y}.png`;
+
+    return tile;
+  }
+});
+
+const CustomTopographyLayer = () => {
+  const map = useMap();
+
+  React.useEffect(() => {
+    const layer = new TerrainHeatmapLayer({
+      opacity: 0.65,
+      attribution: 'Mapzen Terrain-RGB'
+    });
+    
+    layer.addTo(map);
+    return () => {
+      map.removeLayer(layer);
+    };
+  }, [map]);
+
+  return null;
+};
+
 
 import exportData from '../../dc_layer_lab_export.json';
 
@@ -833,14 +919,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       {/* Topography Layer (USGS 3DEP DEM) */}
       {activeLayers.topography && (
-        <WMSTileLayer
-          url="https://elevation.nationalmap.gov/arcgis/services/3DEPElevation/ImageServer/WMSServer"
-          layers="3DEPElevation:Hillshade Elevation Tinted"
-          format="image/png"
-          transparent={true}
-          opacity={0.65}
-          attribution="USGS 3DEP Elevation"
-        />
+        <CustomTopographyLayer />
       )}
 
       <ZoomWidget />
