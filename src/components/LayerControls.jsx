@@ -29,6 +29,7 @@ const LayerControls = ({
   setIsLeftAligned
 }) => {
   const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [filtersOrder, setFiltersOrder] = useState(initialFilters);
   const [draggedItemIndex, setDraggedItemIndex] = useState(null);
@@ -80,14 +81,30 @@ const LayerControls = ({
         transition: 'all 0.3s ease'
       }}
     >
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <Layers size={24} className="text-gradient" />
-            <span className="text-gradient">DC Layer Lab</span>
-          </h2>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isPanelCollapsed ? '0' : '16px' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+          <Layers size={24} className="text-gradient" />
+          <span className="text-gradient">DC Layer Lab</span>
+        </h2>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              padding: '6px',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title={isPanelCollapsed ? 'Expand panel' : 'Collapse panel'}
+          >
+            {isPanelCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          </button>
+          <button 
               onClick={() => setIsEditMode(!isEditMode)}
               style={{
                 background: isEditMode ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)',
@@ -123,7 +140,10 @@ const LayerControls = ({
             </button>
           </div>
         </div>
-        <div style={{ position: 'relative' }}>
+
+        {!isPanelCollapsed && (
+          <>
+            <div style={{ position: 'relative' }}>
           <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
           <input 
             type="text" 
@@ -165,10 +185,9 @@ const LayerControls = ({
             </button>
           )}
         </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <button 
               className={`glass-button ${activeLayers.neighborhoods ? 'active-orange' : ''}`}
               onClick={() => toggleLayer('neighborhoods')}
@@ -300,7 +319,9 @@ const LayerControls = ({
             </div>
           );
         })}
-      </div>
+            </div>
+          </>
+        )}
     </div>
   );
 };
