@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert } from 'lucide-react';
 
 const LayerControls = ({ 
   activeLayers, 
@@ -226,6 +226,24 @@ const LayerControls = ({
         >
           <Mountain size={18} color={activeLayers.topography ? "#ffffff" : "#ef4444"} />
           Topography
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.propertyValues ? 'active-emerald' : ''}`}
+          onClick={() => toggleLayer('propertyValues')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <DollarSign size={18} color={activeLayers.propertyValues ? "#ffffff" : "#10b981"} />
+          Average Property Values
+        </button>
+
+        <button 
+          className={`glass-button ${activeLayers.crime ? 'active-rose' : ''}`}
+          onClick={() => toggleLayer('crime')}
+          style={{ justifyContent: 'flex-start', padding: '12px 16px' }}
+        >
+          <ShieldAlert size={18} color={activeLayers.crime ? "#ffffff" : "#e11d48"} />
+          Crime Index
         </button>
       </div>
     </div>

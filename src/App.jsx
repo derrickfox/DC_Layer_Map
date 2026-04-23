@@ -14,7 +14,9 @@ function App() {
     monuments: true,
     embassies: true,
     floodZones: false,
-    topography: false
+    topography: false,
+    propertyValues: false,
+    crime: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);

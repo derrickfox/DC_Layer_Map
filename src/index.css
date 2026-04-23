@@ -82,6 +82,8 @@ body {
 .glass-button.active-pink { background: #f472b6; color: #ffffff; border-color: #db2777; box-shadow: 0 0 12px rgba(244, 114, 182, 0.4); }
 .glass-button.active-teal { background: #14b8a6; color: #ffffff; border-color: #0d9488; box-shadow: 0 0 12px rgba(20, 184, 166, 0.4); }
 .glass-button.active-red { background: #ef4444; color: #ffffff; border-color: #dc2626; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+.glass-button.active-emerald { background: #10b981; color: #ffffff; border-color: #059669; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
+.glass-button.active-rose { background: #e11d48; color: #ffffff; border-color: #be123c; box-shadow: 0 0 12px rgba(225, 29, 72, 0.4); }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {

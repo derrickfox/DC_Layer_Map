@@ -343,6 +343,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
   const [museumsData, setMuseumsData] = useState(null);
+  const [propertyValuesData, setPropertyValuesData] = useState(null);
+  const [crimeData, setCrimeData] = useState(null);
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
@@ -401,6 +403,76 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching museums data:", err));
     }
   }, [activeLayers.museums, museumsData]);
+
+  useEffect(() => {
+    if (activeLayers.propertyValues && !propertyValuesData) {
+      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Property_and_Land_WebMercator/MapServer/6/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+        .then(res => res.json())
+        .then(data => {
+          // Add simulated property values to each feature
+          const features = data.features.map(f => {
+            // Calculate a simulated value based on centroid
+            const bounds = L.geoJSON(f).getBounds();
+            const center = bounds.getCenter();
+            
+            // Northwest is higher value, Southeast is lower
+            // Center is roughly [38.8895, -77.0320]
+            // Let's use a base of $600,000
+            let baseValue = 600000;
+            
+            // Increase for higher latitude (North), decrease for lower latitude (South)
+            baseValue += (center.lat - 38.88) * 15000000; 
+            
+            // Increase for lower longitude (West), decrease for higher longitude (East)
+            baseValue += (-77.00 - center.lng) * 10000000;
+            
+            // Add some randomization for realism
+            const randomVariance = (Math.random() - 0.5) * 300000;
+            
+            let simulatedValue = Math.max(250000, baseValue + randomVariance);
+            // Cap at 2.5m for realistic average
+            simulatedValue = Math.min(2500000, simulatedValue);
+            
+            f.properties.SIMULATED_AVERAGE_VALUE = Math.round(simulatedValue);
+            return f;
+          });
+          setPropertyValuesData({ type: "FeatureCollection", features });
+        })
+        .catch(err => console.error("Error fetching Assessment Neighborhoods data:", err));
+    }
+  }, [activeLayers.propertyValues, propertyValuesData]);
+
+  useEffect(() => {
+    if (activeLayers.crime && !crimeData) {
+      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Property_and_Land_WebMercator/MapServer/6/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+        .then(res => res.json())
+        .then(data => {
+          // Add simulated crime index to each feature
+          const features = data.features.map(f => {
+            const bounds = L.geoJSON(f).getBounds();
+            const center = bounds.getCenter();
+            
+            // Crime index (incidents per year) base 500
+            let baseCrime = 500;
+            
+            // Increase towards Center/East, decrease towards far NW
+            // Center is roughly [38.8895, -77.0320]
+            baseCrime += (38.9 - center.lat) * 8000; 
+            baseCrime += (center.lng - -77.05) * 6000;
+            
+            const randomVariance = (Math.random() - 0.5) * 400;
+            
+            let simulatedCrime = Math.max(50, baseCrime + randomVariance);
+            simulatedCrime = Math.min(2500, simulatedCrime);
+            
+            f.properties.SIMULATED_CRIME_INDEX = Math.round(simulatedCrime);
+            return f;
+          });
+          setCrimeData({ type: "FeatureCollection", features });
+        })
+        .catch(err => console.error("Error fetching crime data:", err));
+    }
+  }, [activeLayers.crime, crimeData]);
 
   const parksStyle = {
     fillColor: '#22c55e',
@@ -920,6 +992,188 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
       {/* Topography Layer (USGS 3DEP DEM) */}
       {activeLayers.topography && (
         <CustomTopographyLayer />
+      )}
+
+      {/* Average Property Values Layer (Simulated Choropleth) */}
+      {activeLayers.propertyValues && propertyValuesData && (
+        <GeoJSON
+          key={`propertyValues-${searchQuery}`}
+          data={propertyValuesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const desc = feature.properties?.DESCRIPTION || "";
+            const nbhd = feature.properties?.NEIGHBORHO || "";
+            return desc.toLowerCase().includes(q) || nbhd.toLowerCase().includes(q);
+          }}
+          style={(feature) => {
+            const value = feature.properties.SIMULATED_AVERAGE_VALUE;
+            // Map value to a color gradient (Light Yellow to Dark Green)
+            // Color ramp: $250k to $2.5m
+            const minVal = 250000;
+            const maxVal = 2500000;
+            const ratio = Math.max(0, Math.min(1, (value - minVal) / (maxVal - minVal)));
+            
+            // Colors: #fef08a (yellow-200) -> #14532d (green-900)
+            let fillColor = '#fef08a';
+            if (ratio > 0.8) fillColor = '#14532d'; // green-900
+            else if (ratio > 0.6) fillColor = '#166534'; // green-800
+            else if (ratio > 0.4) fillColor = '#22c55e'; // green-500
+            else if (ratio > 0.2) fillColor = '#84cc16'; // lime-500
+            else if (ratio > 0.1) fillColor = '#fde047'; // yellow-300
+            
+            return {
+              fillColor,
+              color: '#ffffff',
+              weight: 1,
+              opacity: 0.5,
+              fillOpacity: 0.65
+            };
+          }}
+          onEachFeature={(feature, layer) => {
+            const name = feature.properties?.DESCRIPTION || feature.properties?.NEIGHBORHO || "Neighborhood";
+            const value = feature.properties.SIMULATED_AVERAGE_VALUE;
+            
+            const formattedValue = new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+              maximumFractionDigits: 0
+            }).format(value);
+
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(16, 185, 129, 0.3); padding-bottom: 4px;">
+                  <span style="color: #10b981; margin-right: 4px;">•</span>${name}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  Assessment Neighborhood
+                </div>
+                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.3;">
+                  Avg Value: ${formattedValue}
+                </div>
+                <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; font-style: italic;">
+                  * Simulated for demonstration
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'center',
+              className: 'custom-tooltip'
+            });
+            
+            // Bring to front on hover
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 3,
+                  color: '#10b981',
+                  fillOpacity: 0.8
+                });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                  l.bringToFront();
+                }
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 1,
+                  color: '#ffffff',
+                  fillOpacity: 0.65
+                });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Crime Index Layer (Simulated Choropleth) */}
+      {activeLayers.crime && crimeData && (
+        <GeoJSON
+          key={`crime-${searchQuery}`}
+          data={crimeData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const desc = feature.properties?.DESCRIPTION || "";
+            const nbhd = feature.properties?.NEIGHBORHO || "";
+            return desc.toLowerCase().includes(q) || nbhd.toLowerCase().includes(q);
+          }}
+          style={(feature) => {
+            const value = feature.properties.SIMULATED_CRIME_INDEX;
+            // Map value to a color gradient (Light Yellow to Dark Red)
+            // Color ramp: 50 to 2500
+            const minVal = 50;
+            const maxVal = 2500;
+            const ratio = Math.max(0, Math.min(1, (value - minVal) / (maxVal - minVal)));
+            
+            // Colors: #fef08a (yellow-200) -> #881337 (rose-900)
+            let fillColor = '#fef08a';
+            if (ratio > 0.8) fillColor = '#881337'; // rose-900
+            else if (ratio > 0.6) fillColor = '#be123c'; // rose-700
+            else if (ratio > 0.4) fillColor = '#f43f5e'; // rose-500
+            else if (ratio > 0.2) fillColor = '#fb923c'; // orange-400
+            else if (ratio > 0.1) fillColor = '#fde047'; // yellow-300
+            
+            return {
+              fillColor,
+              color: '#ffffff',
+              weight: 1,
+              opacity: 0.5,
+              fillOpacity: 0.65
+            };
+          }}
+          onEachFeature={(feature, layer) => {
+            const name = feature.properties?.DESCRIPTION || feature.properties?.NEIGHBORHO || "Neighborhood";
+            const value = feature.properties.SIMULATED_CRIME_INDEX;
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(225, 29, 72, 0.3); padding-bottom: 4px;">
+                  <span style="color: #e11d48; margin-right: 4px;">•</span>${name}
+                </div>
+                <div style="font-size: 11px; font-weight: 600; color: #e11d48; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  Assessment Neighborhood
+                </div>
+                <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.3;">
+                  Crime Index: ${value} incidents/yr
+                </div>
+                <div style="font-size: 10px; color: var(--text-secondary); margin-top: 4px; font-style: italic;">
+                  * Simulated for demonstration
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'center',
+              className: 'custom-tooltip'
+            });
+            
+            // Bring to front on hover
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 3,
+                  color: '#e11d48',
+                  fillOpacity: 0.8
+                });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                  l.bringToFront();
+                }
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle({
+                  weight: 1,
+                  color: '#ffffff',
+                  fillOpacity: 0.65
+                });
+              }
+            });
+          }}
+        />
       )}
 
       <ZoomWidget />
