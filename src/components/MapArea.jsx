@@ -760,7 +760,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               {
                 permanent: false,
                 direction: 'center',
-                className: 'custom-tooltip'
+                className: 'custom-tooltip',
+                sticky: true
               }
             );
           }}
@@ -786,7 +787,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               {
                 permanent: false,
                 direction: 'center',
-                className: 'custom-tooltip'
+                className: 'custom-tooltip',
+                sticky: true
               }
             );
           }}
@@ -822,9 +824,23 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               {
                 permanent: false,
                 direction: 'top',
-                className: 'custom-tooltip'
+                className: 'custom-tooltip',
+                sticky: true
               }
             );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 4 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(6);
+                l.setStyle({ weight: 2 });
+              }
+            });
           }}
         />
       )}
@@ -871,7 +887,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip historical-tooltip',
-                offset: [0, -6]
+                offset: [0, -6],
+                sticky: true
               }
             );
           }}
@@ -925,7 +942,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip',
-                offset: [0, -6]
+                offset: [0, -6],
+                sticky: true
               }
             );
           }}
@@ -974,7 +992,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip events-tooltip',
-                offset: [0, -6]
+                offset: [0, -6],
+                sticky: true
               }
             );
           }}
@@ -1028,9 +1047,23 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 permanent: false,
                 direction: 'top',
                 className: 'custom-tooltip',
-                offset: [0, -6]
+                offset: [0, -6],
+                sticky: true
               }
             );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 4 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(6);
+                l.setStyle({ weight: 2 });
+              }
+            });
           }}
         />
       )}
@@ -1096,7 +1129,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               permanent: false,
               direction: 'top',
               className: 'custom-tooltip',
-              offset: [0, -6]
+              offset: [0, -6],
+              sticky: true
             });
           }}
         />
@@ -1172,7 +1206,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             layer.bindTooltip(tooltipContent, {
               permanent: false,
               direction: 'center',
-              className: 'custom-tooltip'
+              className: 'custom-tooltip',
+              sticky: true
             });
             
             // Bring to front on hover
@@ -1260,7 +1295,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             layer.bindTooltip(tooltipContent, {
               permanent: false,
               direction: 'center',
-              className: 'custom-tooltip'
+              className: 'custom-tooltip',
+              sticky: true
             });
             
             // Bring to front on hover
@@ -1353,7 +1389,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             layer.bindTooltip(tooltipContent, {
               permanent: false,
               direction: 'top',
-              className: 'custom-tooltip'
+              className: 'custom-tooltip',
+              sticky: true
             });
             
             layer.on({
@@ -1421,7 +1458,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             layer.bindTooltip(tooltipContent, {
               permanent: false,
               direction: 'top',
-              className: 'custom-tooltip'
+              className: 'custom-tooltip',
+              sticky: true
             });
             layer.on({
               mouseover: (e) => {
@@ -1489,7 +1527,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             layer.bindTooltip(tooltipContent, {
               permanent: false,
               direction: 'top',
-              className: 'custom-tooltip'
+              className: 'custom-tooltip',
+              sticky: true
             });
             layer.on({
               mouseover: (e) => {
@@ -1559,7 +1598,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             layer.bindTooltip(tooltipContent, {
               permanent: false,
               direction: 'center',
-              className: 'custom-tooltip'
+              className: 'custom-tooltip',
+              sticky: true
             });
             layer.on({
               mouseover: (e) => {
