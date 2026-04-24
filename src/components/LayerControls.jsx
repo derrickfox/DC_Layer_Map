@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -19,6 +19,9 @@ const initialFilters = [
   { id: 'squares', label: 'Squares & Circles', icon: CircleDot, color: '#38bdf8', activeClass: 'active-skyblue' },
   { id: 'floodZones', label: 'Flood Zones', icon: Waves, color: '#3b82f6', activeClass: 'active-blue' },
   { id: 'topography', label: 'Topography', icon: Mountain, color: '#ef4444', activeClass: 'active-red' },
+  { id: 'treeCanopy', label: 'Urban Tree Canopy (blocks)', icon: Leaf, color: '#059669', activeClass: 'active-emerald' },
+  { id: 'combinedSewer', label: 'Combined Sewer (CSS)', icon: CloudRain, color: '#a21caf', activeClass: 'active-pink' },
+  { id: 'wetland', label: 'Wetlands', icon: Droplets, color: '#0891b2', activeClass: 'active-cyan' },
   { id: 'dcps', label: 'DC Public Schools (DCPS)', icon: School, color: '#6366f1', activeClass: 'active-indigo' },
   { id: 'librariesRecPools', label: 'Libraries & Recreation Centers', icon: BookOpen, color: '#0284c7', activeClass: 'active-skyblue' },
   { id: 'foodDeserts', label: 'Food Deserts (Low Food Access)', icon: ShoppingCart, color: '#d97706', activeClass: 'active-amber' },

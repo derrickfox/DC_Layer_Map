@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
@@ -782,6 +782,111 @@ const farmersMarketMatchesSearch = (feature, query) => {
   ].some((v) => String(v || '').toLowerCase().includes(query));
 };
 
+const treeCanopyMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.NAME,
+    p.NAME20,
+    p.LABEL,
+    p.WARD,
+    p.WARD_ID,
+    p.GEOID,
+    p.GEOID20,
+    p.TRACTCE20,
+    p.BLOCKCE20,
+    p.TCAN_PCT,
+    p.UTC_PCT,
+    'tree canopy urban heat island utc forest shade census block'
+  ].some((v) => String(v ?? '').toLowerCase().includes(query));
+};
+
+/** 0–1 normalized canopy cover → RGB; wide yellow→amber→green ramp for legibility */
+const TREE_CANOPY_RGB_STOPS = [
+  [0, [255, 250, 205]],
+  [0.14, [255, 220, 110]],
+  [0.3, [214, 145, 45]],
+  [0.48, [140, 195, 85]],
+  [0.66, [55, 150, 75]],
+  [0.82, [25, 105, 55]],
+  [1, [12, 55, 35]]
+];
+
+const interpolateRgbStops = (t, stops) => {
+  const x = Math.max(0, Math.min(1, t));
+  let i = 0;
+  while (i < stops.length - 2 && x > stops[i + 1][0]) i += 1;
+  const [t0, c0] = stops[i];
+  const [t1, c1] = stops[i + 1];
+  const span = t1 - t0 || 1e-6;
+  const u = (x - t0) / span;
+  return [
+    Math.round(c0[0] + (c1[0] - c0[0]) * u),
+    Math.round(c0[1] + (c1[1] - c0[1]) * u),
+    Math.round(c0[2] + (c1[2] - c0[2]) * u)
+  ];
+};
+
+const combinedSewerMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.NAME,
+    p.LABEL,
+    p.WARD,
+    p.GIS_ID,
+    p.SEWERSYSTEM,
+    'combined sewer css csdo storm overflow flood hazard basement'
+  ].some((v) => String(v ?? '').toLowerCase().includes(query));
+};
+
+const wetlandMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.NAME,
+    p.LABEL,
+    p.WARD,
+    p.WETLAND_TYPE,
+    p.WETLAND_ID,
+    p.DESC_,
+    'wetland nwi freshwater emergent palustrine riparian'
+  ].some((v) => String(v ?? '').toLowerCase().includes(query));
+};
+
+const getTreeCanopyStyle = (feature) => {
+  const pct = Number(feature.properties.TCAN_PCT ?? feature.properties.UTC_PCT);
+  const t = Number.isFinite(pct) ? Math.max(0, Math.min(1, pct / 100)) : 0.35;
+  const [fr, fg, fb] = interpolateRgbStops(t, TREE_CANOPY_RGB_STOPS);
+  const fill = `rgb(${fr},${fg},${fb})`;
+  const [br, bg, bb] = interpolateRgbStops(t * 0.92 + 0.04, TREE_CANOPY_RGB_STOPS);
+  const border = `rgb(${Math.max(0, br - 35)},${Math.max(0, bg - 28)},${Math.max(0, bb - 22)})`;
+  return {
+    color: border,
+    weight: 0.65,
+    opacity: 1,
+    fillColor: fill,
+    fillOpacity: 0.42 + 0.38 * t
+  };
+};
+
+const getCombinedSewerStyle = () => ({
+  color: '#86198f',
+  weight: 1.25,
+  opacity: 0.85,
+  dashArray: '5 4',
+  fillColor: '#e879f9',
+  fillOpacity: 0.22
+});
+
+const getWetlandStyle = () => ({
+  color: '#155e75',
+  weight: 1,
+  opacity: 0.9,
+  fillColor: '#22d3ee',
+  fillOpacity: 0.4
+});
+
 const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.9076, -77.0058]; // Eckington, NE DC
   const [parksData, setParksData] = useState(null);
@@ -803,7 +908,28 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [wardsData, setWardsData] = useState(null);
   const [foodDesertsData, setFoodDesertsData] = useState(null);
   const [farmersMarketsData, setFarmersMarketsData] = useState(null);
+  const [treeCanopyData, setTreeCanopyData] = useState(null);
+  const [combinedSewerData, setCombinedSewerData] = useState(null);
+  const [wetlandData, setWetlandData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const treeCanopyLayerRef = useRef(null);
+  const combinedSewerLayerRef = useRef(null);
+  const wetlandLayerRef = useRef(null);
+  const treeCanopyStyleFn = useCallback((feature) => getTreeCanopyStyle(feature), []);
+  const treeCanopyFilterFn = useCallback(
+    (feature) => treeCanopyMatchesSearch(feature, normalizedSearchQuery),
+    [normalizedSearchQuery]
+  );
+  const combinedSewerStyleFn = useCallback(() => getCombinedSewerStyle(), []);
+  const combinedSewerFilterFn = useCallback(
+    (feature) => combinedSewerMatchesSearch(feature, normalizedSearchQuery),
+    [normalizedSearchQuery]
+  );
+  const wetlandStyleFn = useCallback(() => getWetlandStyle(), []);
+  const wetlandFilterFn = useCallback(
+    (feature) => wetlandMatchesSearch(feature, normalizedSearchQuery),
+    [normalizedSearchQuery]
+  );
 
   const toggleNeighborhoodSelection = (name) => {
     setSelectedNeighborhoods(prev => {
@@ -1142,6 +1268,61 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch((err) => console.error('Error fetching farmers market locations:', err));
     }
   }, [activeLayers.farmersMarkets, farmersMarketsData]);
+
+  useEffect(() => {
+    if (!activeLayers.treeCanopy || treeCanopyData) return;
+
+    let cancelled = false;
+    const pageUrl =
+      'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Urban_Tree_Canopy/MapServer/1/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=2000';
+
+    (async () => {
+      try {
+        const allFeatures = [];
+        let offset = 0;
+        for (;;) {
+          const res = await fetch(`${pageUrl}&resultOffset=${offset}`);
+          const data = await res.json();
+          const feats = data.features || [];
+          if (feats.length === 0) break;
+          allFeatures.push(...feats);
+          if (!data.exceededTransferLimit) break;
+          offset += feats.length;
+        }
+        if (!cancelled) {
+          setTreeCanopyData({ type: 'FeatureCollection', features: allFeatures });
+        }
+      } catch (err) {
+        if (!cancelled) console.error('Error fetching urban tree canopy (census block) data:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.treeCanopy, treeCanopyData]);
+
+  useEffect(() => {
+    if (activeLayers.combinedSewer && !combinedSewerData) {
+      fetch(
+        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Stormwater_Management_WebMercator/MapServer/19/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
+      )
+        .then((res) => res.json())
+        .then((data) => setCombinedSewerData(data))
+        .catch((err) => console.error('Error fetching combined sewer sewershed data:', err));
+    }
+  }, [activeLayers.combinedSewer, combinedSewerData]);
+
+  useEffect(() => {
+    if (activeLayers.wetland && !wetlandData) {
+      fetch(
+        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Water_WebMercator/MapServer/28/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
+      )
+        .then((res) => res.json())
+        .then((data) => setWetlandData(data))
+        .catch((err) => console.error('Error fetching wetland data:', err));
+    }
+  }, [activeLayers.wetland, wetlandData]);
 
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
@@ -2547,6 +2728,172 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 const l = e.target;
                 l.setRadius(6);
                 l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.treeCanopy && treeCanopyData && (
+        <GeoJSON
+          ref={treeCanopyLayerRef}
+          key={`tree-canopy-${searchQuery}`}
+          data={treeCanopyData}
+          filter={treeCanopyFilterFn}
+          style={treeCanopyStyleFn}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const title = escapeHtml(
+              p.NAME20 || p.LABEL || p.NAME || (p.GEOID20 ? `Block ${p.GEOID20}` : 'Tree canopy')
+            );
+            const geoid = escapeHtml(p.GEOID20 || p.GEOID || '');
+            const tcan = Number(p.TCAN_PCT);
+            const utc = Number(p.UTC_PCT);
+            const uhi = Number(p.UHI);
+            const pctStr = (n) => (Number.isFinite(n) ? `${n.toFixed(1)}%` : '');
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: #15803d; margin-right: 6px;">●</span>${title}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 600; color: #0f766e; text-transform: uppercase; margin-bottom: 6px;">Urban tree canopy — 2020 census block</div>`
+            ];
+            if (geoid) {
+              lines.push(`<div style="font-size: 11px; color: var(--text-secondary); font-family: ui-monospace, monospace;">${geoid}</div>`);
+            }
+            if (pctStr(tcan)) {
+              lines.push(`<div style="font-size: 13px; color: var(--text-primary); margin-top: 4px;">Tree canopy: <strong>${pctStr(tcan)}</strong> of land area</div>`);
+            }
+            if (pctStr(utc) && Math.abs(utc - tcan) > 0.05) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">Urban tree canopy (alt. field): ${pctStr(utc)}</div>`);
+            }
+            if (Number.isFinite(uhi)) {
+              lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Urban heat index (layer score): ${uhi.toFixed(1)}</div>`);
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">DC GIS Urban Tree Canopy (2020 census block).</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getTreeCanopyStyle(feature);
+                l.setStyle({
+                  ...base,
+                  weight: (base.weight || 1) + 1.5,
+                  fillOpacity: Math.min(0.85, (base.fillOpacity || 0.3) + 0.12)
+                });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                treeCanopyLayerRef.current?.resetStyle(e.target);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.combinedSewer && combinedSewerData && (
+        <GeoJSON
+          ref={combinedSewerLayerRef}
+          key={`combined-sewer-${searchQuery}`}
+          data={combinedSewerData}
+          filter={combinedSewerFilterFn}
+          style={combinedSewerStyleFn}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const title = escapeHtml(p.NAME || 'Combined sewer area');
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: #a21caf; margin-right: 6px;">●</span>${title}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 600; color: #86198f; text-transform: uppercase; margin-bottom: 6px;">Combined sewer (CSS) sewershed</div>`,
+              `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">`,
+              `Areas where stormwater and sewage share pipes. Heavy rain can stress the system and increase basement or street flooding risk compared with separated storm sewers.`,
+              `</div>`,
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">DC GIS Stormwater — Combined Sewer sewersheds.</div></div>`
+            ];
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getCombinedSewerStyle();
+                l.setStyle({
+                  ...base,
+                  weight: (base.weight || 1) + 1.5,
+                  fillOpacity: Math.min(0.75, (base.fillOpacity || 0.3) + 0.12)
+                });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                combinedSewerLayerRef.current?.resetStyle(e.target);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.wetland && wetlandData && (
+        <GeoJSON
+          ref={wetlandLayerRef}
+          key={`wetland-${searchQuery}`}
+          data={wetlandData}
+          filter={wetlandFilterFn}
+          style={wetlandStyleFn}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const wtype = escapeHtml(p.WETLAND_TYPE || 'Wetland');
+            const wname = escapeHtml(p.NAME || p.DESC_ || '');
+            const acres = Number(p.ACRES);
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: #0891b2; margin-right: 6px;">●</span>${wtype}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 600; color: #0e7490; text-transform: uppercase; margin-bottom: 6px;">Wetland (NWI-based)</div>`
+            ];
+            if (wname && wname !== wtype) {
+              lines.push(`<div style="font-size: 11px; color: var(--text-secondary); line-height: 1.35;">${wname}</div>`);
+            }
+            if (Number.isFinite(acres) && acres > 0) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Approx. ${acres.toFixed(2)} acres</div>`);
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">DC GIS Environment — Wetland Types (General).</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getWetlandStyle();
+                l.setStyle({
+                  ...base,
+                  weight: (base.weight || 1) + 1.5,
+                  fillOpacity: Math.min(0.75, (base.fillOpacity || 0.3) + 0.12)
+                });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                wetlandLayerRef.current?.resetStyle(e.target);
               }
             });
           }}
