@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -22,6 +22,7 @@ const initialFilters = [
   { id: 'treeCanopy', label: 'Urban Tree Canopy (blocks)', icon: Leaf, color: '#059669', activeClass: 'active-emerald' },
   { id: 'combinedSewer', label: 'Combined Sewer (CSS)', icon: CloudRain, color: '#a21caf', activeClass: 'active-pink' },
   { id: 'wetland', label: 'Wetlands', icon: Droplets, color: '#0891b2', activeClass: 'active-cyan' },
+  { id: 'emergencyMedical', label: 'Fire, EMS, Hospitals & Urgent Care', icon: Ambulance, color: '#dc2626', activeClass: 'active-red' },
   { id: 'dcps', label: 'DC Public Schools (DCPS)', icon: School, color: '#6366f1', activeClass: 'active-indigo' },
   { id: 'librariesRecPools', label: 'Libraries & Recreation Centers', icon: BookOpen, color: '#0284c7', activeClass: 'active-skyblue' },
   { id: 'foodDeserts', label: 'Food Deserts (Low Food Access)', icon: ShoppingCart, color: '#d97706', activeClass: 'active-amber' },

@@ -887,6 +887,70 @@ const getWetlandStyle = () => ({
   fillOpacity: 0.4
 });
 
+const emergencyMedicalMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.NAME,
+    p.ADDRESS,
+    p.TYPE,
+    p.FACILITY_TYPE,
+    p.PHONE,
+    p.WARD,
+    p.ZIPCODE,
+    p.BATTALION,
+    p.NEAREST_METRO,
+    p.QUADRANT,
+    p.ANC,
+    p.GIS_ID,
+    'fire engine ems hospital urgent clinic walk-in medstar emergency'
+  ].some((v) => String(v ?? '').toLowerCase().includes(query));
+};
+
+const getEmergencyMedicalPointStyle = (props = {}) => {
+  const kind = props.MED_KIND;
+  if (kind === 'hospital') {
+    return {
+      pane: 'markerPane',
+      radius: 7,
+      fillColor: '#1d4ed8',
+      color: '#93c5fd',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.9
+    };
+  }
+  if (kind === 'urgentCare') {
+    return {
+      pane: 'markerPane',
+      radius: 6,
+      fillColor: '#0d9488',
+      color: '#99f6e4',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.9
+    };
+  }
+  return {
+    pane: 'markerPane',
+    radius: 6,
+    fillColor: '#dc2626',
+    color: '#fecaca',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.88
+  };
+};
+
+const hospitalCapabilityLine = (label, raw) => {
+  const v = String(raw ?? '').trim();
+  if (!v || v === '<Null>' || v.toLowerCase() === 'null') return null;
+  const yes = v.toLowerCase() === 'y' || v.toLowerCase() === 'yes';
+  if (yes) return `${label}: Yes`;
+  if (v.toLowerCase() === 'n' || v.toLowerCase() === 'no') return `${label}: No`;
+  return `${label}: ${v}`;
+};
+
 const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.9076, -77.0058]; // Eckington, NE DC
   const [parksData, setParksData] = useState(null);
@@ -911,10 +975,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [treeCanopyData, setTreeCanopyData] = useState(null);
   const [combinedSewerData, setCombinedSewerData] = useState(null);
   const [wetlandData, setWetlandData] = useState(null);
+  const [emergencyMedicalData, setEmergencyMedicalData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
   const combinedSewerLayerRef = useRef(null);
   const wetlandLayerRef = useRef(null);
+  const emergencyMedicalLayerRef = useRef(null);
   const treeCanopyStyleFn = useCallback((feature) => getTreeCanopyStyle(feature), []);
   const treeCanopyFilterFn = useCallback(
     (feature) => treeCanopyMatchesSearch(feature, normalizedSearchQuery),
@@ -928,6 +994,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const wetlandStyleFn = useCallback(() => getWetlandStyle(), []);
   const wetlandFilterFn = useCallback(
     (feature) => wetlandMatchesSearch(feature, normalizedSearchQuery),
+    [normalizedSearchQuery]
+  );
+  const emergencyMedicalFilterFn = useCallback(
+    (feature) => emergencyMedicalMatchesSearch(feature, normalizedSearchQuery),
     [normalizedSearchQuery]
   );
 
@@ -1323,6 +1393,104 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch((err) => console.error('Error fetching wetland data:', err));
     }
   }, [activeLayers.wetland, wetlandData]);
+
+  useEffect(() => {
+    if (!activeLayers.emergencyMedical || emergencyMedicalData) return;
+
+    let cancelled = false;
+    const fireUrl =
+      'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Public_Safety_WebMercator/MapServer/6/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson';
+    const hospitalUrl =
+      'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Health_WebMercator/MapServer/4/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson';
+    const primaryUrl =
+      'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Health_WebMercator/MapServer/7/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson';
+    const WALK = 'DCGIS.PrimaryCarePt.WALKIN_UNSCHEDULED';
+
+    Promise.all([fetch(fireUrl).then((r) => r.json()), fetch(hospitalUrl).then((r) => r.json()), fetch(primaryUrl).then((r) => r.json())])
+      .then(([fire, hospitals, primary]) => {
+        if (cancelled) return;
+
+        const fireFeatures = (fire.features || []).map((f) => ({
+          type: 'Feature',
+          geometry: f.geometry,
+          properties: {
+            MED_KIND: 'fireEms',
+            NAME: f.properties?.NAME,
+            ADDRESS: f.properties?.ADDRESS,
+            ZIPCODE: f.properties?.ZIP,
+            PHONE: f.properties?.PHONE,
+            TYPE: f.properties?.TYPE,
+            BATTALION: f.properties?.BATTALION,
+            WARD: f.properties?.WARD,
+            NEAREST_METRO: f.properties?.NEAREST_METRO,
+            NEAREST_BUS_STOP: f.properties?.NEAREST_BUS_STOP,
+            GIS_ID: f.properties?.GIS_ID
+          }
+        }));
+
+        const hospitalFeatures = (hospitals.features || []).map((f) => ({
+          type: 'Feature',
+          geometry: f.geometry,
+          properties: {
+            MED_KIND: 'hospital',
+            NAME: f.properties?.NAME,
+            ADDRESS: f.properties?.ADDRESS,
+            WARD: f.properties?.WARD,
+            TYPE: f.properties?.TYPE,
+            BED_COUNT: f.properties?.BED_COUNT,
+            WEB_URL: f.properties?.WEB_URL,
+            GIS_ID: f.properties?.GIS_ID,
+            ADULT_MEDICAL: f.properties?.ADULT_MEDICAL,
+            ADULT_MAJOR_TRAUMA: f.properties?.ADULT_MAJOR_TRAUMA,
+            ADULT_MINOR_TRAUMA: f.properties?.ADULT_MINOR_TRAUMA,
+            PEDIATRIC_MEDICAL: f.properties?.PEDIATRIC_MEDICAL,
+            PEDIATRIC_MAJOR_TRAUMA: f.properties?.PEDIATRIC_MAJOR_TRAUMA,
+            OBSTETRICS: f.properties?.OBSTETRICS
+          }
+        }));
+
+        const urgentFeatures = (primary.features || [])
+          .filter((f) => {
+            const w = f.properties?.[WALK];
+            return String(w || '').trim().toLowerCase() === 'yes';
+          })
+          .map((f) => {
+            const pr = f.properties || {};
+            return {
+              type: 'Feature',
+              geometry: f.geometry,
+              properties: {
+                MED_KIND: 'urgentCare',
+                NAME: pr['DCGIS.PrimaryCarePt.NAME'],
+                ADDRESS: pr['DCGIS.PrimaryCarePt.ADDRESS'],
+                CITY: pr['DCGIS.PrimaryCarePt.CITY'] || 'Washington',
+                STATE: pr['DCGIS.PrimaryCarePt.STATE'] || 'DC',
+                ZIPCODE: pr['DCGIS.PrimaryCarePt.ZIPCODE'] ?? pr['DCGIS.PrimaryCarePt.ZIP_1'],
+                PHONE: pr['DCGIS.PrimaryCarePt.PHONE'],
+                WEB_URL: pr['DCGIS.PrimaryCarePt.WEB_URL'],
+                WARD: pr['DCGIS.PrimaryCarePt.WARD'],
+                FACILITY_TYPE: pr['DCGIS.PrimaryCarePt.FACILITY_TYPE'],
+                WALKIN_UNSCHEDULED: pr[WALK],
+                ANC: pr['DCGIS.PRIMARY_CARE_INFO.ANC'],
+                QUADRANT: pr['DCGIS.PRIMARY_CARE_INFO.QUADRANT'],
+                GIS_ID: pr['DCGIS.PrimaryCarePt.GIS_ID']
+              }
+            };
+          });
+
+        setEmergencyMedicalData({
+          type: 'FeatureCollection',
+          features: [...fireFeatures, ...hospitalFeatures, ...urgentFeatures]
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Error fetching fire / hospital / urgent care data:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.emergencyMedical, emergencyMedicalData]);
 
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
@@ -2894,6 +3062,131 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               },
               mouseout: (e) => {
                 wetlandLayerRef.current?.resetStyle(e.target);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.emergencyMedical && emergencyMedicalData && (
+        <GeoJSON
+          ref={emergencyMedicalLayerRef}
+          key={`emergency-medical-${searchQuery}`}
+          data={emergencyMedicalData}
+          filter={emergencyMedicalFilterFn}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, getEmergencyMedicalPointStyle(feature.properties))
+          }
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const kind = p.MED_KIND;
+            const name = escapeHtml(p.NAME || 'Facility');
+            const addr = escapeHtml(p.ADDRESS || '');
+            const zip = p.ZIPCODE != null ? escapeHtml(String(p.ZIPCODE)) : '';
+            const phone = escapeHtml(p.PHONE || '');
+            const ward = p.WARD != null ? escapeHtml(`Ward ${p.WARD}`) : '';
+            const web = p.WEB_URL ? escapeHtml(String(p.WEB_URL)) : '';
+
+            const lines = [`<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">`];
+
+            if (kind === 'fireEms') {
+              const typ = escapeHtml(p.TYPE || 'Fire / EMS facility');
+              const batt = p.BATTALION != null ? escapeHtml(`Battalion ${p.BATTALION}`) : '';
+              const metro = escapeHtml(p.NEAREST_METRO || '');
+              const bus = escapeHtml(p.NEAREST_BUS_STOP || '');
+              lines.push(
+                `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+                `<span style="color: #dc2626; margin-right: 6px;">●</span>${name}`,
+                `</div>`,
+                `<div style="font-size: 11px; font-weight: 600; color: #b91c1c; text-transform: uppercase; margin-bottom: 6px;">DC Fire & EMS station</div>`,
+                `<div style="font-size: 12px; color: var(--text-secondary);">${typ}</div>`
+              );
+              if (addr) {
+                lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${addr}${zip ? `, DC ${zip}` : ''}</div>`);
+              }
+              if (phone) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${phone}</div>`);
+              if (ward) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${ward}</div>`);
+              if (batt) lines.push(`<div style="font-size: 11px; color: var(--text-secondary);">${batt}</div>`);
+              if (metro) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;"><strong>Metro:</strong> ${metro}</div>`);
+              if (bus) lines.push(`<div style="font-size: 11px; color: var(--text-secondary);"><strong>Bus:</strong> ${bus}</div>`);
+              lines.push(
+                `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">DC GIS — Public Safety (Fire Stations).</div></div>`
+              );
+            } else if (kind === 'hospital') {
+              const typ = escapeHtml(p.TYPE || 'Hospital');
+              const beds = Number(p.BED_COUNT);
+              lines.push(
+                `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+                `<span style="color: #2563eb; margin-right: 6px;">●</span>${name}`,
+                `</div>`,
+                `<div style="font-size: 11px; font-weight: 600; color: #1d4ed8; text-transform: uppercase; margin-bottom: 6px;">Hospital (DC Health)</div>`,
+                `<div style="font-size: 12px; color: var(--text-secondary);">${typ}</div>`
+              );
+              if (addr) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${addr}</div>`);
+              if (ward) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${ward}</div>`);
+              if (Number.isFinite(beds) && beds > 0) {
+                lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Reported beds: <strong>${beds}</strong></div>`);
+              }
+              const caps = [
+                hospitalCapabilityLine('Adult medical / surgical', p.ADULT_MEDICAL),
+                hospitalCapabilityLine('Adult major trauma', p.ADULT_MAJOR_TRAUMA),
+                hospitalCapabilityLine('Adult minor trauma', p.ADULT_MINOR_TRAUMA),
+                hospitalCapabilityLine('Pediatric medical', p.PEDIATRIC_MEDICAL),
+                hospitalCapabilityLine('Pediatric major trauma', p.PEDIATRIC_MAJOR_TRAUMA),
+                hospitalCapabilityLine('Obstetrics', p.OBSTETRICS)
+              ].filter(Boolean);
+              if (caps.length) {
+                lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height: 1.35;">${caps.map((c) => escapeHtml(c)).join('<br/>')}</div>`);
+              }
+              if (web) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; word-break: break-all;">${web}</div>`);
+              lines.push(
+                `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">DC GIS — Health (Hospitals). Not for emergencies—call 911.</div></div>`
+              );
+            } else {
+              const ftype = escapeHtml(p.FACILITY_TYPE || 'Primary care');
+              const anc = escapeHtml(p.ANC || '');
+              const quad = escapeHtml(p.QUADRANT || '');
+              const city = escapeHtml(p.CITY || '');
+              const st = escapeHtml(p.STATE || '');
+              lines.push(
+                `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+                `<span style="color: #0d9488; margin-right: 6px;">●</span>${name}`,
+                `</div>`,
+                `<div style="font-size: 11px; font-weight: 600; color: #0f766e; text-transform: uppercase; margin-bottom: 6px;">Urgent / walk-in care (DC Health)</div>`,
+                `<div style="font-size: 12px; color: var(--text-secondary);">${ftype} · accepts walk-in / unscheduled visits (per DC dataset)</div>`
+              );
+              if (addr) {
+                const loc = [addr, [city, st].filter(Boolean).join(', '), zip].filter(Boolean).join(' · ');
+                lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${loc}</div>`);
+              }
+              if (phone) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${phone}</div>`);
+              if (ward) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${ward}</div>`);
+              if (quad || anc) {
+                lines.push(`<div style="font-size: 11px; color: var(--text-secondary);">${[quad, anc ? `ANC ${anc}` : ''].filter(Boolean).join(' · ')}</div>`);
+              }
+              if (web) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; word-break: break-all;">${web}</div>`);
+              lines.push(
+                `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">DC GIS — Health (Primary Care, walk-in subset). Verify hours and services before visiting.</div></div>`
+              );
+            }
+
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getEmergencyMedicalPointStyle(feature.properties);
+                l.setRadius((base.radius || 6) + 3);
+                l.setStyle({ ...base, weight: (base.weight || 2) + 1 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                emergencyMedicalLayerRef.current?.resetStyle(e.target);
               }
             });
           }}

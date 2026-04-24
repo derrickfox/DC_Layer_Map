@@ -118,6 +118,7 @@ function App() {
     treeCanopy: false,
     combinedSewer: false,
     wetland: false,
+    emergencyMedical: false,
     propertyValues: false,
     crime: false,
     foodDeserts: false,
