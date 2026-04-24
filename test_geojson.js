@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 fetch('https://raw.githubusercontent.com/alulsh/dc-micromobility-by-neighborhood/main/dc-neighborhoods.geojson')
   .then(res => res.json())
   .then(data => {

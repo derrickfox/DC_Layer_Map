@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, GeoJSON, Circle, 
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
 import 'esri-leaflet';
-import { imageMapLayer } from 'esri-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Vite + Leaflet
@@ -349,11 +348,13 @@ const customOverrides = {
   "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
   "Columbia Heights": { center: [38.9283, -77.0327], radius: 500 },
   "Mt. Pleasant": { center: [38.9317, -77.0383], radius: 450 },
+  "Cardozo/Shaw": { center: [38.9170, -77.0320], radius: 450 },
   "Dupont Circle": { center: [38.9096, -77.0434], radius: 500 },
   "Kalorama Heights": { center: [38.9174, -77.0505], radius: 450 },
   "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
   "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
   "Georgetown": { center: [38.9048, -77.0628], radius: 550 },
+  "Burleith/Hillandale": { center: [38.9145, -77.0700], radius: 450 },
   "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
   "National Mall": { center: [38.8895, -77.0230], radius: 600 },
   "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
@@ -373,11 +374,36 @@ const customOverrides = {
   "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 }
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned }) => {
+const NEIGHBORHOOD_DISPLAY_NAMES = {
+  'Kalorama Heights': 'Kalorama',
+  'Mt. Pleasant': 'Mount Pleasant',
+  'Burleith/Hillandale': 'Burleith / Hillandale',
+  'Historic Anacostia': 'Anacostia',
+  'Southwest/Waterfront': 'Southwest Waterfront / The Wharf'
+};
+
+const syntheticNeighborhoods = [
+  { name: 'U Street Corridor', center: [38.9170, -77.0270], radius: 450 },
+  { name: 'H Street Corridor', center: [38.9007, -76.9955], radius: 450 },
+  { name: 'Barracks Row', center: [38.8817, -76.9952], radius: 350 },
+  { name: 'Hill East', center: [38.8845, -76.9785], radius: 500 }
+];
+
+const getNeighborhoodDisplayName = (name) => NEIGHBORHOOD_DISPLAY_NAMES[name] || name;
+
+const escapeHtml = (value) => String(value || '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;');
+
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
   const [museumsData, setMuseumsData] = useState(null);
+  const [muralsPublicArtData, setMuralsPublicArtData] = useState(null);
   const [propertyValuesData, setPropertyValuesData] = useState(null);
   const [crimeData, setCrimeData] = useState(null);
   const [bikeLanesData, setBikeLanesData] = useState(null);
@@ -385,6 +411,19 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [metroStationsData, setMetroStationsData] = useState(null);
   const [federalPropertyData, setFederalPropertyData] = useState(null);
   const [zoningData, setZoningData] = useState(null);
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const toggleNeighborhoodSelection = (name) => {
+    setSelectedNeighborhoods(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(name)) {
+        newSet.delete(name);
+      } else {
+        newSet.add(name);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
@@ -443,6 +482,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching museums data:", err));
     }
   }, [activeLayers.museums, museumsData]);
+
+  useEffect(() => {
+    if (activeLayers.muralsPublicArt && !muralsPublicArtData) {
+      import('../data/murals-public-art.json')
+        .then(module => setMuralsPublicArtData(module.default))
+        .catch(err => console.error("Error loading murals and public art data:", err));
+    }
+  }, [activeLayers.muralsPublicArt, muralsPublicArtData]);
 
   useEffect(() => {
     if (activeLayers.propertyValues && !propertyValuesData) {
@@ -690,7 +737,6 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           {geoJsonData.features
             .flatMap((feature, featureIndex) => {
             const rawNames = feature.properties?.NBH_NAMES || 'Unknown Neighborhood';
-            const clusterName = feature.properties?.NAME || 'Neighborhood Cluster';
             const neighborhoods = rawNames.split(',')
               .map(n => n.trim())
               .filter(n => n !== 'Anacostia River'); // Remove river from neighborhood list
@@ -710,8 +756,15 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             const radiusX = lngDiff * 0.2;
 
             return neighborhoods.map((name, i) => {
-              // Check if this specific neighborhood is toggled off
-              if (hiddenNeighborhoods && hiddenNeighborhoods.has(name)) {
+              const displayName = getNeighborhoodDisplayName(name);
+              const isSearchMatch = normalizedSearchQuery && (
+                name.toLowerCase().includes(normalizedSearchQuery) ||
+                displayName.toLowerCase().includes(normalizedSearchQuery)
+              );
+              if (normalizedSearchQuery && !isSearchMatch) {
+                return null;
+              }
+              if (!normalizedSearchQuery && hiddenNeighborhoods && hiddenNeighborhoods.has(name)) {
                 return null;
               }
 
@@ -738,34 +791,93 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 <Circle
                   key={`${featureIndex}-${i}`}
                   center={pos}
-                  radius={finalRadius * (isSelected ? 1.5 : 1.2)}
+                  radius={showNeighborhoodBackgrounds ? finalRadius * (isSelected ? 1.5 : 1.2) : 1}
                   pathOptions={{
-                    color: isSelected ? '#ffffff' : color,
-                    weight: isSelected ? 2 : 0,
+                    color: showNeighborhoodBackgrounds ? (isSelected ? '#ffffff' : color) : 'transparent',
+                    weight: showNeighborhoodBackgrounds ? (isSelected ? 2 : 0) : 0,
                     fillColor: color,
-                    fillOpacity: isSelected ? 0.7 : 0.3,
-                    className: isSelected ? 'blurry-node-selected' : 'blurry-node'
+                    fillOpacity: showNeighborhoodBackgrounds ? (isSelected ? 0.7 : 0.3) : 0,
+                    className: showNeighborhoodBackgrounds ? (isSelected ? 'blurry-node-selected' : 'blurry-node') : ''
                   }}
                   eventHandlers={{
                     click: () => {
-                      setSelectedNeighborhoods(prev => {
-                        const newSet = new Set(prev);
-                        if (newSet.has(name)) {
-                          newSet.delete(name);
-                        } else {
-                          newSet.add(name);
-                        }
-                        return newSet;
-                      });
+                      toggleNeighborhoodSelection(name);
                     }
                   }}
                 >
-                  <Tooltip permanent direction="center" className="neighborhood-label">
-                    {name}
+                  <Tooltip
+                    permanent
+                    direction="center"
+                    interactive={!!isSearchMatch}
+                    className={`neighborhood-label ${isSearchMatch ? 'neighborhood-label-search-result' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="neighborhood-label-button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        L.DomEvent.stopPropagation(event.nativeEvent);
+                        toggleNeighborhoodSelection(name);
+                      }}
+                    >
+                      {displayName}
+                    </button>
                   </Tooltip>
                 </Circle>
               );
             });
+          })}
+          {syntheticNeighborhoods.map((neighborhood, index) => {
+            const { name, center, radius } = neighborhood;
+            const isSearchMatch = normalizedSearchQuery && name.toLowerCase().includes(normalizedSearchQuery);
+            if (normalizedSearchQuery && !isSearchMatch) {
+              return null;
+            }
+            if (!normalizedSearchQuery && hiddenNeighborhoods && hiddenNeighborhoods.has(name)) {
+              return null;
+            }
+
+            const color = NEIGHBORHOOD_COLORS[(index + 3) % NEIGHBORHOOD_COLORS.length];
+            const isSelected = selectedNeighborhoods.has(name);
+
+            return (
+              <Circle
+                key={`synthetic-${name}`}
+                center={center}
+                radius={showNeighborhoodBackgrounds ? radius * (isSelected ? 1.5 : 1.2) : 1}
+                pathOptions={{
+                  color: showNeighborhoodBackgrounds ? (isSelected ? '#ffffff' : color) : 'transparent',
+                  weight: showNeighborhoodBackgrounds ? (isSelected ? 2 : 0) : 0,
+                  fillColor: color,
+                  fillOpacity: showNeighborhoodBackgrounds ? (isSelected ? 0.7 : 0.3) : 0,
+                  className: showNeighborhoodBackgrounds ? (isSelected ? 'blurry-node-selected' : 'blurry-node') : ''
+                }}
+                eventHandlers={{
+                  click: () => {
+                    toggleNeighborhoodSelection(name);
+                  }
+                }}
+              >
+                <Tooltip
+                  permanent
+                  direction="center"
+                  interactive={!!isSearchMatch}
+                  className={`neighborhood-label ${isSearchMatch ? 'neighborhood-label-search-result' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className="neighborhood-label-button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      L.DomEvent.stopPropagation(event.nativeEvent);
+                      toggleNeighborhoodSelection(name);
+                    }}
+                  >
+                    {name}
+                  </button>
+                </Tooltip>
+              </Circle>
+            );
           })}
         </>
       )}
@@ -860,6 +972,87 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 offset: [10, -20]
               }
             );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 4 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(6);
+                l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Murals & Public Art Layer */}
+      {activeLayers.muralsPublicArt && muralsPublicArtData && (
+        <GeoJSON
+          key={`murals-public-art-${searchQuery}`}
+          data={muralsPublicArtData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const props = feature.properties || {};
+            return [
+              props.title,
+              props.artist,
+              props.artType,
+              props.medium,
+              props.address,
+              props.neighborhood,
+              props.source
+            ].some(value => String(value || '').toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: 6,
+              fillColor: '#ca8a04',
+              color: '#facc15',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.85
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const title = escapeHtml(props.title || 'Untitled Public Art');
+            const artist = escapeHtml(props.artist);
+            const artType = escapeHtml(props.artType || 'Public Art');
+            const medium = escapeHtml(props.medium);
+            const year = escapeHtml(props.year);
+            const address = escapeHtml(props.address);
+            const neighborhood = escapeHtml(props.neighborhood);
+            const source = escapeHtml(props.source);
+
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 320px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(202, 138, 4, 0.35); padding-bottom: 4px;">
+                  <span style="color: #ca8a04; margin-right: 4px;">•</span>${title}
+                </div>
+                <div style="font-size: 11px; font-weight: 700; color: #ca8a04; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${artType}${year ? ` · ${year}` : ''}
+                </div>
+                ${artist ? `<div style="font-size: 12px; color: var(--text-primary); line-height: 1.35;"><strong>Artist:</strong> ${artist}</div>` : ''}
+                ${medium ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Medium:</strong> ${medium}</div>` : ''}
+                ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Address:</strong> ${address}</div>` : ''}
+                ${neighborhood ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Neighborhood:</strong> ${neighborhood}</div>` : ''}
+                ${source ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 5px; opacity: 0.85;">${source}</div>` : ''}
+              </div>
+            `;
+
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
             layer.on({
               mouseover: (e) => {
                 const l = e.target;
@@ -1361,7 +1554,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       {activeLayers.bikeLanes && bikeLanesData && (
         <GeoJSON
-          key={`bikelanes-${Date.now()}`}
+          key="bikelanes"
           data={bikeLanesData}
           style={(feature) => {
             const props = feature.properties;
@@ -1445,7 +1638,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       {activeLayers.metro && metroLinesData && (
         <GeoJSON
-          key={`metrolines-${Date.now()}`}
+          key={`metrolines-${searchQuery}`}
           data={metroLinesData}
           filter={(feature) => {
             if (!searchQuery) return true;
@@ -1514,7 +1707,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       {activeLayers.metro && metroStationsData && (
         <GeoJSON
-          key={`metrostations-${Date.now()}`}
+          key={`metrostations-${searchQuery}`}
           data={metroStationsData}
           filter={(feature) => {
             if (!searchQuery) return true;

@@ -80,6 +80,7 @@ body {
 .glass-button.active-skyblue { background: #38bdf8; color: #ffffff; border-color: #0284c7; box-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
 .glass-button.active-purple { background: #a78bfa; color: #ffffff; border-color: #7c3aed; box-shadow: 0 0 12px rgba(167, 139, 250, 0.4); }
 .glass-button.active-pink { background: #f472b6; color: #ffffff; border-color: #db2777; box-shadow: 0 0 12px rgba(244, 114, 182, 0.4); }
+.glass-button.active-gold { background: #ca8a04; color: #ffffff; border-color: #a16207; box-shadow: 0 0 12px rgba(202, 138, 4, 0.4); }
 .glass-button.active-teal { background: #14b8a6; color: #ffffff; border-color: #0d9488; box-shadow: 0 0 12px rgba(20, 184, 166, 0.4); }
 .glass-button.active-red { background: #ef4444; color: #ffffff; border-color: #dc2626; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
 .glass-button.active-emerald { background: #10b981; color: #ffffff; border-color: #059669; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
@@ -156,16 +157,14 @@ path.leaflet-interactive:focus {
   outline: none;
 }
 
-/* Blurry Neighborhood Effect */
+/* Neighborhood circle styling */
 .blurry-node {
-  filter: blur(25px);
-  transition: filter 0.3s ease, fill-opacity 0.3s ease;
+  transition: fill-opacity 0.3s ease;
   pointer-events: visiblePainted;
 }
 
 .blurry-node-selected {
-  filter: blur(8px);
-  transition: filter 0.3s ease, fill-opacity 0.3s ease;
+  transition: fill-opacity 0.3s ease;
   pointer-events: visiblePainted;
 }
 
@@ -187,6 +186,31 @@ path.leaflet-interactive:focus {
   text-shadow: 0 0 6px rgba(255, 255, 255, 1), 0 0 12px rgba(255, 255, 255, 0.8), 0 0 2px rgba(255, 255, 255, 1);
   white-space: nowrap;
   pointer-events: none;
+}
+
+.neighborhood-label-search-result.leaflet-tooltip {
+  pointer-events: auto;
+}
+
+.neighborhood-label-button {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: inherit;
+  font: inherit;
+  font-weight: inherit;
+  padding: 0;
+  text-shadow: inherit;
+  white-space: inherit;
+}
+
+.neighborhood-label-search-result .neighborhood-label-button {
+  cursor: pointer;
+}
+
+.neighborhood-label-search-result .neighborhood-label-button:hover {
+  color: var(--accent-primary);
 }
 
 .neighborhood-label.leaflet-tooltip::before {

@@ -3,6 +3,101 @@ import MapArea from './components/MapArea';
 import LayerControls from './components/LayerControls';
 import './index.css';
 
+const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
+  'Adams Morgan',
+  'American University Park',
+  'Barnaby Woods',
+  'Berkley',
+  'Bloomingdale',
+  'Brightwood',
+  'Buzzard Point',
+  'Cardozo/Shaw',
+  'Cathedral Heights',
+  'Chevy Chase',
+  'Chinatown',
+  'Cleveland Park',
+  'Columbia Heights',
+  'Connecticut Avenue/K Street',
+  'Downtown',
+  'Dupont Circle',
+  'Foggy Bottom',
+  'Friendship Heights',
+  'Forest Hills',
+  'Foxhall Crescent',
+  'Foxhall Village',
+  'Georgetown',
+  'Glover Park',
+  'Burleith/Hillandale',
+  'Kalorama Heights',
+  'Observatory Circle',
+  'Logan Circle',
+  'Mt. Pleasant',
+  'Kent',
+  'North Cleveland Park',
+  'Palisades',
+  'Petworth',
+  'Shaw',
+  'Spring Valley',
+  'Takoma',
+  'Tenleytown',
+  'Truxton Circle',
+  'U Street Corridor',
+  'Union Station',
+  'Van Ness',
+  'Wesley Heights',
+  'Woodley Park',
+  'Brookland',
+  'Brentwood',
+  'Fort Lincoln',
+  'Fort Totten',
+  'Eckington',
+  'Edgewood',
+  'H Street Corridor',
+  'Ivy City',
+  'Langdon',
+  'Lamont Riggs',
+  'Le Droit Park',
+  'Michigan Park',
+  'Queens Chapel',
+  'Trinidad',
+  'Woodridge',
+  'Arboretum',
+  'Benning',
+  'Carver Langston',
+  'Deanwood',
+  'Historic Anacostia',
+  'Kenilworth',
+  'Kingman Park',
+  'River Terrace',
+  'Barracks Row',
+  'Barry Farm',
+  'Bellevue',
+  'Capitol Hill',
+  'Capitol View',
+  'Congress Heights',
+  'Crestwood',
+  'Fairlawn',
+  'Fort Dupont',
+  'Hill East',
+  'Hillcrest',
+  'National Mall',
+  'Navy Yard',
+  'Penn Branch',
+  'Randle Highlands',
+  'Shipley Terrace',
+  'Stanton Park',
+  'Southwest/Waterfront',
+  'Washington Highlands',
+  'Woodland/Fort Stanton'
+]);
+
+const SYNTHETIC_NEIGHBORHOODS = [
+  'U Street Corridor',
+  'H Street Corridor',
+  'Barracks Row',
+  'Hill East'
+];
+
 function App() {
   const [activeLayers, setActiveLayers] = useState({
     historical: false,
@@ -10,6 +105,7 @@ function App() {
     parks: false,
     squares: false,
     museums: true,
+    muralsPublicArt: false,
     events: true,
     monuments: true,
     embassies: true,
@@ -30,6 +126,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [previousActiveLayers, setPreviousActiveLayers] = useState(null);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState(new Set());
+  const [showNeighborhoodBackgrounds, setShowNeighborhoodBackgrounds] = useState(true);
 
   const [isLeftAligned, setIsLeftAligned] = useState(false);
 
@@ -50,14 +147,19 @@ function App() {
             feature.properties.NBH_NAMES = rawNames;
           }
 
-          const names = rawNames.split(',').map(n => n.trim()).filter(n => n);
+          const names = rawNames
+            .split(',')
+            .map(n => n.trim())
+            .filter(n => n && n !== 'Anacostia River');
           names.forEach(n => allNames.add(n));
         });
+        SYNTHETIC_NEIGHBORHOODS.forEach(name => allNames.add(name));
         
         setGeoJsonData(data);
         
         const sortedNames = Array.from(allNames).sort();
         setNeighborhoodList(sortedNames);
+        setHiddenNeighborhoods(new Set(sortedNames.filter(name => !DEFAULT_VISIBLE_NEIGHBORHOODS.has(name))));
       })
       .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
 
@@ -127,6 +229,7 @@ function App() {
           selectedNeighborhoods={selectedNeighborhoods}
           setSelectedNeighborhoods={setSelectedNeighborhoods}
           isLeftAligned={isLeftAligned}
+          showNeighborhoodBackgrounds={showNeighborhoodBackgrounds}
         />
         <LayerControls 
           activeLayers={activeLayers} 
@@ -139,6 +242,8 @@ function App() {
           setSearchQuery={handleSearchChange}
           isLeftAligned={isLeftAligned}
           setIsLeftAligned={setIsLeftAligned}
+          showNeighborhoodBackgrounds={showNeighborhoodBackgrounds}
+          toggleNeighborhoodBackgrounds={() => setShowNeighborhoodBackgrounds(prev => !prev)}
         />
       </div>
     </>

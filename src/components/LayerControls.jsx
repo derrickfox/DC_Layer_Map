@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Pencil, Check, X, TrainFront, Building2, Building } from 'lucide-react';
+import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
+  { id: 'muralsPublicArt', label: 'Murals & Public Art', icon: Palette, color: '#ca8a04', activeClass: 'active-gold' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
   { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
@@ -29,7 +30,9 @@ const LayerControls = ({
   searchQuery,
   setSearchQuery,
   isLeftAligned,
-  setIsLeftAligned
+  setIsLeftAligned,
+  showNeighborhoodBackgrounds,
+  toggleNeighborhoodBackgrounds
 }) => {
   const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
@@ -203,6 +206,16 @@ const LayerControls = ({
                 Neighborhoods
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: '-4px' }}>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (toggleNeighborhoodBackgrounds) toggleNeighborhoodBackgrounds();
+                  }}
+                  style={{ display: 'flex', alignItems: 'center', padding: '4px' }}
+                  title={showNeighborhoodBackgrounds ? "Hide neighborhood backgrounds" : "Show neighborhood backgrounds"}
+                >
+                  <CircleDot size={18} color={showNeighborhoodBackgrounds ? 'currentColor' : 'var(--text-secondary)'} />
+                </div>
                 <div
                   onClick={(e) => {
                     e.stopPropagation();
