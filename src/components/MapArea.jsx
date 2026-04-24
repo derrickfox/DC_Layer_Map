@@ -659,12 +659,136 @@ const wardFeatureMatchesSearch = (feature, query) => {
   ].some(value => String(value || '').toLowerCase().includes(query));
 };
 
+const getDcplDprPointStyle = (props = {}) => {
+  const kind = props.AMENITY_KIND;
+  if (kind === 'library') {
+    return { pane: 'markerPane', radius: 6, fillColor: '#0284c7', color: '#7dd3fc', weight: 2, opacity: 1, fillOpacity: 0.88 };
+  }
+  if (kind === 'recCenter') {
+    return { pane: 'markerPane', radius: 6, fillColor: '#ea580c', color: '#fdba74', weight: 2, opacity: 1, fillOpacity: 0.88 };
+  }
+  return { pane: 'markerPane', radius: 5, fillColor: '#64748b', color: '#94a3b8', weight: 2, opacity: 1, fillOpacity: 0.8 };
+};
+
+const dcplDprAmenityMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const props = feature.properties || {};
+  const kind = String(props.AMENITY_KIND || '');
+  return [
+    props.NAME,
+    props.ADDRESS,
+    props.TYPE,
+    props.USE_TYPE,
+    props.PHONE,
+    props.POOL,
+    props.POOL_NAME,
+    props.WARD,
+    props.WARD_ID,
+    props.STATUS,
+    props.FITNESS_CENTER,
+    props.WEB_URL,
+    props.GIS_ID,
+    kind,
+    props.AMENITY_SOURCE,
+    kind === 'library' ? 'library dcpl book' : '',
+    kind === 'recCenter' ? 'recreation center dpr gym pool swim aquatic' : ''
+  ].some(value => String(value || '').toLowerCase().includes(query));
+};
+
+const getFoodDesertPolygonStyle = (props = {}) => {
+  const p = Number(props.PERCENTUND185);
+  const t = Number.isFinite(p) ? Math.max(0, Math.min(1, p)) : 0;
+  let fill = '#fef9c3';
+  if (t >= 0.15) fill = '#fde047';
+  if (t >= 0.3) fill = '#fb923c';
+  if (t >= 0.45) fill = '#f97316';
+  if (t >= 0.6) fill = '#ef4444';
+  if (t >= 0.75) fill = '#b91c1c';
+  return {
+    color: '#78350f',
+    weight: 1.25,
+    opacity: 0.88,
+    fillColor: fill,
+    fillOpacity: 0.42 + 0.3 * t
+  };
+};
+
+const foodDesertMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const props = feature.properties || {};
+  return [
+    props.NAME,
+    props.WARD,
+    props.GIS_ID,
+    props.PARTPOP2,
+    props.PRTUND185,
+    props.PRTOVR185,
+    props.PERCENTUND185
+  ].some((value) => String(value ?? '').toLowerCase().includes(query));
+};
+
+const BUS_ROUTE_COLOR_PALETTE = ['#2563eb', '#7c3aed', '#db2777', '#0d9488', '#ca8a04', '#4f46e5', '#be185d', '#0369a1'];
+
+const getBusRouteLineStyle = (feature) => {
+  const props = feature.properties || {};
+  const key = props.ROUTE || props.RT_D || props.SHAPE_ID || props.DESCRIPTION || '';
+  return {
+    color: getStablePaletteColor(key, BUS_ROUTE_COLOR_PALETTE),
+    weight: 2,
+    opacity: 0.82
+  };
+};
+
+const busRouteFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.ROUTE,
+    p.RT_D,
+    p.DESCRIPTION,
+    p.ORIGIN,
+    p.DESTINATION,
+    p.DIRECTION,
+    p.SHAPE_ID,
+    p.GIS_ID,
+    p.STATE,
+    'metrobus wmata better bus'
+  ].some((v) => String(v || '').toLowerCase().includes(query));
+};
+
+const farmersMarketMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.NAME,
+    p.ADDRESS,
+    p.CITY,
+    p.STATE,
+    p.ZIPCODE,
+    p.WARD,
+    p.ANC,
+    p.DAYS,
+    p.TIMES,
+    p.WEBSITE,
+    p.BENEFITS,
+    p.SOCIAL,
+    p.STARTDATE,
+    p.ENDDATE,
+    p.METRO,
+    p.BUS,
+    p.PARKING,
+    p.MD_COUNTY,
+    p.MAR_MATCHADDRESS
+  ].some((v) => String(v || '').toLowerCase().includes(query));
+};
+
 const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
-  const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
+  const dcCenter = [38.9076, -77.0058]; // Eckington, NE DC
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
   const [museumsData, setMuseumsData] = useState(null);
   const [dcpsSchoolsData, setDcpsSchoolsData] = useState(null);
+  const [librariesRecPoolsData, setLibrariesRecPoolsData] = useState(null);
   const [muralsPublicArtData, setMuralsPublicArtData] = useState(null);
   const [historicLandmarksData, setHistoricLandmarksData] = useState(null);
   const [propertyValuesData, setPropertyValuesData] = useState(null);
@@ -672,10 +796,13 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [bikeLanesData, setBikeLanesData] = useState(null);
   const [metroLinesData, setMetroLinesData] = useState(null);
   const [metroStationsData, setMetroStationsData] = useState(null);
+  const [busRoutesData, setBusRoutesData] = useState(null);
   const [federalPropertyData, setFederalPropertyData] = useState(null);
   const [federalBuildingsData, setFederalBuildingsData] = useState(null);
   const [zoningData, setZoningData] = useState(null);
   const [wardsData, setWardsData] = useState(null);
+  const [foodDesertsData, setFoodDesertsData] = useState(null);
+  const [farmersMarketsData, setFarmersMarketsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const toggleNeighborhoodSelection = (name) => {
@@ -756,6 +883,44 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching DCPS schools data:", err));
     }
   }, [activeLayers.dcps, dcpsSchoolsData]);
+
+  useEffect(() => {
+    if (activeLayers.librariesRecPools && !librariesRecPoolsData) {
+      // DC GIS "Swimming Pools" (MapServer/11) includes public *and* private residential pools
+      // with no attribute to filter—so we only use DCPL libraries + DPR rec center points.
+      // Public aquatics appear on rec centers via POOL / POOL_NAME.
+      const librariesUrl = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Cultural_and_Society_WebMercator/MapServer/4/query?where=1%3D1&outFields=*&outSR=4326&f=geojson';
+      const recreationUrl = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/4/query?where=1%3D1&outFields=*&outSR=4326&f=geojson';
+
+      Promise.all([
+        fetch(`${librariesUrl}&resultRecordCount=100`).then((res) => res.json()),
+        fetch(`${recreationUrl}&resultRecordCount=200`).then((res) => res.json())
+      ])
+        .then(([libraries, recreation]) => {
+          const libFeatures = (libraries.features || []).map((f) => ({
+            ...f,
+            properties: {
+              ...f.properties,
+              AMENITY_KIND: 'library',
+              AMENITY_SOURCE: 'DCPL'
+            }
+          }));
+          const recFeatures = (recreation.features || []).map((f) => ({
+            ...f,
+            properties: {
+              ...f.properties,
+              AMENITY_KIND: 'recCenter',
+              AMENITY_SOURCE: 'DPR'
+            }
+          }));
+          setLibrariesRecPoolsData({
+            type: 'FeatureCollection',
+            features: [...libFeatures, ...recFeatures]
+          });
+        })
+        .catch((err) => console.error('Error fetching libraries / recreation centers:', err));
+    }
+  }, [activeLayers.librariesRecPools, librariesRecPoolsData]);
 
   useEffect(() => {
     if (activeLayers.muralsPublicArt && !muralsPublicArtData) {
@@ -907,6 +1072,23 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   }, [activeLayers.metro, metroStationsData]);
 
   useEffect(() => {
+    if (activeLayers.bus && !busRoutesData) {
+      const metroBusUrl =
+        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Rail_Bus_WebMercator/MapServer/59/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=2000';
+
+      fetch(metroBusUrl)
+        .then((r) => r.json())
+        .then((metroBus) =>
+          setBusRoutesData({
+            type: 'FeatureCollection',
+            features: metroBus.features || []
+          })
+        )
+        .catch((err) => console.error('Error fetching Metrobus routes:', err));
+    }
+  }, [activeLayers.bus, busRoutesData]);
+
+  useEffect(() => {
     if (activeLayers.federal && !federalPropertyData) {
       import('../data/federal-property.json')
         .then(module => setFederalPropertyData(module.default))
@@ -938,6 +1120,28 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching ward boundaries:", err));
     }
   }, [activeLayers.wards, wardsData]);
+
+  useEffect(() => {
+    if (activeLayers.foodDeserts && !foodDesertsData) {
+      fetch(
+        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Public_Service_WebMercator/MapServer/61/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
+      )
+        .then((res) => res.json())
+        .then((data) => setFoodDesertsData(data))
+        .catch((err) => console.error('Error fetching low food access areas:', err));
+    }
+  }, [activeLayers.foodDeserts, foodDesertsData]);
+
+  useEffect(() => {
+    if (activeLayers.farmersMarkets && !farmersMarketsData) {
+      fetch(
+        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Business_Goods_and_Service_WebMercator/MapServer/2/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=200'
+      )
+        .then((res) => res.json())
+        .then((data) => setFarmersMarketsData(data))
+        .catch((err) => console.error('Error fetching farmers market locations:', err));
+    }
+  }, [activeLayers.farmersMarkets, farmersMarketsData]);
 
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
@@ -1053,7 +1257,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   return (
     <MapContainer 
       center={dcCenter} 
-      zoom={14} 
+      zoom={13} 
       minZoom={11}
       style={{ height: '100%', width: '100%', zIndex: 0 }}
       zoomControl={false}
@@ -1388,6 +1592,84 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               mouseout: (e) => {
                 const l = e.target;
                 const s = getDcpsPointStyle(feature.properties);
+                l.setRadius(s.radius);
+                l.setStyle({ weight: s.weight });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* DCPL libraries + DPR recreation centers (public pool info on center attributes, not residential pool GIS) */}
+      {activeLayers.librariesRecPools && librariesRecPoolsData && (
+        <GeoJSON
+          key={`libraries-rec-pools-${searchQuery}`}
+          data={librariesRecPoolsData}
+          filter={(feature) => dcplDprAmenityMatchesSearch(feature, normalizedSearchQuery)}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, getDcplDprPointStyle(feature.properties))
+          }
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const kind = props.AMENITY_KIND;
+
+            const name = escapeHtml(props.NAME || 'Facility');
+            const badge =
+              kind === 'library'
+                ? '<span style="color:#0284c7;font-weight:600;font-size:11px;">DCPL Library</span>'
+                : '<span style="color:#ea580c;font-weight:600;font-size:11px;">DPR Recreation Center</span>';
+            const typeOrUse = escapeHtml(props.TYPE || props.USE_TYPE || '');
+            const address = escapeHtml(props.ADDRESS || '');
+            const phone = escapeHtml(props.PHONE || '');
+            const ward = escapeHtml(props.WARD || (props.WARD_ID != null ? `Ward ${props.WARD_ID}` : ''));
+            const poolName = escapeHtml(props.POOL_NAME || '');
+            const poolHas = poolName && String(poolName).toLowerCase() !== 'none';
+            const poolTypeRaw = String(props.POOL || '').trim();
+            const poolType =
+              poolTypeRaw && poolTypeRaw.toLowerCase() !== 'none'
+                ? escapeHtml(poolTypeRaw.replace(/_/g, ' '))
+                : '';
+            const fitness = escapeHtml(props.FITNESS_CENTER || '');
+            const status = escapeHtml(props.STATUS || '');
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 280px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">${name}</div>`,
+              `<div style="margin-bottom: 6px;">${badge}</div>`
+            ];
+            if (typeOrUse) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${typeOrUse}</div>`);
+            if (address) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${address}</div>`);
+            if (ward) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${ward}</div>`);
+            if (phone) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${phone}</div>`);
+            if (kind === 'recCenter' && poolType) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Aquatics: ${poolType}</div>`);
+            }
+            if (kind === 'recCenter' && poolHas) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">Pool: ${poolName}</div>`);
+            }
+            if (kind === 'recCenter' && fitness && String(fitness).toLowerCase() !== 'no') {
+              lines.push(`<div style="font-size: 11px; color: var(--text-secondary);">${fitness}</div>`);
+            }
+            if (status && status.toLowerCase() !== 'open') {
+              lines.push(`<div style="font-size: 11px; color: #f97316; margin-top: 4px;">Status: ${status}</div>`);
+            }
+            lines.push(`</div>`);
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 4 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const s = getDcplDprPointStyle(feature.properties);
                 l.setRadius(s.radius);
                 l.setStyle({ weight: s.weight });
               }
@@ -2106,6 +2388,171 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
+      {/* DC Office of Planning: Low Food Access Areas (often called food deserts) */}
+      {activeLayers.foodDeserts && foodDesertsData && (
+        <GeoJSON
+          key={`food-deserts-${searchQuery}`}
+          data={foodDesertsData}
+          filter={(feature) => foodDesertMatchesSearch(feature, normalizedSearchQuery)}
+          style={(feature) => getFoodDesertPolygonStyle(feature.properties)}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const title = escapeHtml(props.NAME || 'Low food access area');
+            const ward = props.WARD != null ? escapeHtml(String(props.WARD)) : '';
+            const pop = formatNumber(props.PARTPOP2);
+            const under = formatNumber(props.PRTUND185);
+            const over = formatNumber(props.PRTOVR185);
+            const pctRaw = Number(props.PERCENTUND185);
+            const pct =
+              Number.isFinite(pctRaw) ? `${(pctRaw * 100).toFixed(1).replace(/\.0$/, '')}%` : '';
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: #d97706; margin-right: 6px;">●</span>${title}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 600; color: #b45309; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;">`,
+              `Low food access (DC Office of Planning)`,
+              `</div>`,
+              `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">`,
+              `More than an estimated 10-minute walk to the nearest full-service grocery, `,
+              `with Census-based estimates of population below 185% of the federal poverty line.`,
+              `</div>`
+            ];
+            if (ward) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">Ward: ${ward}</div>`);
+            }
+            if (pop) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Estimated population in zone: <strong>${pop}</strong></div>`);
+            }
+            if (under || over) {
+              lines.push(
+                `<div style="font-size: 12px; color: var(--text-secondary);">Below 185% FPL: <strong>${under || '—'}</strong> · Above: <strong>${over || '—'}</strong></div>`
+              );
+            }
+            if (pct) {
+              lines.push(
+                `<div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 6px;">Estimated food-insecure share of zone: ${pct}</div>`
+              );
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">`,
+              `Source: DC GIS Low Food Access Areas. Methodology updated through 2017; see Open Data DC for current metadata.`,
+              `</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getFoodDesertPolygonStyle(feature.properties);
+                l.setStyle({ ...base, weight: 2.5, fillOpacity: Math.min(0.92, base.fillOpacity + 0.12) });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                e.target.setStyle(getFoodDesertPolygonStyle(feature.properties));
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.farmersMarkets && farmersMarketsData && (
+        <GeoJSON
+          key={`farmers-markets-${searchQuery}`}
+          data={farmersMarketsData}
+          filter={(feature) => farmersMarketMatchesSearch(feature, normalizedSearchQuery)}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: 6,
+              fillColor: '#22c55e',
+              color: '#15803d',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            })
+          }
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Farmers market');
+            const addr = escapeHtml(p.ADDRESS || '');
+            const city = escapeHtml(p.CITY || '');
+            const st = escapeHtml(p.STATE || '');
+            const zip = escapeHtml(p.ZIPCODE || '');
+            const ward = escapeHtml(p.WARD || '');
+            const anc = escapeHtml(p.ANC || '');
+            const days = escapeHtml(p.DAYS || '');
+            const times = escapeHtml(p.TIMES || '');
+            const season =
+              p.STARTDATE || p.ENDDATE
+                ? escapeHtml([p.STARTDATE, p.ENDDATE].filter(Boolean).join(' – '))
+                : '';
+            const benefits = escapeHtml(p.BENEFITS || '');
+            const metro = escapeHtml(p.METRO || '');
+            const bus = escapeHtml(p.BUS || '');
+            const parking = escapeHtml(p.PARKING || '');
+            const web = p.WEBSITE ? escapeHtml(p.WEBSITE) : '';
+            const county = escapeHtml(p.MD_COUNTY || '');
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: #15803d; margin-right: 6px;">●</span>${name}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 600; color: #15803d; text-transform: uppercase; letter-spacing: 0.35px; margin-bottom: 6px;">`,
+              `Farmers market (DC Health)`,
+              `</div>`
+            ];
+            if (addr) {
+              const loc = [addr, [city, st].filter(Boolean).join(', '), zip].filter(Boolean).join(' · ');
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">${loc}</div>`);
+            }
+            if (county) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${county}</div>`);
+            if (ward) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">${ward}${anc ? ` · ${anc}` : ''}</div>`);
+            if (days || times) {
+              lines.push(
+                `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;"><strong>Hours:</strong> ${[days, times].filter(Boolean).join(' · ')}</div>`
+              );
+            }
+            if (season) lines.push(`<div style="font-size: 11px; color: var(--text-secondary);">Season: ${season}</div>`);
+            if (benefits) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">${benefits}</div>`);
+            if (metro) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;"><strong>Metro:</strong> ${metro}</div>`);
+            if (bus) lines.push(`<div style="font-size: 11px; color: var(--text-secondary);"><strong>Bus:</strong> ${bus}</div>`);
+            if (parking) lines.push(`<div style="font-size: 11px; color: var(--text-secondary);">${parking}</div>`);
+            if (web) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; word-break: break-all;">${web}</div>`);
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">`,
+              `Listings include DC and nearby MD markets with at least one DC Produce Incentive Program–authorized vendor. Verify hours on the market website.`,
+              `</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(6);
+                l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
       {activeLayers.bikeLanes && bikeLanesData && (
         <GeoJSON
           key="bikelanes"
@@ -2323,6 +2770,63 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               mouseout: (e) => {
                 const l = e.target;
                 l.setRadius(6);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.bus && busRoutesData && (
+        <GeoJSON
+          key={`bus-routes-${searchQuery}`}
+          data={busRoutesData}
+          filter={(feature) => busRouteFeatureMatchesSearch(feature, normalizedSearchQuery)}
+          style={(feature) => getBusRouteLineStyle(feature)}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const lineStyle = getBusRouteLineStyle(feature);
+            const color = lineStyle.color;
+            const route = escapeHtml(props.ROUTE || '');
+            const desc = escapeHtml(props.DESCRIPTION || '');
+            const dir = escapeHtml(props.DIRECTION || '');
+            const origin = escapeHtml(props.ORIGIN || '');
+            const dest = escapeHtml(props.DESTINATION || '');
+            const state = escapeHtml(props.STATE || '');
+            const geomSrc = escapeHtml(props.GEOMETRYSOURCE || '');
+            const lines = [`<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 320px;">`];
+            lines.push(
+              `<div style="font-weight: 700; font-size: 15px; color: ${color}; margin-bottom: 4px;">Route ${route || '—'}</div>`
+            );
+            if (desc) {
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35; margin-bottom: 6px;">${desc}</div>`);
+            }
+            if (dir) lines.push(`<div style="font-size: 11px; color: var(--text-secondary);">Direction: <strong>${dir}</strong></div>`);
+            if (origin || dest) {
+              lines.push(
+                `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; line-height: 1.35;"><strong>From:</strong> ${origin || '—'}<br><strong>To:</strong> ${dest || '—'}</div>`
+              );
+            }
+            if (state) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Jurisdiction: ${state}</div>`);
+            if (geomSrc) {
+              lines.push(`<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">Source: WMATA GTFS via DC GIS — ${geomSrc}</div>`);
+            }
+            lines.push(`</div>`);
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getBusRouteLineStyle(feature);
+                l.setStyle({ ...base, weight: base.weight + 3, opacity: 1 });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                e.target.setStyle(getBusRouteLineStyle(feature));
               }
             });
           }}

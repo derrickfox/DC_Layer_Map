@@ -1,31 +1,37 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
-  { id: 'dcps', label: 'DC Public Schools (DCPS)', icon: School, color: '#6366f1', activeClass: 'active-indigo' },
   { id: 'muralsPublicArt', label: 'Murals & Public Art', icon: Palette, color: '#ca8a04', activeClass: 'active-gold' },
   { id: 'historicLandmarks', label: 'Historic Landmarks & Districts', icon: ScrollText, color: '#18432f', activeClass: 'active-vintage' },
-  { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
   { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
-  { id: 'federal', label: 'Federal Footprint', icon: Building2, color: '#3b82f6', activeClass: 'active-blue' },
-  { id: 'wards', label: 'Council Wards (2022)', icon: Vote, color: '#0891b2', activeClass: 'active-cyan' },
   { id: 'historical', label: 'Places in History', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
+  { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
+  { id: 'wards', label: 'Council Wards (2022)', icon: Vote, color: '#0891b2', activeClass: 'active-cyan' },
+  { id: 'federal', label: 'Federal Footprint', icon: Building2, color: '#3b82f6', activeClass: 'active-blue' },
+  { id: 'zoning', label: 'Zoning & Land Use', icon: Building, color: '#fb923c', activeClass: 'active-orange' },
+  { id: 'metro', label: 'Metro', icon: TrainFront, color: '#f87171', activeClass: 'active-red' },
+  { id: 'bus', label: 'WMATA Metrobus', icon: Bus, color: '#2563eb', activeClass: 'active-blue' },
+  { id: 'bikeLanes', label: 'Bike Lanes', icon: Bike, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'parks', label: 'Parks', icon: TreePine, color: '#4ade80', activeClass: 'active-green' },
   { id: 'squares', label: 'Squares & Circles', icon: CircleDot, color: '#38bdf8', activeClass: 'active-skyblue' },
   { id: 'floodZones', label: 'Flood Zones', icon: Waves, color: '#3b82f6', activeClass: 'active-blue' },
   { id: 'topography', label: 'Topography', icon: Mountain, color: '#ef4444', activeClass: 'active-red' },
+  { id: 'dcps', label: 'DC Public Schools (DCPS)', icon: School, color: '#6366f1', activeClass: 'active-indigo' },
+  { id: 'librariesRecPools', label: 'Libraries & Recreation Centers', icon: BookOpen, color: '#0284c7', activeClass: 'active-skyblue' },
+  { id: 'foodDeserts', label: 'Food Deserts (Low Food Access)', icon: ShoppingCart, color: '#d97706', activeClass: 'active-amber' },
+  { id: 'farmersMarkets', label: 'Farmers Markets', icon: Store, color: '#15803d', activeClass: 'active-green' },
   { id: 'propertyValues', label: 'Average Property Values', icon: DollarSign, color: '#10b981', activeClass: 'active-emerald' },
-  { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' },
-  { id: 'bikeLanes', label: 'Bike Lanes', icon: Bike, color: '#10b981', activeClass: 'active-emerald' },
-  { id: 'metro', label: 'Metro', icon: TrainFront, color: '#f87171', activeClass: 'active-red' },
-  { id: 'zoning', label: 'Zoning & Land Use', icon: Building, color: '#fb923c', activeClass: 'active-orange' }
+  { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' }
 ];
 
 const LayerControls = ({ 
   activeLayers, 
-  toggleLayer, 
+  toggleLayer,
+  layersSuspended = false,
+  onToggleSuspendAllLayers,
   neighborhoodList = [], 
   hiddenNeighborhoods = new Set(), 
   toggleNeighborhoodVisibility,
@@ -98,6 +104,26 @@ const LayerControls = ({
           <span className="text-gradient">DC Layer Lab</span>
         </h2>
         <div style={{ display: 'flex', gap: '8px' }}>
+          {onToggleSuspendAllLayers && (
+            <button 
+              type="button"
+              onClick={onToggleSuspendAllLayers}
+              style={{
+                background: layersSuspended ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                border: layersSuspended ? '1px solid rgba(34, 197, 94, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px',
+                color: layersSuspended ? '#4ade80' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title={layersSuspended ? 'Restore layers' : 'Hide all layers'}
+            >
+              {layersSuspended ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          )}
           <button 
             onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
             style={{

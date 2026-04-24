@@ -106,6 +106,7 @@ function App() {
     squares: false,
     museums: true,
     dcps: false,
+    librariesRecPools: false,
     muralsPublicArt: false,
     historicLandmarks: false,
     events: true,
@@ -116,7 +117,10 @@ function App() {
     topography: false,
     propertyValues: false,
     crime: false,
+    foodDeserts: false,
+    farmersMarkets: false,
     bikeLanes: false,
+    bus: false,
     metro: false,
     zoning: false
   });
@@ -128,6 +132,7 @@ function App() {
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [previousActiveLayers, setPreviousActiveLayers] = useState(null);
+  const [layerSuspendSnapshot, setLayerSuspendSnapshot] = useState(null);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState(new Set());
   const [showNeighborhoodBackgrounds, setShowNeighborhoodBackgrounds] = useState(true);
 
@@ -186,6 +191,22 @@ function App() {
     }));
   };
 
+  const toggleSuspendAllLayers = () => {
+    if (layerSuspendSnapshot) {
+      setActiveLayers(layerSuspendSnapshot);
+      setLayerSuspendSnapshot(null);
+    } else {
+      setLayerSuspendSnapshot({ ...activeLayers });
+      setActiveLayers((prev) => {
+        const next = {};
+        for (const key of Object.keys(prev)) {
+          next[key] = false;
+        }
+        return next;
+      });
+    }
+  };
+
   const toggleNeighborhoodVisibility = (name) => {
     setHiddenNeighborhoods(prev => {
       const newSet = new Set(prev);
@@ -237,6 +258,8 @@ function App() {
         <LayerControls 
           activeLayers={activeLayers} 
           toggleLayer={toggleLayer}
+          layersSuspended={layerSuspendSnapshot !== null}
+          onToggleSuspendAllLayers={toggleSuspendAllLayers}
           neighborhoodList={neighborhoodList}
           hiddenNeighborhoods={hiddenNeighborhoods}
           toggleNeighborhoodVisibility={toggleNeighborhoodVisibility}
