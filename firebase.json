@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "bookmarker-9ac68",
     "public": "dist",
     "ignore": [
       "firebase.json",

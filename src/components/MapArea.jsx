@@ -102,64 +102,100 @@ const CustomTopographyLayer = () => {
 
   return null;
 };
+const historicalPlaces = [
+  ["Assassination of Abraham Lincoln", "1865", "President Abraham Lincoln was shot by John Wilkes Booth while attending a play at Ford's Theatre.", [-77.0258, 38.8967]],
+  ["Petersen House", "1865", "Lincoln was carried across 10th Street after the assassination and died here the next morning.", [-77.0257, 38.8966]],
+  ["Burning of Washington", "1814", "British forces burned public buildings including the White House during the War of 1812.", [-77.0365, 38.8977]],
+  ["U.S. Capitol Burning", "1814", "British troops set fire to the Capitol during the Burning of Washington.", [-77.0091, 38.8899]],
+  ["Treaty of Washington Signing", "1871", "The treaty resolving major post-Civil War claims between the United States and Great Britain was signed at the State Department.", [-77.0398, 38.8951]],
+  ["Woman Suffrage Procession", "1913", "Thousands of suffragists marched down Pennsylvania Avenue on the eve of Woodrow Wilson's inauguration.", [-77.0280, 38.8949]],
+  ["National Woman's Party Headquarters", "1929", "The Sewall-Belmont House became a home base for the National Woman's Party and the campaign for equal rights.", [-77.0036, 38.8922]],
+  ["Mary McLeod Bethune Council House", "1943", "Mary McLeod Bethune and the National Council of Negro Women organized nationally from this Logan Circle house.", [-77.0319, 38.9098]],
+  ["Carter G. Woodson Home", "1922", "Historian Carter G. Woodson worked here while building the movement that became Black History Month.", [-77.0238, 38.9109]],
+  ["Frederick Douglass Cedar Hill", "1877", "Frederick Douglass lived at Cedar Hill in Anacostia during his later years as a statesman and reformer.", [-76.9859, 38.8629]],
+  ["Howard University Founders Library", "1939", "Founders Library anchors Howard University, a central institution in Black scholarship, law, medicine, and civil rights.", [-77.0195, 38.9227]],
+  ["Howard Theatre", "1910", "The Howard Theatre helped make U Street a national center for Black music and performance.", [-77.0210, 38.9153]],
+  ["Ben's Chili Bowl", "1958", "A U Street landmark that remained open through the 1968 unrest and became a symbol of Black Washington.", [-77.0310, 38.9170]],
+  ["Thurgood Marshall Center", "1912", "The former Twelfth Street YMCA was a landmark social and civic center for Black Washington.", [-77.0285, 38.9136]],
+  ["Duke Ellington Birthplace", "1899", "Jazz composer Duke Ellington was born in Washington and grew up in the city's Black cultural world.", [-77.0209, 38.9086]],
+  ["Lincoln Memorial Dedication", "1922", "The Lincoln Memorial opened as a national monument to Abraham Lincoln.", [-77.0502, 38.8893]],
+  ["Marian Anderson Concert", "1939", "After being denied Constitution Hall, Marian Anderson sang before a huge interracial crowd from the Lincoln Memorial steps.", [-77.0502, 38.8893]],
+  ["March on Washington", "1963", "Dr. Martin Luther King Jr. delivered the 'I Have a Dream' speech during the March on Washington for Jobs and Freedom.", [-77.0502, 38.8893]],
+  ["Vietnam Veterans Memorial Dedication", "1982", "The memorial's dedication reshaped how the nation publicly mourned the Vietnam War.", [-77.0477, 38.8913]],
+  ["AIDS Quilt on the National Mall", "1987", "The NAMES Project AIDS Memorial Quilt was first displayed on the National Mall.", [-77.0365, 38.8895]],
+  ["Poor People's Campaign Resurrection City", "1968", "Activists built Resurrection City on the Mall to demand economic justice after Martin Luther King Jr.'s death.", [-77.0365, 38.8895]],
+  ["Bonus Army Encampment", "1932", "World War I veterans camped at Anacostia Flats while demanding early payment of service bonuses.", [-76.9858, 38.8733]],
+  ["Watergate Break-in", "1972", "The break-in at Democratic National Committee headquarters triggered the Watergate scandal.", [-77.0544, 38.8995]],
+  ["Washington Post Watergate Reporting", "1972", "The Washington Post newsroom pursued reporting that helped uncover the Watergate scandal.", [-77.0317, 38.9048]],
+  ["Pentagon Papers Supreme Court Case", "1971", "The Supreme Court upheld the press's ability to publish the Pentagon Papers.", [-77.0044, 38.8906]],
+  ["Supreme Court Desegregation Decisions", "1954", "The Supreme Court handed down Brown v. Board of Education and companion school desegregation decisions.", [-77.0044, 38.8906]],
+  ["United States v. Nixon", "1974", "The Supreme Court ordered President Nixon to release Oval Office recordings, accelerating the end of his presidency.", [-77.0044, 38.8906]],
+  ["First Presidential Inauguration in DC", "1801", "Thomas Jefferson became the first president inaugurated in Washington, D.C.", [-77.0091, 38.8899]],
+  ["Franklin D. Roosevelt First Inauguration", "1933", "Roosevelt told the nation that 'the only thing we have to fear is fear itself' at the Capitol.", [-77.0091, 38.8899]],
+  ["Kennedy Inauguration", "1961", "John F. Kennedy urged Americans to 'ask what you can do for your country' at the Capitol.", [-77.0091, 38.8899]],
+  ["January 6 Attack on the Capitol", "2021", "A mob attacked the U.S. Capitol while Congress met to certify the presidential election results.", [-77.0091, 38.8899]],
+  ["White House Cornerstone", "1792", "The cornerstone of the President's House was laid as the new federal city took shape.", [-77.0365, 38.8977]],
+  ["White House Civil Rights Meeting", "1963", "Civil rights leaders met with President Kennedy after the March on Washington.", [-77.0365, 38.8977]],
+  ["Lafayette Square Civil War Encampments", "1861", "The square and nearby buildings became part of wartime Washington's military and political landscape.", [-77.0366, 38.8996]],
+  ["Decatur House Slave Quarters", "1820s", "One of the few surviving examples of slave quarters within sight of the White House.", [-77.0391, 38.8998]],
+  ["Dolly Madison Saves Washington Portrait", "1814", "Dolley Madison helped preserve the Gilbert Stuart portrait of George Washington before British troops arrived.", [-77.0365, 38.8977]],
+  ["Old Patent Office Civil War Hospital", "1861", "The Patent Office served as a Civil War hospital where Walt Whitman visited wounded soldiers.", [-77.0230, 38.8979]],
+  ["Clara Barton Missing Soldiers Office", "1865", "Clara Barton used this office to help families locate missing Civil War soldiers.", [-77.0229, 38.8972]],
+  ["African American Civil War Memorial", "1998", "The memorial honors the United States Colored Troops and Black sailors who fought for the Union.", [-77.0260, 38.9165]],
+  ["Fort Stevens", "1864", "Confederate forces attacked Fort Stevens, where Abraham Lincoln came under enemy fire.", [-77.0290, 38.9639]],
+  ["Fort Reno", "1861", "Fort Reno was the highest point in the Civil War defenses of Washington.", [-77.0763, 38.9513]],
+  ["Fort Totten", "1861", "Fort Totten was part of the ring of Civil War forts protecting Washington.", [-77.0082, 38.9517]],
+  ["Washington Navy Yard", "1799", "The Navy Yard became one of the capital's oldest federal industrial sites and a major wartime facility.", [-76.9958, 38.8733]],
+  ["Washington Arsenal Explosion", "1864", "A deadly explosion at the Washington Arsenal killed women workers producing ammunition during the Civil War.", [-77.0161, 38.8675]],
+  ["Titanic Memorial Dedication", "1931", "The Women's Titanic Memorial was dedicated on the Southwest waterfront.", [-77.0180, 38.8718]],
+  ["Pearl Harbor Speech to Congress", "1941", "President Roosevelt asked Congress for a declaration of war after the attack on Pearl Harbor.", [-77.0091, 38.8899]],
+  ["Army-McCarthy Hearings", "1954", "Televised Senate hearings at the Capitol helped turn public opinion against Senator Joseph McCarthy.", [-77.0091, 38.8899]],
+  ["Senate Watergate Hearings", "1973", "The Senate Watergate Committee hearings unfolded in the Russell Senate Office Building.", [-77.0070, 38.8926]],
+  ["National Archives Opens", "1935", "The National Archives became the home of the Declaration of Independence, Constitution, and Bill of Rights.", [-77.0230, 38.8928]],
+  ["Library of Congress Jefferson Building Opens", "1897", "The Library's grand Jefferson Building opened as a national temple of knowledge.", [-77.0047, 38.8887]],
+  ["Smithsonian Castle Opens", "1855", "The Smithsonian Institution Building opened as the original home of the Smithsonian.", [-77.0260, 38.8888]],
+  ["National Museum of African American History and Culture Opens", "2016", "The museum opened on the National Mall after decades of advocacy.", [-77.0320, 38.8911]],
+  ["National Gallery of Art Opens", "1941", "The National Gallery opened to the public with a founding gift from Andrew Mellon.", [-77.0199, 38.8913]],
+  ["Union Station Opens", "1907", "Union Station opened as a monumental rail gateway to the capital.", [-77.0064, 38.8970]],
+  ["Old Post Office Opens", "1899", "The Old Post Office became a landmark federal building on Pennsylvania Avenue.", [-77.0274, 38.8947]],
+  ["First Nationals Park Game", "2008", "Nationals Park opened, marking a new era for baseball and development along the Anacostia waterfront.", [-77.0074, 38.8730]],
+  ["RFK Stadium Opens", "1961", "D.C. Stadium, later RFK Stadium, opened as a multipurpose venue for football, baseball, soccer, and concerts.", [-76.9717, 38.8898]],
+  ["Martin Luther King Jr. Memorial Dedication", "2011", "The memorial to Martin Luther King Jr. was dedicated beside the Tidal Basin.", [-77.0443, 38.8861]],
+  ["Japanese American Memorial Dedication", "2000", "The memorial honors Japanese American patriotism and the injustice of incarceration during World War II.", [-77.0108, 38.8967]],
+  ["Emancipation Memorial Dedication", "1876", "The Emancipation Memorial was dedicated in Lincoln Park with Frederick Douglass as the keynote speaker.", [-76.9880, 38.8898]],
+  ["Mary McLeod Bethune Memorial Dedication", "1974", "This Lincoln Park memorial was the first public monument in D.C. honoring an African American woman.", [-76.9892, 38.8900]],
+  ["Hay-Adams and St. John's Civil Rights Era", "1960s", "Lafayette Square hotels, churches, and offices were staging grounds for national politics and protest.", [-77.0367, 38.9004]],
+  ["Mayday Antiwar Protests", "1971", "Large-scale antiwar demonstrations attempted to shut down parts of the federal city.", [-77.0365, 38.8895]],
+  ["First Earth Day Teach-In", "1970", "Washington hosted major Earth Day demonstrations and teach-ins around the Mall and federal core.", [-77.0365, 38.8895]],
+  ["Million Man March", "1995", "Hundreds of thousands gathered on the National Mall for a major demonstration of Black unity and civic responsibility.", [-77.0365, 38.8895]],
+  ["Women's March", "2017", "A mass demonstration for women's rights filled the Mall and downtown Washington after the presidential inauguration.", [-77.0365, 38.8895]],
+  ["March for Our Lives", "2018", "Student-led demonstrations against gun violence brought large crowds to Pennsylvania Avenue.", [-77.0280, 38.8949]],
+  ["Black Lives Matter Plaza", "2020", "The city renamed a stretch near the White House during nationwide protests for racial justice.", [-77.0366, 38.9009]],
+  ["Oberlin Rescuers Trial Site", "1859", "Abolitionist defendants were tried in Washington amid national conflict over slavery and fugitive slave laws.", [-77.0163, 38.8951]],
+  ["Pearl Incident Wharf", "1848", "Seventy-seven enslaved people attempted to escape from Washington aboard the schooner Pearl.", [-77.0214, 38.8769]],
+  ["Franklin and Armfield Slave Pen", "1830s", "One of the largest domestic slave-trading firms operated from this area near the National Mall.", [-77.0277, 38.8847]],
+  ["Old Stone House", "1765", "The Old Stone House is among the oldest surviving buildings in Washington.", [-77.0600, 38.9058]],
+  ["Tudor Place", "1816", "Tudor Place preserves generations of Georgetown and Washington family history.", [-77.0629, 38.9106]],
+  ["Dumbarton House", "1799", "Dumbarton House tells the story of early federal-period life in Georgetown.", [-77.0588, 38.9099]],
+  ["Heurich House", "1894", "The mansion of brewer Christian Heurich reflects the immigrant industrial history of late 19th-century Washington.", [-77.0476, 38.9062]],
+  ["Woodrow Wilson House", "1921", "President Woodrow Wilson lived here after leaving the White House.", [-77.0520, 38.9110]],
+  ["President Lincoln's Cottage", "1862", "Lincoln lived seasonally at the Soldiers' Home, where he developed ideas behind the Emancipation Proclamation.", [-77.0110, 38.9415]],
+  ["Congressional Cemetery", "1807", "The cemetery became the resting place of many early national and District figures.", [-76.9785, 38.8806]],
+  ["Gallaudet University Founding", "1864", "President Lincoln signed the charter for what became Gallaudet University, a landmark in Deaf education.", [-76.9936, 38.9074]],
+  ["Anacostia Community Museum Opens", "1967", "The Smithsonian opened a neighborhood museum in Anacostia to connect national collections with local communities.", [-76.9765, 38.8564]],
+  ["Eastern Market Opens", "1873", "Eastern Market became a neighborhood food market and civic landmark on Capitol Hill.", [-76.9951, 38.8841]],
+  ["Carnegie Library Opens", "1903", "The central public library opened in Mount Vernon Square with Andrew Carnegie's support.", [-77.0232, 38.9025]],
+  ["Walter Reed Army Medical Center Opens", "1909", "Walter Reed became a major military medical center in Northwest Washington.", [-77.0327, 38.9769]],
+  ["National Zoo Opens", "1889", "The Smithsonian's National Zoo opened as a public scientific and conservation institution.", [-77.0498, 38.9296]]
+];
+
 const historicalEventsData = {
   type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      properties: {
-        NAME: "Assassination of Abraham Lincoln",
-        YEAR: "1865",
-        SUMMARY: "President Abraham Lincoln was assassinated by John Wilkes Booth while attending a play at Ford's Theatre."
-      },
-      geometry: { type: "Point", coordinates: [-77.0258, 38.8967] }
-    },
-    {
-      type: "Feature",
-      properties: {
-        NAME: "\"I Have a Dream\" Speech",
-        YEAR: "1963",
-        SUMMARY: "Dr. Martin Luther King Jr. delivered his historic speech during the March on Washington for Jobs and Freedom at the Lincoln Memorial."
-      },
-      geometry: { type: "Point", coordinates: [-77.0502, 38.8893] }
-    },
-    {
-      type: "Feature",
-      properties: {
-        NAME: "Burning of Washington",
-        YEAR: "1814",
-        SUMMARY: "British forces set fire to many public buildings, including the White House and the Capitol, during the War of 1812."
-      },
-      geometry: { type: "Point", coordinates: [-77.0365, 38.8977] }
-    },
-    {
-      type: "Feature",
-      properties: {
-        NAME: "Watergate Break-in",
-        YEAR: "1972",
-        SUMMARY: "Five men were arrested for breaking into the DNC headquarters at the Watergate complex, sparking a major political scandal."
-      },
-      geometry: { type: "Point", coordinates: [-77.0544, 38.8995] }
-    },
-    {
-      type: "Feature",
-      properties: {
-        NAME: "Bonus Army Encampment",
-        YEAR: "1932",
-        SUMMARY: "Thousands of WWI veterans gathered at Anacostia Flats to demand cash-payment redemption of their service certificates."
-      },
-      geometry: { type: "Point", coordinates: [-76.9858, 38.8733] }
-    },
-    {
-      type: "Feature",
-      properties: {
-        NAME: "Woman Suffrage Procession",
-        YEAR: "1913",
-        SUMMARY: "The first suffragist parade in Washington, D.C. marched down Pennsylvania Avenue from the Capitol."
-      },
-      geometry: { type: "Point", coordinates: [-77.0091, 38.8899] }
-    }
-  ]
+  features: historicalPlaces.map(([NAME, YEAR, SUMMARY, coordinates]) => ({
+    type: "Feature",
+    properties: { NAME, YEAR, SUMMARY },
+    geometry: { type: "Point", coordinates }
+  }))
 };
 
 const ticketedEventsData = {
@@ -458,6 +494,75 @@ const formatDate = (value) => {
   return date.getUTCFullYear().toString();
 };
 
+const formatNumber = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '';
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(number);
+};
+
+const formatFederalTenure = (value) => {
+  if (value === 'F') return 'Federally Owned';
+  if (value === 'L') return 'Leased';
+  return value || 'Federal Asset';
+};
+
+const formatFederalArea = (value) => {
+  const squareFeet = Number(value);
+  if (!Number.isFinite(squareFeet) || squareFeet <= 0) return '';
+  const acres = squareFeet / 43560;
+  if (acres >= 10) return `${formatNumber(acres)} acres`;
+  return `${acres.toFixed(1)} acres`;
+};
+
+const getFederalAssetColor = (props = {}) => {
+  if (props.BUILDING_STATUS === 'Excess') return '#e11d48';
+  if (props.REAL_PROPERTY_ASSET_TYPE === 'LAND') return '#16a34a';
+  if (props.REAL_PROPERTY_ASSET_TYPE === 'STRUCTURE') return '#f97316';
+  if (props.OWNED_OR_LEASED === 'L') return '#0891b2';
+  return '#1d4ed8';
+};
+
+const getFederalMarkerRadius = (props = {}) => {
+  const squareFeet = Number(props.BUILDING_RENTABLE_SQUARE_FEET);
+  if (!Number.isFinite(squareFeet) || squareFeet <= 0) return 5;
+  if (squareFeet >= 1000000) return 10;
+  if (squareFeet >= 500000) return 8;
+  if (squareFeet >= 150000) return 7;
+  return 5;
+};
+
+const getFederalMarkerStyle = (props = {}) => {
+  const color = getFederalAssetColor(props);
+  return {
+    pane: 'markerPane',
+    radius: getFederalMarkerRadius(props),
+    fillColor: color,
+    color: '#ffffff',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: props.BUILDING_STATUS === 'Excess' ? 0.65 : 0.9
+  };
+};
+
+const federalFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const props = feature.properties || {};
+  return [
+    props.REAL_PROPERTY_ASSET_NAME,
+    props.INSTALLATION_NAME,
+    props.STREET_ADDRESS,
+    props.CITY,
+    props.ZIP_CODE,
+    props.OWNED_OR_LEASED,
+    props.BUILDING_STATUS,
+    props.REAL_PROPERTY_ASSET_TYPE,
+    props.LOCATION_CODE,
+    props.GIS_ID,
+    props.GLOBALID,
+    props.OBJECTID
+  ].some(value => String(value || '').toLowerCase().includes(query));
+};
+
 const getStablePaletteColor = (value, palette) => {
   const text = String(value || '');
   let hash = 0;
@@ -467,11 +572,99 @@ const getStablePaletteColor = (value, palette) => {
   return palette[Math.abs(hash) % palette.length];
 };
 
+const getDcpsPointStyle = (props = {}) => {
+  const facuse = String(props.FACUSE || '').toLowerCase();
+  let fillColor = '#6366f1';
+  let stroke = '#a5b4fc';
+  if (facuse.includes('high')) {
+    fillColor = '#4f46e5';
+    stroke = '#c7d2fe';
+  } else if (facuse.includes('middle')) {
+    fillColor = '#7c3aed';
+    stroke = '#ddd6fe';
+  } else if (facuse.includes('elementary')) {
+    fillColor = '#818cf8';
+    stroke = '#e0e7ff';
+  } else if (facuse.includes('education campus')) {
+    fillColor = '#4338ca';
+    stroke = '#a5b4fc';
+  }
+  const inactive = String(props.STATUS || '').toLowerCase() !== 'active';
+  return {
+    pane: 'markerPane',
+    radius: 6,
+    fillColor,
+    color: stroke,
+    weight: 2,
+    opacity: 1,
+    fillOpacity: inactive ? 0.45 : 0.85
+  };
+};
+
+const dcpsFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const props = feature.properties || {};
+  return [
+    props.NAME,
+    props.SCHOOL_NAM,
+    props.ADDRESS,
+    props.FACUSE,
+    props.GRADES,
+    props.ZIPCODE,
+    props.PHONE,
+    props.SCHOOL_ID,
+    props.GIS_ID,
+    props.WEB_URL,
+    props.LEA_NAME
+  ].some(value => String(value || '').toLowerCase().includes(query));
+};
+
+const WARD_POLYGON_STYLES = {
+  1: { fill: '#fecdd3', stroke: '#be123c' },
+  2: { fill: '#ffedd5', stroke: '#c2410c' },
+  3: { fill: '#fef9c3', stroke: '#a16207' },
+  4: { fill: '#dcfce7', stroke: '#15803d' },
+  5: { fill: '#cffafe', stroke: '#0e7490' },
+  6: { fill: '#dbeafe', stroke: '#1d4ed8' },
+  7: { fill: '#ede9fe', stroke: '#6d28d9' },
+  8: { fill: '#fce7f3', stroke: '#be185d' }
+};
+
+const getWardPolygonStyle = (props = {}) => {
+  const n = Number(props.WARD ?? props.WARD_ID);
+  const s = WARD_POLYGON_STYLES[n] || { fill: '#e2e8f0', stroke: '#64748b' };
+  return {
+    color: s.stroke,
+    weight: 2,
+    opacity: 0.95,
+    fillColor: s.fill,
+    fillOpacity: 0.38
+  };
+};
+
+const wardFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const props = feature.properties || {};
+  return [
+    props.NAME,
+    props.LABEL,
+    props.WARD,
+    props.WARD_ID,
+    props.REP_NAME,
+    props.REP_EMAIL,
+    props.REP_PHONE,
+    props.REP_OFFICE,
+    props.GEOID,
+    props.GEOCODE
+  ].some(value => String(value || '').toLowerCase().includes(query));
+};
+
 const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
   const [museumsData, setMuseumsData] = useState(null);
+  const [dcpsSchoolsData, setDcpsSchoolsData] = useState(null);
   const [muralsPublicArtData, setMuralsPublicArtData] = useState(null);
   const [historicLandmarksData, setHistoricLandmarksData] = useState(null);
   const [propertyValuesData, setPropertyValuesData] = useState(null);
@@ -480,7 +673,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [metroLinesData, setMetroLinesData] = useState(null);
   const [metroStationsData, setMetroStationsData] = useState(null);
   const [federalPropertyData, setFederalPropertyData] = useState(null);
+  const [federalBuildingsData, setFederalBuildingsData] = useState(null);
   const [zoningData, setZoningData] = useState(null);
+  const [wardsData, setWardsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
   const toggleNeighborhoodSelection = (name) => {
@@ -552,6 +747,15 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching museums data:", err));
     }
   }, [activeLayers.museums, museumsData]);
+
+  useEffect(() => {
+    if (activeLayers.dcps && !dcpsSchoolsData) {
+      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Education_WebMercator/MapServer/5/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+        .then(res => res.json())
+        .then(data => setDcpsSchoolsData(data))
+        .catch(err => console.error("Error fetching DCPS schools data:", err));
+    }
+  }, [activeLayers.dcps, dcpsSchoolsData]);
 
   useEffect(() => {
     if (activeLayers.muralsPublicArt && !muralsPublicArtData) {
@@ -711,12 +915,29 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   }, [activeLayers.federal, federalPropertyData]);
 
   useEffect(() => {
+    if (activeLayers.federal && !federalBuildingsData) {
+      import('../data/federal-buildings.json')
+        .then(module => setFederalBuildingsData(module.default))
+        .catch(err => console.error("Error loading federal buildings data:", err));
+    }
+  }, [activeLayers.federal, federalBuildingsData]);
+
+  useEffect(() => {
     if (activeLayers.zoning && !zoningData) {
       import('../data/dc-zoning.json')
         .then(module => setZoningData(module.default))
         .catch(err => console.error("Error loading zoning data:", err));
     }
   }, [activeLayers.zoning, zoningData]);
+
+  useEffect(() => {
+    if (activeLayers.wards && !wardsData) {
+      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries_WebMercator/MapServer/53/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=20')
+        .then(res => res.json())
+        .then(data => setWardsData(data))
+        .catch(err => console.error("Error fetching ward boundaries:", err));
+    }
+  }, [activeLayers.wards, wardsData]);
 
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
@@ -1119,6 +1340,62 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
+      {/* DC Public Schools (DCPS) */}
+      {activeLayers.dcps && dcpsSchoolsData && (
+        <GeoJSON
+          key={`dcps-schools-${searchQuery}`}
+          data={dcpsSchoolsData}
+          filter={(feature) => dcpsFeatureMatchesSearch(feature, normalizedSearchQuery)}
+          pointToLayer={(feature, latlng) => L.circleMarker(latlng, getDcpsPointStyle(feature.properties))}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const name = escapeHtml(props.NAME || props.SCHOOL_NAM || 'School');
+            const facuse = escapeHtml(props.FACUSE || '');
+            const grades = escapeHtml(props.GRADES || '');
+            const address = escapeHtml(props.ADDRESS || '');
+            const zip = escapeHtml(props.ZIPCODE != null ? String(props.ZIPCODE) : '');
+            const phone = escapeHtml(props.PHONE || '');
+            const students = formatNumber(props.TOTAL_STUD);
+            const status = escapeHtml(props.STATUS || '');
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary);"><span style="color: #6366f1; margin-right: 4px;">•</span>${name}</div>`
+            ];
+            if (facuse) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${facuse}</div>`);
+            if (grades) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">Grades: ${grades}</div>`);
+            if (address) {
+              const addrLine = zip ? `${address}, DC ${zip}` : address;
+              lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${addrLine}</div>`);
+            }
+            if (phone) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${phone}</div>`);
+            if (students) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">Enrollment: ${students}</div>`);
+            if (status && status.toLowerCase() !== 'active') {
+              lines.push(`<div style="font-size: 11px; color: #f97316; margin-top: 4px;">Status: ${status}</div>`);
+            }
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 4 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const s = getDcpsPointStyle(feature.properties);
+                l.setRadius(s.radius);
+                l.setStyle({ weight: s.weight });
+              }
+            });
+          }}
+        />
+      )}
+
       {/* Murals & Public Art Layer */}
       {activeLayers.muralsPublicArt && muralsPublicArtData && (
         <GeoJSON
@@ -1333,7 +1610,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         </>
       )}
 
-      {/* Historical Data Layer */}
+      {/* Places in History Layer */}
       {activeLayers.historical && (
         <GeoJSON 
           key={`historical-${searchQuery}`}
@@ -1342,13 +1619,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
             const name = feature.properties?.NAME || "";
+            const year = feature.properties?.YEAR || "";
             const summary = feature.properties?.SUMMARY || "";
-            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q);
+            return [name, year, summary].some(value => value.toLowerCase().includes(q));
           }}
           pointToLayer={(feature, latlng) => {
             return L.circleMarker(latlng, {
               pane: 'markerPane',
-              radius: 8,
+              radius: 6,
               fillColor: '#f59e0b', // amber
               color: '#fbbf24',
               weight: 2,
@@ -1363,7 +1641,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                    <span style="color: #fbbf24;">★</span> ${NAME}
                  </div>
                  <div style="font-weight: 600; font-size: 13px; color: #fbbf24; margin-bottom: 6px;">
-                   Built: ${YEAR || 'Unknown'}
+                   Year: ${YEAR || 'Unknown'}
                  </div>
                  <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
                    ${SUMMARY}
@@ -1379,6 +1657,19 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 sticky: true
               }
             );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(9);
+                l.setStyle({ weight: 3, fillOpacity: 1 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(6);
+                l.setStyle({ weight: 2, fillOpacity: 0.9 });
+              }
+            });
           }}
         />
       )}
@@ -2040,34 +2331,40 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       {activeLayers.federal && federalPropertyData && (
         <GeoJSON
-          key="federal-layer"
+          key={`federal-footprints-${searchQuery}`}
           data={federalPropertyData}
+          filter={(feature) => {
+            if (!normalizedSearchQuery) return true;
+            const props = feature.properties || {};
+            return [
+              'Federal footprint',
+              'Federal property',
+              props.OBJECTID,
+              props.GLOBALID
+            ].some(value => String(value || '').toLowerCase().includes(normalizedSearchQuery));
+          }}
           style={() => ({
-            fillColor: '#3b82f6',
-            color: '#2563eb',
-            weight: 1,
-            opacity: 0.8,
-            fillOpacity: 0.4
+            fillColor: '#1d4ed8',
+            color: '#1e40af',
+            weight: 2,
+            opacity: 0.75,
+            fillOpacity: 0.18,
+            dashArray: '6 4'
           })}
           onEachFeature={(feature, layer) => {
-            const props = feature.properties;
-            const agency = props.AGENCY || props.Agency_Name || "Federal Agency";
-            const propName = props.PROPERTY_NAME || props.Property_Name || "";
-            const address = props.ADDRESS || props.Address || "";
+            const props = feature.properties || {};
+            const objectId = escapeHtml(props.OBJECTID);
+            const area = escapeHtml(formatFederalArea(props.DCGIS_REDACTIONAREAPLY_AREA || props.SHAPEAREA));
             
             const tooltipContent = `
-              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 250px;">
-                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px;">
-                  ${agency}
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 280px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px; border-bottom: 1px solid rgba(29, 78, 216, 0.35); padding-bottom: 4px;">
+                  <span style="color: #1d4ed8; margin-right: 4px;">•</span>Federal Footprint
                 </div>
-                ${propName ? `
-                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">
-                  ${propName}
-                </div>` : ''}
-                ${address ? `
-                <div style="font-size: 11px; color: var(--text-secondary); opacity: 0.8;">
-                  ${address}
-                </div>` : ''}
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">
+                  ${area ? `Approx. area: <strong>${area}</strong><br>` : ''}
+                  ${objectId ? `Feature ID: <strong>${objectId}</strong>` : 'Restricted federal property area'}
+                </div>
               </div>
             `;
             layer.bindTooltip(tooltipContent, {
@@ -2081,17 +2378,130 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               mouseover: (e) => {
                 const l = e.target;
                 l.setStyle({
-                  weight: 2,
-                  fillOpacity: 0.6
+                  weight: 3,
+                  fillOpacity: 0.32,
+                  dashArray: null
                 });
                 l.bringToFront();
               },
               mouseout: (e) => {
                 const l = e.target;
                 l.setStyle({
-                  weight: 1,
-                  fillOpacity: 0.4
+                  weight: 2,
+                  fillOpacity: 0.18,
+                  dashArray: '6 4'
                 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.federal && federalBuildingsData && (
+        <GeoJSON
+          key={`federal-buildings-${searchQuery}`}
+          data={federalBuildingsData}
+          filter={(feature) => federalFeatureMatchesSearch(feature, normalizedSearchQuery)}
+          pointToLayer={(feature, latlng) => {
+            return L.circleMarker(latlng, getFederalMarkerStyle(feature.properties));
+          }}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const name = escapeHtml(props.REAL_PROPERTY_ASSET_NAME || props.INSTALLATION_NAME || 'Federal Asset');
+            const installation = escapeHtml(props.INSTALLATION_NAME && props.INSTALLATION_NAME !== 'NA' ? props.INSTALLATION_NAME : '');
+            const address = escapeHtml([props.STREET_ADDRESS, props.CITY, props.STATE, props.ZIP_CODE].filter(Boolean).join(', '));
+            const tenure = escapeHtml(formatFederalTenure(props.OWNED_OR_LEASED));
+            const assetType = escapeHtml(props.REAL_PROPERTY_ASSET_TYPE || 'Asset');
+            const status = escapeHtml(props.BUILDING_STATUS || 'Unknown status');
+            const squareFeet = escapeHtml(formatNumber(props.BUILDING_RENTABLE_SQUARE_FEET));
+            const constructionDate = escapeHtml(props.CONSTRUCTION_DATE);
+            const color = getFederalAssetColor(props);
+            
+            const tooltipContent = `
+              <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 310px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 3px; border-bottom: 1px solid ${color}; padding-bottom: 4px;">
+                  <span style="color: ${color}; margin-right: 4px;">•</span>${name}
+                </div>
+                ${installation ? `
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600;">
+                  ${installation}
+                </div>` : ''}
+                <div style="font-size: 11px; font-weight: 700; color: ${color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">
+                  ${tenure} &middot; ${assetType} &middot; ${status}
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">
+                  ${address ? `${address}<br>` : ''}
+                  ${squareFeet ? `Rentable SF: <strong>${squareFeet}</strong><br>` : ''}
+                  ${constructionDate ? `Built: <strong>${constructionDate}</strong>` : ''}
+                </div>
+              </div>
+            `;
+            layer.bindTooltip(tooltipContent, {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(getFederalMarkerRadius(props) + 3);
+                l.setStyle({ weight: 3, fillOpacity: 1 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(getFederalMarkerRadius(props));
+                l.setStyle(getFederalMarkerStyle(props));
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.wards && wardsData && (
+        <GeoJSON
+          key={`wards-${searchQuery}`}
+          data={wardsData}
+          filter={(feature) => wardFeatureMatchesSearch(feature, normalizedSearchQuery)}
+          style={(feature) => getWardPolygonStyle(feature.properties)}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const title = escapeHtml(props.LABEL || props.NAME || 'Ward');
+            const rep = escapeHtml(props.REP_NAME || '');
+            const phone = escapeHtml(props.REP_PHONE || '');
+            const email = escapeHtml(props.REP_EMAIL || '');
+            const office = escapeHtml(props.REP_OFFICE || '');
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 280px;">`,
+              `<div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: #0891b2; margin-right: 6px;">●</span>${title}`,
+              `</div>`
+            ];
+            if (rep) {
+              lines.push(`<div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Councilmember: ${rep}</div>`);
+            }
+            if (phone) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${phone}</div>`);
+            if (email) lines.push(`<div style="font-size: 12px; color: var(--text-secondary);">${email}</div>`);
+            if (office) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px; line-height: 1.35;">${office}</div>`);
+            lines.push(`</div>`);
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const base = getWardPolygonStyle(feature.properties);
+                l.setStyle({ ...base, weight: 3, fillOpacity: 0.52 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                e.target.setStyle(getWardPolygonStyle(feature.properties));
               }
             });
           }}

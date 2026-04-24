@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
+  { id: 'dcps', label: 'DC Public Schools (DCPS)', icon: School, color: '#6366f1', activeClass: 'active-indigo' },
   { id: 'muralsPublicArt', label: 'Murals & Public Art', icon: Palette, color: '#ca8a04', activeClass: 'active-gold' },
   { id: 'historicLandmarks', label: 'Historic Landmarks & Districts', icon: ScrollText, color: '#18432f', activeClass: 'active-vintage' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
   { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
   { id: 'federal', label: 'Federal Footprint', icon: Building2, color: '#3b82f6', activeClass: 'active-blue' },
-  { id: 'historical', label: 'Historical Data', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
+  { id: 'wards', label: 'Council Wards (2022)', icon: Vote, color: '#0891b2', activeClass: 'active-cyan' },
+  { id: 'historical', label: 'Places in History', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
   { id: 'parks', label: 'Parks', icon: TreePine, color: '#4ade80', activeClass: 'active-green' },
   { id: 'squares', label: 'Squares & Circles', icon: CircleDot, color: '#38bdf8', activeClass: 'active-skyblue' },
   { id: 'floodZones', label: 'Flood Zones', icon: Waves, color: '#3b82f6', activeClass: 'active-blue' },
@@ -80,17 +82,17 @@ const LayerControls = ({
         right: isLeftAligned ? 'auto' : '24px',
         left: isLeftAligned ? '24px' : 'auto',
         width: '320px',
-        padding: '24px',
+        padding: '20px',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
+        gap: '14px',
         maxHeight: 'calc(100vh - 48px)',
         overflowY: 'auto',
         transition: 'all 0.3s ease'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isPanelCollapsed ? '0' : '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isPanelCollapsed ? '0' : '8px' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
           <Layers size={24} className="text-gradient" />
           <span className="text-gradient">DC Layer Lab</span>
@@ -195,7 +197,7 @@ const LayerControls = ({
           )}
         </div>
             
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <button 
               className={`glass-button ${activeLayers.neighborhoods ? 'active-orange' : ''}`}
@@ -298,7 +300,8 @@ const LayerControls = ({
           )}
         </div>
 
-        {filtersOrder.map((filter, index) => {
+        {filtersOrder.map((orderedFilter, index) => {
+          const filter = initialFilters.find(item => item.id === orderedFilter.id) || orderedFilter;
           const isActive = activeLayers[filter.id];
           const isDraggingOver = dragOverItemIndex === index;
           const Icon = filter.icon;
