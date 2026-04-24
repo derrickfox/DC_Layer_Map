@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, WMSTileLayer, Marker, Popup, GeoJSON, Circle, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
@@ -103,14 +103,6 @@ const CustomTopographyLayer = () => {
 
   return null;
 };
-
-
-import metroLinesData from '../data/metro-lines.json';
-import metroStationsData from '../data/metro-stations.json';
-import zoningData from '../data/dc-zoning.json';
-import federalPropertyData from '../data/federal-property.json';
-import exportData from '../../dc_layer_lab_export.json';
-
 const historicalEventsData = {
   type: "FeatureCollection",
   features: [
@@ -389,6 +381,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [propertyValuesData, setPropertyValuesData] = useState(null);
   const [crimeData, setCrimeData] = useState(null);
   const [bikeLanesData, setBikeLanesData] = useState(null);
+  const [metroLinesData, setMetroLinesData] = useState(null);
+  const [metroStationsData, setMetroStationsData] = useState(null);
+  const [federalPropertyData, setFederalPropertyData] = useState(null);
+  const [zoningData, setZoningData] = useState(null);
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
@@ -526,6 +522,38 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching bike lanes data:", err));
     }
   }, [activeLayers.bikeLanes, bikeLanesData]);
+
+  useEffect(() => {
+    if (activeLayers.metro && !metroLinesData) {
+      import('../data/metro-lines.json')
+        .then(module => setMetroLinesData(module.default))
+        .catch(err => console.error("Error loading metro lines data:", err));
+    }
+  }, [activeLayers.metro, metroLinesData]);
+
+  useEffect(() => {
+    if (activeLayers.metro && !metroStationsData) {
+      import('../data/metro-stations.json')
+        .then(module => setMetroStationsData(module.default))
+        .catch(err => console.error("Error loading metro stations data:", err));
+    }
+  }, [activeLayers.metro, metroStationsData]);
+
+  useEffect(() => {
+    if (activeLayers.federal && !federalPropertyData) {
+      import('../data/federal-property.json')
+        .then(module => setFederalPropertyData(module.default))
+        .catch(err => console.error("Error loading federal property data:", err));
+    }
+  }, [activeLayers.federal, federalPropertyData]);
+
+  useEffect(() => {
+    if (activeLayers.zoning && !zoningData) {
+      import('../data/dc-zoning.json')
+        .then(module => setZoningData(module.default))
+        .catch(err => console.error("Error loading zoning data:", err));
+    }
+  }, [activeLayers.zoning, zoningData]);
 
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
