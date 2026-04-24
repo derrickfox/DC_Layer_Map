@@ -106,6 +106,7 @@ function App() {
     squares: false,
     museums: true,
     muralsPublicArt: false,
+    historicLandmarks: false,
     events: true,
     monuments: true,
     embassies: true,

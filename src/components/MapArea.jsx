@@ -335,6 +335,21 @@ const MapEvents = ({ onMapClick }) => {
 
 const NEIGHBORHOOD_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
 
+const HISTORIC_DISTRICT_COLORS = [
+  '#8ca173',
+  '#6f9aa5',
+  '#7392a2',
+  '#a491aa',
+  '#d47c68',
+  '#e2ad4d',
+  '#c9783f',
+  '#b8664f',
+  '#c7a169',
+  '#7c9a86',
+  '#d09977',
+  '#9e8061'
+];
+
 const customOverrides = {
   "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
   "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
@@ -398,12 +413,67 @@ const escapeHtml = (value) => String(value || '')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#039;');
 
+const isExactTriangleName = (name) => name.trim().toLowerCase() === 'triangle';
+
+const isGenericSquareCircleName = (name) => {
+  const normalized = name.trim().toLowerCase();
+  return (
+    normalized === 'circle' ||
+    /^triangle park res\b/i.test(name) ||
+    /^triangle park\s+\d/i.test(name) ||
+    /^square\s+[a-z]?\.\s*\d/i.test(name) ||
+    /^square\s+\d/i.test(name)
+  );
+};
+
+const formatSquareCircleLabel = (name) => {
+  const trimmed = name.trim();
+  const keywordMatch = trimmed.match(/\b(Circle|Square|Triangle)\b/i);
+  if (!keywordMatch) return escapeHtml(trimmed);
+
+  const keyword = keywordMatch[1];
+  const before = trimmed.slice(0, keywordMatch.index).trim();
+  const after = trimmed.slice(keywordMatch.index + keyword.length).trim();
+  const firstLine = [before, after].filter(Boolean).join(' ');
+
+  if (!firstLine) return escapeHtml(keyword);
+  return `${escapeHtml(firstLine)}<br><span class="square-circle-label-keyword">${escapeHtml(keyword)}</span>`;
+};
+
+const getFeatureCenter = (feature) => {
+  try {
+    const bounds = L.geoJSON(feature).getBounds();
+    if (!bounds.isValid()) return null;
+    const center = bounds.getCenter();
+    return [center.lng, center.lat];
+  } catch {
+    return null;
+  }
+};
+
+const formatDate = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.getUTCFullYear().toString();
+};
+
+const getStablePaletteColor = (value, palette) => {
+  const text = String(value || '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
+};
+
 const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.8895, -77.0320]; // Centered near the National Mall
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
   const [museumsData, setMuseumsData] = useState(null);
   const [muralsPublicArtData, setMuralsPublicArtData] = useState(null);
+  const [historicLandmarksData, setHistoricLandmarksData] = useState(null);
   const [propertyValuesData, setPropertyValuesData] = useState(null);
   const [crimeData, setCrimeData] = useState(null);
   const [bikeLanesData, setBikeLanesData] = useState(null);
@@ -448,7 +518,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
           allFeatures.forEach(f => {
             const name = f.properties?.NAME || "";
-            if (isSquareOrCircle(name)) {
+            if (isSquareOrCircle(name) && !isExactTriangleName(name)) {
               sFeatures.push(f);
             } else {
               pFeatures.push(f);
@@ -490,6 +560,52 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error loading murals and public art data:", err));
     }
   }, [activeLayers.muralsPublicArt, muralsPublicArtData]);
+
+  useEffect(() => {
+    if (activeLayers.historicLandmarks && !historicLandmarksData) {
+      const landmarksUrl = 'https://opendata.dc.gov/api/download/v1/items/288a8c4db1b641b28748dbad958b5272/geojson?layers=23';
+      const districtsUrl = 'https://opendata.dc.gov/api/download/v1/items/a443bfb6d078439e9e1941773879c7f6/geojson?layers=6';
+
+      Promise.all([
+        fetch(landmarksUrl).then(res => res.json()),
+        fetch(districtsUrl).then(res => res.json())
+      ])
+        .then(([landmarks, districts]) => {
+          const landmarkPoints = (landmarks.features || [])
+            .map(feature => {
+              const center = getFeatureCenter(feature);
+              if (!center) return null;
+
+              return {
+                type: 'Feature',
+                properties: {
+                  ...feature.properties,
+                  FEATURE_KIND: 'Historic Landmark'
+                },
+                geometry: {
+                  type: 'Point',
+                  coordinates: center
+                }
+              };
+            })
+            .filter(Boolean);
+
+          const districtFeatures = (districts.features || []).map(feature => ({
+            ...feature,
+            properties: {
+              ...feature.properties,
+              FEATURE_KIND: 'Historic District'
+            }
+          }));
+
+          setHistoricLandmarksData({
+            landmarks: { type: 'FeatureCollection', features: landmarkPoints },
+            districts: { type: 'FeatureCollection', features: districtFeatures }
+          });
+        })
+        .catch(err => console.error("Error fetching historic landmarks data:", err));
+    }
+  }, [activeLayers.historicLandmarks, historicLandmarksData]);
 
   useEffect(() => {
     if (activeLayers.propertyValues && !propertyValuesData) {
@@ -698,6 +814,19 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     fillOpacity: 0.4,
     color: '#38bdf8',
     weight: 2,
+  };
+
+  const getHistoricDistrictStyle = (feature, highlight = false) => {
+    const props = feature?.properties || {};
+    const color = getStablePaletteColor(props.UNIQUEID || props.LABEL || props.NAME, HISTORIC_DISTRICT_COLORS);
+    return {
+      fillColor: color,
+      fillOpacity: highlight ? 0.38 : 0.24,
+      color,
+      weight: highlight ? 3 : 2,
+      opacity: highlight ? 0.92 : 0.78,
+      dashArray: '4, 4'
+    };
   };
 
   return (
@@ -924,13 +1053,14 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           style={squaresStyle}
           onEachFeature={(feature, layer) => {
             const name = feature.properties?.NAME || "Square/Circle";
+            const showPermanentLabel = !isGenericSquareCircleName(name);
             layer.bindTooltip(
-              `<div style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; color: var(--text-primary);"><span style="color: #38bdf8; margin-right: 4px;">•</span>${name}</div>`, 
+              `<div class="${showPermanentLabel ? 'square-circle-label-text' : ''}">${showPermanentLabel ? formatSquareCircleLabel(name) : escapeHtml(name)}</div>`, 
               {
-                permanent: false,
+                permanent: showPermanentLabel,
                 direction: 'center',
-                className: 'custom-tooltip',
-                sticky: true,
+                className: showPermanentLabel ? 'square-circle-label' : 'custom-tooltip',
+                sticky: !showPermanentLabel,
                 offset: [10, -20]
               }
             );
@@ -1068,6 +1198,139 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             });
           }}
         />
+      )}
+
+      {/* Historic Landmarks & Districts Layer */}
+      {activeLayers.historicLandmarks && historicLandmarksData && (
+        <>
+          <GeoJSON
+            key={`historic-districts-${searchQuery}`}
+            data={historicLandmarksData.districts}
+            filter={(feature) => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              const props = feature.properties || {};
+              return [
+                props.NAME,
+                props.LABEL,
+                props.ADDRESS,
+                props.STATUS,
+                props.DESIGNATION,
+                props.HITYPE,
+                props.FEATURE_KIND
+              ].some(value => String(value || '').toLowerCase().includes(q));
+            }}
+            style={(feature) => getHistoricDistrictStyle(feature)}
+            onEachFeature={(feature, layer) => {
+              const props = feature.properties || {};
+              const districtColor = getStablePaletteColor(props.UNIQUEID || props.LABEL || props.NAME, HISTORIC_DISTRICT_COLORS);
+              const name = escapeHtml(props.LABEL || props.NAME || 'Historic District');
+              const address = escapeHtml(props.ADDRESS);
+              const status = escapeHtml(props.STATUS);
+              const designation = escapeHtml(props.DESIGNATION);
+              const year = escapeHtml(formatDate(props.DESIGNATION_DATE));
+
+              const tooltipContent = `
+                <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 320px;">
+                  <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(184, 138, 55, 0.4); padding-bottom: 4px;">
+                    <span style="color: ${districtColor}; margin-right: 4px;">◆</span>${name}
+                  </div>
+                  <div style="font-size: 11px; font-weight: 700; color: #18432f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                    Historic District${year ? ` · ${year}` : ''}
+                  </div>
+                  ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Address:</strong> ${address}</div>` : ''}
+                  ${designation ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Designation:</strong> ${designation}</div>` : ''}
+                  ${status ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Status:</strong> ${status}</div>` : ''}
+                </div>
+              `;
+
+              layer.bindTooltip(tooltipContent, {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip',
+                sticky: true,
+                offset: [10, -20]
+              });
+              layer.on({
+                mouseover: (e) => {
+                  e.target.setStyle(getHistoricDistrictStyle(feature, true));
+                  e.target.bringToFront();
+                },
+                mouseout: (e) => {
+                  e.target.setStyle(getHistoricDistrictStyle(feature));
+                }
+              });
+            }}
+          />
+          <GeoJSON
+            key={`historic-landmarks-${searchQuery}`}
+            data={historicLandmarksData.landmarks}
+            filter={(feature) => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              const props = feature.properties || {};
+              return [
+                props.NAME,
+                props.LABEL,
+                props.SHORTLABEL,
+                props.STATUS,
+                props.FEATURE_KIND
+              ].some(value => String(value || '').toLowerCase().includes(q));
+            }}
+            pointToLayer={(feature, latlng) => {
+              return L.circleMarker(latlng, {
+                pane: 'markerPane',
+                radius: 4.5,
+                fillColor: '#18432f',
+                color: '#e6c879',
+                weight: 1.5,
+                opacity: 1,
+                fillOpacity: 0.85
+              });
+            }}
+            onEachFeature={(feature, layer) => {
+              const props = feature.properties || {};
+              const name = escapeHtml(props.LABEL || props.SHORTLABEL || props.NAME || 'Historic Landmark');
+              const status = escapeHtml(props.STATUS);
+              const year = escapeHtml(formatDate(props.DESIGNATION_DATE));
+              const uniqueId = escapeHtml(props.UNIQUEID);
+
+              const tooltipContent = `
+                <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 300px;">
+                  <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(184, 138, 55, 0.4); padding-bottom: 4px;">
+                    <span style="color: #18432f; margin-right: 4px;">•</span>${name}
+                  </div>
+                  <div style="font-size: 11px; font-weight: 700; color: #18432f; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                    Historic Landmark${year ? ` · ${year}` : ''}
+                  </div>
+                  ${status ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Status:</strong> ${status}</div>` : ''}
+                  ${uniqueId ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 5px; opacity: 0.85;">${uniqueId}</div>` : ''}
+                </div>
+              `;
+
+              layer.bindTooltip(tooltipContent, {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip',
+                sticky: true,
+                offset: [10, -20]
+              });
+              layer.on({
+                mouseover: (e) => {
+                  const l = e.target;
+                  l.setRadius(7);
+                  l.setStyle({ weight: 3 });
+                  l.bringToFront();
+                },
+                mouseout: (e) => {
+                  const l = e.target;
+                  l.setRadius(4.5);
+                  l.setStyle({ weight: 1.5 });
+                }
+              });
+            }}
+          />
+        </>
       )}
 
       {/* Historical Data Layer */}

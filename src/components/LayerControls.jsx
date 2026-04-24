@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Layers, MapPin, History, Sparkles, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
   { id: 'muralsPublicArt', label: 'Murals & Public Art', icon: Palette, color: '#ca8a04', activeClass: 'active-gold' },
+  { id: 'historicLandmarks', label: 'Historic Landmarks & Districts', icon: ScrollText, color: '#18432f', activeClass: 'active-vintage' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
   { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
