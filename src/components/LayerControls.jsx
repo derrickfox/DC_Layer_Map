@@ -9,6 +9,7 @@ const initialFilters = [
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
   { id: 'historical', label: 'Places in History', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
+  { id: 'comedyVenues', label: 'Comedy Venues', icon: Ticket, color: '#ec4899', activeClass: 'active-pink' },
   { id: 'festivalsParades', label: 'Festivals & Parades', icon: Flag, color: '#f59e0b', activeClass: 'active-amber' },
   { id: 'breweriesDistilleries', label: 'Breweries & Distilleries', icon: Store, color: '#b45309', activeClass: 'active-amber' },
   { id: 'wards', label: 'Council Wards (2022)', icon: Vote, color: '#0891b2', activeClass: 'active-cyan' },

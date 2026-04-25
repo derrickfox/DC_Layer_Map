@@ -110,6 +110,7 @@ function App() {
     muralsPublicArt: false,
     historicLandmarks: false,
     events: true,
+    comedyVenues: false,
     festivalsParades: false,
     breweriesDistilleries: false,
     monuments: true,

@@ -203,14 +203,42 @@ const ticketedEventsData = {
   features: [
     { type: "Feature", properties: { NAME: "Capital One Arena", TYPE: "Arena", SUMMARY: "Major indoor arena for sports and large concerts." }, geometry: { type: "Point", coordinates: [-77.0209, 38.8981] } },
     { type: "Feature", properties: { NAME: "Nationals Park", TYPE: "Stadium", SUMMARY: "Baseball park and venue for major outdoor events." }, geometry: { type: "Point", coordinates: [-77.0074, 38.8730] } },
+    { type: "Feature", properties: { NAME: "Audi Field", TYPE: "Stadium", SUMMARY: "Soccer-specific stadium hosting DC United, Washington Spirit, and major ticketed events." }, geometry: { type: "Point", coordinates: [-77.0129, 38.8683] } },
     { type: "Feature", properties: { NAME: "9:30 Club", TYPE: "Music Venue", SUMMARY: "Iconic nightclub and concert venue for live music." }, geometry: { type: "Point", coordinates: [-77.0235, 38.9180] } },
     { type: "Feature", properties: { NAME: "The Anthem", TYPE: "Music Venue", SUMMARY: "Large concert hall and events venue at the District Wharf." }, geometry: { type: "Point", coordinates: [-77.0264, 38.8797] } },
+    { type: "Feature", properties: { NAME: "Echostage", TYPE: "Music Venue", SUMMARY: "Large indoor performance space known for major electronic and touring acts." }, geometry: { type: "Point", coordinates: [-76.9953, 38.9172] } },
+    { type: "Feature", properties: { NAME: "The Atlantis", TYPE: "Music Venue", SUMMARY: "Intimate sister venue to 9:30 Club focused on emerging and mid-size touring artists." }, geometry: { type: "Point", coordinates: [-77.0232, 38.9178] } },
+    { type: "Feature", properties: { NAME: "Lincoln Theatre", TYPE: "Theater", SUMMARY: "Historic U Street theater hosting concerts, comedy, and special performances." }, geometry: { type: "Point", coordinates: [-77.0240, 38.9175] } },
+    { type: "Feature", properties: { NAME: "Howard Theatre", TYPE: "Music Venue", SUMMARY: "Renovated historic venue presenting concerts, comedy, and nightlife events." }, geometry: { type: "Point", coordinates: [-77.0246, 38.9169] } },
     { type: "Feature", properties: { NAME: "Kennedy Center", TYPE: "Performing Arts", SUMMARY: "Premier performing arts center on the Potomac River." }, geometry: { type: "Point", coordinates: [-77.0560, 38.8954] } },
+    { type: "Feature", properties: { NAME: "Arena Stage", TYPE: "Performing Arts", SUMMARY: "Major regional theater campus staging ticketed productions year-round." }, geometry: { type: "Point", coordinates: [-77.0208, 38.8740] } },
+    { type: "Feature", properties: { NAME: "National Theatre", TYPE: "Theater", SUMMARY: "Historic downtown theater hosting touring Broadway and live performances." }, geometry: { type: "Point", coordinates: [-77.0303, 38.8971] } },
     { type: "Feature", properties: { NAME: "Warner Theatre", TYPE: "Theater", SUMMARY: "Historic venue hosting concerts, comedy, and theater." }, geometry: { type: "Point", coordinates: [-77.0305, 38.8961] } },
     { type: "Feature", properties: { NAME: "DAR Constitution Hall", TYPE: "Concert Hall", SUMMARY: "Historic concert hall and event venue near the White House." }, geometry: { type: "Point", coordinates: [-77.0416, 38.8936] } },
     { type: "Feature", properties: { NAME: "Folger Theatre", TYPE: "Theater", SUMMARY: "Acclaimed intimate venue for classical theater, specifically Shakespeare." }, geometry: { type: "Point", coordinates: [-77.0035, 38.8884] } },
     { type: "Feature", properties: { NAME: "Ford's Theatre", TYPE: "Theater", SUMMARY: "Historic working theater producing plays year-round, alongside its museum." }, geometry: { type: "Point", coordinates: [-77.0258, 38.8966] } },
-    { type: "Feature", properties: { NAME: "Black Cat", TYPE: "Music Venue", SUMMARY: "Legendary independent music venue on 14th Street hosting indie and alternative bands." }, geometry: { type: "Point", coordinates: [-77.0316, 38.9150] } }
+    { type: "Feature", properties: { NAME: "Black Cat", TYPE: "Music Venue", SUMMARY: "Legendary independent music venue on 14th Street hosting indie and alternative bands." }, geometry: { type: "Point", coordinates: [-77.0316, 38.9150] } },
+    { type: "Feature", properties: { NAME: "The Hamilton Live", TYPE: "Music Venue", SUMMARY: "Downtown live music venue with ticketed nightly performances." }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } },
+    { type: "Feature", properties: { NAME: "Union Stage", TYPE: "Music Venue", SUMMARY: "Intimate Wharf venue for concerts, podcasts, and live events." }, geometry: { type: "Point", coordinates: [-77.0269, 38.8790] } },
+    { type: "Feature", properties: { NAME: "Pearl Street Warehouse", TYPE: "Music Venue", SUMMARY: "Ticketed live music hall at The Wharf featuring Americana and touring acts." }, geometry: { type: "Point", coordinates: [-77.0270, 38.8787] } },
+    { type: "Feature", properties: { NAME: "Songbyrd Music House", TYPE: "Music Venue", SUMMARY: "Adams Morgan venue hosting ticketed concerts and DJ sets." }, geometry: { type: "Point", coordinates: [-77.0441, 38.9217] } },
+    { type: "Feature", properties: { NAME: "Capital Turnaround", TYPE: "Performance Venue", SUMMARY: "Multi-use event hall in Navy Yard for concerts, comedy, and special productions." }, geometry: { type: "Point", coordinates: [-77.0023, 38.8769] } }
+  ]
+};
+
+const comedyVenuesData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "DC Improv", TYPE: "Comedy Club", SUMMARY: "Flagship comedy club in downtown DC hosting national touring comics.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0215, 38.9000] } },
+    { type: "Feature", properties: { NAME: "The DC Comedy Loft", TYPE: "Comedy Club", SUMMARY: "Dedicated comedy room above Bier Baron with frequent local and touring stand-up shows.", NEIGHBORHOOD: "Dupont Circle" }, geometry: { type: "Point", coordinates: [-77.0419, 38.9139] } },
+    { type: "Feature", properties: { NAME: "Room 808 (DC Comedy Clubhouse)", TYPE: "Comedy Venue", SUMMARY: "Independent venue for stand-up showcases, indie productions, and open mics.", NEIGHBORHOOD: "Petworth" }, geometry: { type: "Point", coordinates: [-77.0238, 38.9334] } },
+    { type: "Feature", properties: { NAME: "Capital Laughs", TYPE: "Comedy Venue", SUMMARY: "Small-format comedy room hosting local lineups and monthly showcases.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0288, 38.9059] } },
+    { type: "Feature", properties: { NAME: "Arlington Drafthouse (near DC)", TYPE: "Comedy Club", SUMMARY: "Regional comedy destination frequently booking touring comics for DMV audiences.", NEIGHBORHOOD: "Arlington" }, geometry: { type: "Point", coordinates: [-77.1040, 38.8793] } },
+    { type: "Feature", properties: { NAME: "Kennedy Center (Comedy Programming)", TYPE: "Performance Venue", SUMMARY: "Hosts ticketed stand-up and comedic performances as part of broader programming.", NEIGHBORHOOD: "Foggy Bottom" }, geometry: { type: "Point", coordinates: [-77.0560, 38.8954] } },
+    { type: "Feature", properties: { NAME: "Warner Theatre (Comedy Tours)", TYPE: "Theater", SUMMARY: "Large theater that regularly books major stand-up comedy tours.", NEIGHBORHOOD: "Penn Quarter" }, geometry: { type: "Point", coordinates: [-77.0305, 38.8961] } },
+    { type: "Feature", properties: { NAME: "Lincoln Theatre (Comedy Shows)", TYPE: "Theater", SUMMARY: "Historic venue on U Street with recurring stand-up and comedy special events.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0240, 38.9175] } },
+    { type: "Feature", properties: { NAME: "Capital Turnaround (Comedy Nights)", TYPE: "Performance Venue", SUMMARY: "Navy Yard venue that occasionally hosts stand-up showcases and comedy podcasts.", NEIGHBORHOOD: "Navy Yard" }, geometry: { type: "Point", coordinates: [-77.0023, 38.8769] } },
+    { type: "Feature", properties: { NAME: "The Hamilton Live (Comedy Sets)", TYPE: "Music & Comedy Venue", SUMMARY: "Downtown live venue featuring periodic comedy nights and touring acts.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } }
   ]
 };
 
@@ -2474,6 +2502,77 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 sticky: true
               }
             );
+          }}
+        />
+      )}
+
+      {/* Comedy Venues Layer */}
+      {activeLayers.comedyVenues && (
+        <GeoJSON
+          key={`comedy-venues-${searchQuery}`}
+          data={comedyVenuesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [p.NAME, p.TYPE, p.SUMMARY, p.NEIGHBORHOOD]
+              .some((v) => String(v || "").toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            const primaryClub = String(feature.properties?.TYPE || "").toLowerCase().includes("comedy club");
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: primaryClub ? 8 : 7,
+              fillColor: primaryClub ? '#db2777' : '#ec4899',
+              color: '#f9a8d4',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Comedy venue');
+            const type = escapeHtml(p.TYPE || 'Comedy');
+            const summary = escapeHtml(p.SUMMARY || '');
+            const nbh = escapeHtml(p.NEIGHBORHOOD || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #ec4899;">🎤</span> ${name}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #db2777; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${type}${nbh ? ` · ${nbh}` : ''}
+                 </div>
+                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summary}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Many venues run mixed programming; check current calendar for comedy nights.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const primaryClub = String(feature.properties?.TYPE || "").toLowerCase().includes("comedy club");
+                l.setRadius(primaryClub ? 8 : 7);
+                l.setStyle({ weight: 2 });
+              }
+            });
           }}
         />
       )}
