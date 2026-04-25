@@ -9,6 +9,8 @@ const initialFilters = [
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
   { id: 'historical', label: 'Places in History', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
+  { id: 'festivalsParades', label: 'Festivals & Parades', icon: Flag, color: '#f59e0b', activeClass: 'active-amber' },
+  { id: 'breweriesDistilleries', label: 'Breweries & Distilleries', icon: Store, color: '#b45309', activeClass: 'active-amber' },
   { id: 'wards', label: 'Council Wards (2022)', icon: Vote, color: '#0891b2', activeClass: 'active-cyan' },
   { id: 'federal', label: 'Federal Footprint', icon: Building2, color: '#3b82f6', activeClass: 'active-blue' },
   { id: 'zoning', label: 'Zoning & Land Use', icon: Building, color: '#fb923c', activeClass: 'active-orange' },
@@ -26,6 +28,8 @@ const initialFilters = [
   { id: 'dcps', label: 'DC Public Schools (DCPS)', icon: School, color: '#6366f1', activeClass: 'active-indigo' },
   { id: 'librariesRecPools', label: 'Libraries & Recreation Centers', icon: BookOpen, color: '#0284c7', activeClass: 'active-skyblue' },
   { id: 'foodDeserts', label: 'Food Deserts (Low Food Access)', icon: ShoppingCart, color: '#d97706', activeClass: 'active-amber' },
+  { id: 'rentControlBuildings', label: 'Rent Control Buildings', icon: Building, color: '#7c3aed', activeClass: 'active-purple' },
+  { id: 'publicHousing', label: 'Public Housing', icon: Building2, color: '#1d4ed8', activeClass: 'active-blue' },
   { id: 'farmersMarkets', label: 'Farmers Markets', icon: Store, color: '#15803d', activeClass: 'active-green' },
   { id: 'propertyValues', label: 'Average Property Values', icon: DollarSign, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' }

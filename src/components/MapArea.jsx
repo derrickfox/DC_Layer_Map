@@ -214,6 +214,74 @@ const ticketedEventsData = {
   ]
 };
 
+const festivalsParadesData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Signature downtown parade route and festivities tied to the Cherry Blossom Festival." }, geometry: { type: "Point", coordinates: [-77.0283, 38.8921] } },
+    { type: "Feature", properties: { NAME: "DC JazzFest (The Wharf)", TYPE: "Festival", SEASON: "Late Summer", SUMMARY: "Multi-day citywide jazz festival with major performances around The Wharf and nearby venues." }, geometry: { type: "Point", coordinates: [-77.0262, 38.8797] } },
+    { type: "Feature", properties: { NAME: "H Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Large neighborhood street festival along the H Street NE corridor with music, food, and vendors." }, geometry: { type: "Point", coordinates: [-76.9958, 38.9002] } },
+    { type: "Feature", properties: { NAME: "Broccoli City Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Music and culture festival focused on sustainability and community programming." }, geometry: { type: "Point", coordinates: [-76.9792, 38.9190] } },
+    { type: "Feature", properties: { NAME: "Capital Pride Festival & Concert", TYPE: "Festival", SEASON: "June", SUMMARY: "Flagship Pride celebration with performances and community organizations in the downtown core." }, geometry: { type: "Point", coordinates: [-77.0283, 38.9014] } },
+    { type: "Feature", properties: { NAME: "Capital Pride Parade", TYPE: "Parade", SEASON: "June", SUMMARY: "Annual Pride parade route through central DC, drawing large crowds and community groups." }, geometry: { type: "Point", coordinates: [-77.0419, 38.9096] } },
+    { type: "Feature", properties: { NAME: "Fiesta DC Parade of Nations", TYPE: "Parade", SEASON: "Fall", SUMMARY: "Long-running Latino heritage parade and festival celebrating cultures from across the Americas." }, geometry: { type: "Point", coordinates: [-77.0335, 38.9025] } },
+    { type: "Feature", properties: { NAME: "Funk Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Community parade and music festival centered around U Street and historic Black music culture." }, geometry: { type: "Point", coordinates: [-77.0338, 38.9161] } },
+    { type: "Feature", properties: { NAME: "Barracks Row Fall Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Neighborhood street festival on Capitol Hill with local businesses, food, and family activities." }, geometry: { type: "Point", coordinates: [-76.9954, 38.8803] } },
+    { type: "Feature", properties: { NAME: "Adams Morgan Day", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Historic neighborhood festival featuring live music, restaurants, and local vendors." }, geometry: { type: "Point", coordinates: [-77.0436, 38.9226] } },
+    { type: "Feature", properties: { NAME: "Anacostia River Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront arts and recreation festival focused on ecology, water access, and community." }, geometry: { type: "Point", coordinates: [-76.9652, 38.8722] } },
+    { type: "Feature", properties: { NAME: "Downtown Holiday Market", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Seasonal open-air market with crafts, food, and performances in the Penn Quarter area." }, geometry: { type: "Point", coordinates: [-77.0265, 38.9009] } }
+  ]
+};
+
+const breweriesDistilleriesData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "DC Brau Brewing Company", TYPE: "Brewery", SUMMARY: "One of DC's flagship production breweries with taproom and frequent public events.", NEIGHBORHOOD: "Ivy City" }, geometry: { type: "Point", coordinates: [-76.9834, 38.9138] } },
+    { type: "Feature", properties: { NAME: "Atlas Brew Works (Ivy City)", TYPE: "Brewery", SUMMARY: "Local brewery known for district-focused beers and a central taproom in Ivy City.", NEIGHBORHOOD: "Ivy City" }, geometry: { type: "Point", coordinates: [-76.9857, 38.9150] } },
+    { type: "Feature", properties: { NAME: "Right Proper Brewing (Brookland Production House)", TYPE: "Brewery", SUMMARY: "Production brewery and taproom serving rotating small-batch beers.", NEIGHBORHOOD: "Brookland" }, geometry: { type: "Point", coordinates: [-76.9851, 38.9195] } },
+    { type: "Feature", properties: { NAME: "Bluejacket", TYPE: "Brewery", SUMMARY: "Navy Yard brewery and restaurant with a broad house beer program.", NEIGHBORHOOD: "Navy Yard" }, geometry: { type: "Point", coordinates: [-77.0074, 38.8785] } },
+    { type: "Feature", properties: { NAME: "Solace Outpost", TYPE: "Brewery", SUMMARY: "DC outpost of Solace Brewing at Bryant Street with on-site beers and food.", NEIGHBORHOOD: "Edgewood" }, geometry: { type: "Point", coordinates: [-77.0008, 38.9274] } },
+    { type: "Feature", properties: { NAME: "Red Bear Brewing Co.", TYPE: "Brewery", SUMMARY: "LGBTQ-owned brewery and pub in NoMa near Union Market.", NEIGHBORHOOD: "NoMa" }, geometry: { type: "Point", coordinates: [-77.0032, 38.9037] } },
+    { type: "Feature", properties: { NAME: "City-State Brewing", TYPE: "Brewery", SUMMARY: "Craft brewery and beer hall with local events and outdoor seating.", NEIGHBORHOOD: "Edgewood" }, geometry: { type: "Point", coordinates: [-77.0115, 38.9238] } },
+    { type: "Feature", properties: { NAME: "Other Half Brewing (DC)", TYPE: "Brewery", SUMMARY: "Large brewery and taproom near the waterfront serving rotating IPA-focused drafts.", NEIGHBORHOOD: "Navy Yard" }, geometry: { type: "Point", coordinates: [-77.0000, 38.8718] } },
+    { type: "Feature", properties: { NAME: "Cotton & Reed", TYPE: "Distillery", SUMMARY: "Rum-focused distillery known for tastings, cocktails, and private bottlings.", NEIGHBORHOOD: "Union Market" }, geometry: { type: "Point", coordinates: [-76.9906, 38.9084] } },
+    { type: "Feature", properties: { NAME: "Republic Restoratives Distillery", TYPE: "Distillery", SUMMARY: "Woman-owned distillery producing vodka, gin, and bourbon in Ivy City.", NEIGHBORHOOD: "Ivy City" }, geometry: { type: "Point", coordinates: [-76.9863, 38.9158] } },
+    { type: "Feature", properties: { NAME: "District Made Spirits", TYPE: "Distillery", SUMMARY: "Small-batch spirits distillery and tasting room near Union Market.", NEIGHBORHOOD: "Union Market" }, geometry: { type: "Point", coordinates: [-76.9900, 38.9068] } },
+    { type: "Feature", properties: { NAME: "Don Ciccio & Figli", TYPE: "Distillery", SUMMARY: "Italian liqueur distillery with guided tastings and production tours.", NEIGHBORHOOD: "Ivy City" }, geometry: { type: "Point", coordinates: [-76.9859, 38.9138] } }
+  ]
+};
+
+const rentControlBuildingsData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "The Cairo", TYPE: "Apartment Building", YEAR_BUILT: 1894, SUMMARY: "Historic Columbia Heights apartment building commonly cited among older multifamily stock likely covered by DC rent stabilization.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0333, 38.9232] } },
+    { type: "Feature", properties: { NAME: "The Chastleton", TYPE: "Apartment Building", YEAR_BUILT: 1920, SUMMARY: "Large pre-1975 multifamily building in Dupont/Logan area; representative of rent-stabilized-era housing.", NEIGHBORHOOD: "Dupont Circle" }, geometry: { type: "Point", coordinates: [-77.0398, 38.9151] } },
+    { type: "Feature", properties: { NAME: "The Woodner", TYPE: "Apartment Building", YEAR_BUILT: 1952, SUMMARY: "High-rise multifamily property near Rock Creek Park, representative of rent-control-era inventory.", NEIGHBORHOOD: "Woodley Park" }, geometry: { type: "Point", coordinates: [-77.0510, 38.9231] } },
+    { type: "Feature", properties: { NAME: "Ontario 17", TYPE: "Apartment Building", YEAR_BUILT: 1905, SUMMARY: "Historic Adams Morgan apartment building representative of older rental stock potentially subject to rent stabilization.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0417, 38.9222] } },
+    { type: "Feature", properties: { NAME: "The Westchester", TYPE: "Apartment Cooperative", YEAR_BUILT: 1931, SUMMARY: "Large prewar complex in upper Northwest; included as representative long-standing multifamily housing.", NEIGHBORHOOD: "Cathedral Heights" }, geometry: { type: "Point", coordinates: [-77.0785, 38.9257] } },
+    { type: "Feature", properties: { NAME: "The Kennedy-Warren", TYPE: "Apartment Building", YEAR_BUILT: 1931, SUMMARY: "Art deco apartment building near Cleveland Park that exemplifies older multifamily stock.", NEIGHBORHOOD: "Cleveland Park" }, geometry: { type: "Point", coordinates: [-77.0537, 38.9344] } },
+    { type: "Feature", properties: { NAME: "Park Pleasant", TYPE: "Apartment Building", YEAR_BUILT: 1959, SUMMARY: "Mid-century large apartment complex in Ward 1; representative of rent-stabilized-era housing forms.", NEIGHBORHOOD: "Pleasant Plains" }, geometry: { type: "Point", coordinates: [-77.0264, 38.9351] } },
+    { type: "Feature", properties: { NAME: "Park Van Ness", TYPE: "Apartment Building", YEAR_BUILT: 1964, SUMMARY: "High-rise apartment building in Van Ness, representative of pre-1976 rental inventory.", NEIGHBORHOOD: "Van Ness" }, geometry: { type: "Point", coordinates: [-77.0755, 38.9448] } },
+    { type: "Feature", properties: { NAME: "The Argonne", TYPE: "Apartment Building", YEAR_BUILT: 1936, SUMMARY: "Historic rental property in upper Connecticut Avenue corridor.", NEIGHBORHOOD: "Cleveland Park" }, geometry: { type: "Point", coordinates: [-77.0541, 38.9367] } },
+    { type: "Feature", properties: { NAME: "The Altamont", TYPE: "Apartment Building", YEAR_BUILT: 1916, SUMMARY: "Early 20th-century apartment building near Kalorama/Adams Morgan.", NEIGHBORHOOD: "Kalorama" }, geometry: { type: "Point", coordinates: [-77.0450, 38.9197] } }
+  ]
+};
+
+const publicHousingData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "Benning Terrace", TYPE: "Public Housing Community", SUMMARY: "Large DCHA public-housing community in Ward 7.", WARD: "Ward 7" }, geometry: { type: "Point", coordinates: [-76.9425, 38.8948] } },
+    { type: "Feature", properties: { NAME: "Barry Farm", TYPE: "Public Housing Community", SUMMARY: "Historic public-housing site undergoing long-term redevelopment planning.", WARD: "Ward 8" }, geometry: { type: "Point", coordinates: [-76.9986, 38.8618] } },
+    { type: "Feature", properties: { NAME: "Greenleaf Gardens", TYPE: "Public Housing Community", SUMMARY: "Southwest public-housing community and New Communities redevelopment focus area.", WARD: "Ward 6" }, geometry: { type: "Point", coordinates: [-77.0188, 38.8726] } },
+    { type: "Feature", properties: { NAME: "Kenilworth Courts", TYPE: "Public Housing Community", SUMMARY: "Public-housing complex in Northeast near the Anacostia River corridor.", WARD: "Ward 7" }, geometry: { type: "Point", coordinates: [-76.9409, 38.9107] } },
+    { type: "Feature", properties: { NAME: "Park Morton", TYPE: "Public Housing Community", SUMMARY: "Ward 1 public-housing site included in mixed-income redevelopment efforts.", WARD: "Ward 1" }, geometry: { type: "Point", coordinates: [-77.0247, 38.9300] } },
+    { type: "Feature", properties: { NAME: "Lincoln Heights", TYPE: "Public Housing Community", SUMMARY: "Public-housing neighborhood in Ward 7 often discussed with nearby Richardson Dwellings.", WARD: "Ward 7" }, geometry: { type: "Point", coordinates: [-76.9385, 38.8938] } },
+    { type: "Feature", properties: { NAME: "Richardson Dwellings", TYPE: "Public Housing Community", SUMMARY: "Adjacent to Lincoln Heights; part of longstanding affordable/public housing inventory.", WARD: "Ward 7" }, geometry: { type: "Point", coordinates: [-76.9362, 38.8937] } },
+    { type: "Feature", properties: { NAME: "Highland Dwellings", TYPE: "Public Housing Community", SUMMARY: "Historic public-housing community in Ward 8.", WARD: "Ward 8" }, geometry: { type: "Point", coordinates: [-77.0125, 38.8396] } },
+    { type: "Feature", properties: { NAME: "Fort Dupont Dwellings", TYPE: "Public Housing Community", SUMMARY: "Public-housing community in Southeast near Fort Dupont Park.", WARD: "Ward 7" }, geometry: { type: "Point", coordinates: [-76.9582, 38.8828] } },
+    { type: "Feature", properties: { NAME: "James Creek", TYPE: "Public Housing Community", SUMMARY: "Public-housing site in Southwest / Buzzard Point area under phased redevelopment.", WARD: "Ward 6" }, geometry: { type: "Point", coordinates: [-77.0229, 38.8685] } }
+  ]
+};
+
 const monumentsData = {
   type: "FeatureCollection",
   features: [
@@ -2406,6 +2474,305 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 sticky: true
               }
             );
+          }}
+        />
+      )}
+
+      {/* Festivals & Parades Layer */}
+      {activeLayers.festivalsParades && (
+        <GeoJSON
+          key={`festivals-parades-${searchQuery}`}
+          data={festivalsParadesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const name = feature.properties?.NAME || "";
+            const summary = feature.properties?.SUMMARY || "";
+            const type = feature.properties?.TYPE || "";
+            const season = feature.properties?.SEASON || "";
+            return (
+              name.toLowerCase().includes(q) ||
+              summary.toLowerCase().includes(q) ||
+              type.toLowerCase().includes(q) ||
+              season.toLowerCase().includes(q)
+            );
+          }}
+          pointToLayer={(feature, latlng) => {
+            const isParade = String(feature.properties?.TYPE || "").toLowerCase().includes("parade");
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: isParade ? 8 : 7,
+              fillColor: isParade ? '#f59e0b' : '#f97316',
+              color: '#fcd34d',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const { NAME, TYPE, SUMMARY, SEASON } = feature.properties;
+            const typeSafe = escapeHtml(TYPE || 'Festival');
+            const seasonSafe = escapeHtml(SEASON || '');
+            const nameSafe = escapeHtml(NAME || 'Festival / Parade');
+            const summarySafe = escapeHtml(SUMMARY || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 420px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #f59e0b;">🎉</span> ${nameSafe}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #f59e0b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${typeSafe}${seasonSafe ? ` · ${seasonSafe}` : ''}
+                 </div>
+                 <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summarySafe}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Representative anchor locations; routes/footprints can vary by year.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const isParade = String(feature.properties?.TYPE || "").toLowerCase().includes("parade");
+                l.setRadius(isParade ? 8 : 7);
+                l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Breweries & Distilleries Layer */}
+      {activeLayers.breweriesDistilleries && (
+        <GeoJSON
+          key={`breweries-distilleries-${searchQuery}`}
+          data={breweriesDistilleriesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const name = feature.properties?.NAME || "";
+            const summary = feature.properties?.SUMMARY || "";
+            const type = feature.properties?.TYPE || "";
+            const neighborhood = feature.properties?.NEIGHBORHOOD || "";
+            return (
+              name.toLowerCase().includes(q) ||
+              summary.toLowerCase().includes(q) ||
+              type.toLowerCase().includes(q) ||
+              neighborhood.toLowerCase().includes(q)
+            );
+          }}
+          pointToLayer={(feature, latlng) => {
+            const isDistillery = String(feature.properties?.TYPE || "").toLowerCase().includes("distillery");
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: isDistillery ? 8 : 7,
+              fillColor: isDistillery ? '#7c2d12' : '#b45309',
+              color: '#fbbf24',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const { NAME, TYPE, SUMMARY, NEIGHBORHOOD } = feature.properties;
+            const nameSafe = escapeHtml(NAME || 'Beverage Producer');
+            const typeSafe = escapeHtml(TYPE || 'Brewery');
+            const summarySafe = escapeHtml(SUMMARY || '');
+            const nbhSafe = escapeHtml(NEIGHBORHOOD || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 420px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #f59e0b;">🍺</span> ${nameSafe}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #b45309; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${typeSafe}${nbhSafe ? ` · ${nbhSafe}` : ''}
+                 </div>
+                 <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summarySafe}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Curated anchor list; verify current hours and operations before visiting.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const isDistillery = String(feature.properties?.TYPE || "").toLowerCase().includes("distillery");
+                l.setRadius(isDistillery ? 8 : 7);
+                l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Rent Control Buildings Layer */}
+      {activeLayers.rentControlBuildings && (
+        <GeoJSON
+          key={`rent-control-buildings-${searchQuery}`}
+          data={rentControlBuildingsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [p.NAME, p.TYPE, p.SUMMARY, p.NEIGHBORHOOD, p.YEAR_BUILT]
+              .some((v) => String(v || "").toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            const year = Number(feature.properties?.YEAR_BUILT);
+            const older = Number.isFinite(year) && year <= 1930;
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: older ? 8 : 7,
+              fillColor: older ? '#6d28d9' : '#8b5cf6',
+              color: '#ddd6fe',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Rent-controlled building');
+            const type = escapeHtml(p.TYPE || 'Multifamily');
+            const nbh = escapeHtml(p.NEIGHBORHOOD || '');
+            const year = Number(p.YEAR_BUILT);
+            const summary = escapeHtml(p.SUMMARY || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #8b5cf6;">🏢</span> ${name}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #7c3aed; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${type}${nbh ? ` · ${nbh}` : ''}${Number.isFinite(year) ? ` · Built ${year}` : ''}
+                 </div>
+                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summary}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Curated representative list, not an official citywide registry. Verify current rent-control status through DHCD/RAD resources.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const yearOut = Number(feature.properties?.YEAR_BUILT);
+                const olderOut = Number.isFinite(yearOut) && yearOut <= 1930;
+                l.setRadius(olderOut ? 8 : 7);
+                l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Public Housing Layer */}
+      {activeLayers.publicHousing && (
+        <GeoJSON
+          key={`public-housing-${searchQuery}`}
+          data={publicHousingData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [p.NAME, p.TYPE, p.SUMMARY, p.WARD]
+              .some((v) => String(v || "").toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: 8,
+              fillColor: '#1d4ed8',
+              color: '#93c5fd',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            })
+          }
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Public housing community');
+            const type = escapeHtml(p.TYPE || 'Public housing');
+            const ward = escapeHtml(p.WARD || '');
+            const summary = escapeHtml(p.SUMMARY || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #2563eb;">🏘️</span> ${name}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #1d4ed8; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${type}${ward ? ` · ${ward}` : ''}
+                 </div>
+                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summary}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Curated community anchors, not parcel-level boundaries. Verify current inventory and redevelopment status with DCHA.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(8);
+                l.setStyle({ weight: 2 });
+              }
+            });
           }}
         />
       )}
