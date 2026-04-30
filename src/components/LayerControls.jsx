@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap, Route } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -20,6 +20,7 @@ const initialFilters = [
   { id: 'zoning', label: 'Zoning & Land Use', icon: Building, color: '#fb923c', activeClass: 'active-orange' },
   { id: 'metro', label: 'Metro', icon: TrainFront, color: '#f87171', activeClass: 'active-red' },
   { id: 'bus', label: 'WMATA Metrobus', icon: Bus, color: '#2563eb', activeClass: 'active-blue' },
+  { id: 'emergencyRoutes', label: 'Emergency Routes', icon: Route, color: '#dc2626', activeClass: 'active-red' },
   { id: 'bikeLanes', label: 'Bike Lanes', icon: Bike, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'parks', label: 'Parks', icon: TreePine, color: '#4ade80', activeClass: 'active-green' },
   { id: 'squares', label: 'Squares & Circles', icon: CircleDot, color: '#38bdf8', activeClass: 'active-skyblue' },

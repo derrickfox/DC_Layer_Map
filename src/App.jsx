@@ -132,6 +132,7 @@ function App() {
     publicHousing: false,
     farmersMarkets: false,
     bikeLanes: false,
+    emergencyRoutes: false,
     bus: false,
     metro: false,
     zoning: false

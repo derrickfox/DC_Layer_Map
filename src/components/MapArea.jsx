@@ -504,9 +504,15 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "Thomas Jefferson Memorial", TYPE: "Memorial", SUMMARY: "Neoclassical memorial building honoring the third U.S. president." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8814] } },
     { type: "Feature", properties: { NAME: "Martin Luther King Jr. Memorial", TYPE: "Memorial", SUMMARY: "Stone of Hope memorial honoring the civil rights leader." }, geometry: { type: "Point", coordinates: [-77.0443, 38.8861] } },
     { type: "Feature", properties: { NAME: "Franklin Delano Roosevelt Memorial", TYPE: "Memorial", SUMMARY: "Sprawling memorial spanning four outdoor rooms representing his four terms." }, geometry: { type: "Point", coordinates: [-77.0433, 38.8827] } },
+    { type: "Feature", properties: { NAME: "Theodore Roosevelt Memorial", TYPE: "Memorial", SUMMARY: "Wooded island memorial plaza with a bronze statue of Theodore Roosevelt, fountains, and granite quotation tablets." }, geometry: { type: "Point", coordinates: [-77.06394, 38.897436] } },
+    { type: "Feature", properties: { NAME: "Dwight D. Eisenhower Memorial", TYPE: "Memorial", SUMMARY: "National memorial honoring the 34th president and Supreme Allied Commander, with sculpture, bas-relief, and woven-metal tapestry." }, geometry: { type: "Point", coordinates: [-77.0188, 38.8871] } },
     { type: "Feature", properties: { NAME: "World War II Memorial", TYPE: "Memorial", SUMMARY: "Honors the 16 million people who served in the U.S. armed forces during WWII." }, geometry: { type: "Point", coordinates: [-77.0405, 38.8894] } },
+    { type: "Feature", properties: { NAME: "National World War I Memorial", TYPE: "Memorial", SUMMARY: "Pershing Park memorial honoring Americans who served in World War I, incorporating the Pershing statue and A Soldier's Journey sculpture." }, geometry: { type: "Point", coordinates: [-77.0328, 38.8959] } },
     { type: "Feature", properties: { NAME: "Vietnam Veterans Memorial", TYPE: "Memorial", SUMMARY: "A black granite wall inscribed with the names of over 58,000 servicemembers." }, geometry: { type: "Point", coordinates: [-77.0477, 38.8913] } },
     { type: "Feature", properties: { NAME: "Korean War Veterans Memorial", TYPE: "Memorial", SUMMARY: "Features 19 stainless steel statues of soldiers on patrol." }, geometry: { type: "Point", coordinates: [-77.0475, 38.8878] } },
+    { type: "Feature", properties: { NAME: "District of Columbia War Memorial", TYPE: "Memorial", SUMMARY: "Classical open-air memorial honoring District residents who died in World War I." }, geometry: { type: "Point", coordinates: [-77.0435, 38.8876] } },
+    { type: "Feature", properties: { NAME: "American Veterans Disabled for Life Memorial", TYPE: "Memorial", SUMMARY: "Memorial honoring veterans permanently disabled during national service." }, geometry: { type: "Point", coordinates: [-77.0132, 38.8864] } },
+    { type: "Feature", properties: { NAME: "National Native American Veterans Memorial", TYPE: "Memorial", SUMMARY: "Smithsonian memorial honoring the military service of Native American, Alaska Native, and Native Hawaiian veterans." }, geometry: { type: "Point", coordinates: [-77.0156, 38.8886] } },
     { type: "Feature", properties: { NAME: "Albert Einstein Memorial", TYPE: "Statue", SUMMARY: "A monumental bronze statue of Albert Einstein seated." }, geometry: { type: "Point", coordinates: [-77.0484, 38.8923] } },
     { type: "Feature", properties: { NAME: "African American Civil War Memorial", TYPE: "Memorial", SUMMARY: "Honors the service of the United States Colored Troops during the Civil War." }, geometry: { type: "Point", coordinates: [-77.0256, 38.9166] } },
     { type: "Feature", properties: { NAME: "Ulysses S. Grant Memorial", TYPE: "Memorial", SUMMARY: "One of the largest equestrian statues in the U.S., honoring the 18th President." }, geometry: { type: "Point", coordinates: [-77.0136, 38.8899] } },
@@ -516,6 +522,7 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "George Mason Memorial", TYPE: "Memorial", SUMMARY: "Honors the author of the Virginia Declaration of Rights." }, geometry: { type: "Point", coordinates: [-77.0396, 38.8804] } },
     { type: "Feature", properties: { NAME: "Signers of the Declaration of Independence Memorial", TYPE: "Memorial", SUMMARY: "Granite stones honoring the 56 signers of the Declaration of Independence." }, geometry: { type: "Point", coordinates: [-77.0435, 38.8906] } },
     { type: "Feature", properties: { NAME: "John Paul Jones Memorial", TYPE: "Memorial", SUMMARY: "Statue of the American Revolution naval hero." }, geometry: { type: "Point", coordinates: [-77.0402, 38.8885] } },
+    { type: "Feature", properties: { NAME: "John Ericsson Memorial", TYPE: "Memorial", SUMMARY: "Memorial honoring the engineer and naval innovator whose screw-propeller and ironclad designs transformed naval history." }, geometry: { type: "Point", coordinates: [-77.0502, 38.8867] } },
     { type: "Feature", properties: { NAME: "First Division Monument", TYPE: "Monument", SUMMARY: "Honors soldiers of the U.S. Army's First Infantry Division." }, geometry: { type: "Point", coordinates: [-77.0387, 38.8962] } },
     { type: "Feature", properties: { NAME: "Second Division Memorial", TYPE: "Memorial", SUMMARY: "Commemorates the 2nd Infantry Division." }, geometry: { type: "Point", coordinates: [-77.0382, 38.8953] } },
     { type: "Feature", properties: { NAME: "Boy Scout Memorial", TYPE: "Memorial", SUMMARY: "Features a male scout, female scout, and an adult scouter." }, geometry: { type: "Point", coordinates: [-77.0374, 38.8942] } },
@@ -533,6 +540,7 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "General Winfield Scott Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the general in Scott Circle." }, geometry: { type: "Point", coordinates: [-77.0365, 38.9075] } },
     { type: "Feature", properties: { NAME: "George Washington Equestrian Statue", TYPE: "Statue", SUMMARY: "Depicts George Washington at the Battle of Princeton, in Washington Circle." }, geometry: { type: "Point", coordinates: [-77.0502, 38.9027] } },
     { type: "Feature", properties: { NAME: "National Law Enforcement Officers Memorial", TYPE: "Memorial", SUMMARY: "Honors federal, state, and local law enforcement officers." }, geometry: { type: "Point", coordinates: [-77.0172, 38.8967] } },
+    { type: "Feature", properties: { NAME: "United States Navy Memorial", TYPE: "Memorial", SUMMARY: "Memorial plaza on Pennsylvania Avenue honoring sailors, Marines, Coast Guardsmen, and the sea services." }, geometry: { type: "Point", coordinates: [-77.0229, 38.8940] } },
     { type: "Feature", properties: { NAME: "Japanese American Memorial to Patriotism", TYPE: "Memorial", SUMMARY: "Commemorates Japanese American patriotism during World War II." }, geometry: { type: "Point", coordinates: [-77.0108, 38.8967] } },
     { type: "Feature", properties: { NAME: "Victims of Communism Memorial", TYPE: "Memorial", SUMMARY: "A bronze replica of the Goddess of Democracy." }, geometry: { type: "Point", coordinates: [-77.0122, 38.8978] } },
     { type: "Feature", properties: { NAME: "Christopher Columbus Memorial", TYPE: "Memorial", SUMMARY: "Features a statue of Columbus in front of Union Station." }, geometry: { type: "Point", coordinates: [-77.0061, 38.8966] } },
@@ -878,6 +886,49 @@ const osmPlacesOfWorshipToGeoJson = (elements = []) => ({
     .filter(Boolean)
 });
 
+const normalizeMonumentName = (name) => String(name || '')
+  .toLowerCase()
+  .replace(/^the\s+/, '')
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim();
+
+const osmStatuesMemorialsToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const coordinates = getOsmElementCoordinates(element);
+      if (!coordinates) return null;
+      const tags = element.tags || {};
+      const name = tags.name || tags['official_name'];
+      if (!name) return null;
+      const artworkType = formatOsmTag(tags.artwork_type);
+      const historicType = formatOsmTag(tags.historic);
+      const type = artworkType || historicType || 'Statue / Memorial';
+      const subject = tags.subject || tags['subject:name'] || tags['name:etymology'] || '';
+      const artist = tags.artist_name || tags.artist || '';
+      const summaryParts = [
+        subject ? `Subject: ${subject}` : '',
+        artist ? `Artist: ${artist}` : '',
+        tags.description || tags.inscription || ''
+      ].filter(Boolean);
+
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: name,
+          TYPE: type,
+          SUMMARY: summaryParts.length ? summaryParts.join(' · ') : 'Public statue, sculpture, monument, or memorial mapped in OpenStreetMap.',
+          SOURCE: 'OpenStreetMap',
+          ARTIST: artist,
+          SUBJECT: subject
+        },
+        geometry: { type: 'Point', coordinates }
+      };
+    })
+    .filter(Boolean)
+});
+
 const UNIVERSITY_PROFILES = [
   { name: 'Georgetown University', color: '#2563eb', center: [-77.0730, 38.9076], radiusMeters: 1800, patterns: ['georgetown university', 'georgetown law'] },
   { name: 'George Washington University', color: '#f59e0b', center: [-77.0486, 38.8997], radiusMeters: 1500, patterns: ['george washington university', 'gwu', 'gw university'] },
@@ -1047,6 +1098,83 @@ const fetchOverpassJson = async (query) => {
   }
 
   throw lastError || new Error('All Overpass endpoints failed');
+};
+
+const fetchPagedArcGisGeoJson = async (url, pageSize = 1000) => {
+  const features = [];
+  let offset = 0;
+  let base = null;
+
+  while (true) {
+    const separator = url.includes('?') ? '&' : '?';
+    const pageUrl = `${url}${separator}resultRecordCount=${pageSize}&resultOffset=${offset}`;
+    const res = await fetch(pageUrl);
+    if (!res.ok) throw new Error(`ArcGIS request failed: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'ArcGIS API error');
+    if (!base) base = { ...data, features: [] };
+    const pageFeatures = data.features || [];
+    features.push(...pageFeatures);
+    const exceeded = data.exceededTransferLimit || data.properties?.exceededTransferLimit;
+    if (!exceeded || pageFeatures.length === 0) break;
+    offset += pageSize;
+  }
+
+  return {
+    ...(base || { type: 'FeatureCollection' }),
+    type: 'FeatureCollection',
+    features
+  };
+};
+
+const getEmergencyRouteStyle = (props = {}, highlight = false) => {
+  const routeClass = props.ROUTE_CLASS || '';
+  if (routeClass === 'Regional Evacuation Route') {
+    return {
+      color: '#2563eb',
+      weight: highlight ? 6 : 4,
+      opacity: highlight ? 0.95 : 0.82,
+      dashArray: null
+    };
+  }
+  if (routeClass === 'Snow Emergency Ramp') {
+    return {
+      color: '#f59e0b',
+      weight: highlight ? 5 : 3,
+      opacity: highlight ? 0.95 : 0.82,
+      dashArray: '2, 6'
+    };
+  }
+  if (routeClass === 'Snow Emergency Service Road') {
+    return {
+      color: '#7c3aed',
+      weight: highlight ? 5 : 3,
+      opacity: highlight ? 0.95 : 0.78,
+      dashArray: '8, 5'
+    };
+  }
+  return {
+    color: '#dc2626',
+    weight: highlight ? 6 : 4,
+    opacity: highlight ? 0.95 : 0.86,
+    dashArray: null
+  };
+};
+
+const emergencyRouteMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.ROUTE_CLASS,
+    p.NAME,
+    p.REGISTEREDNAME,
+    p.STREETTYPE,
+    p.QUADRANT,
+    p.ROUTE_TYPE,
+    p.STATUS,
+    p.FC,
+    p.GIS_ID
+  ].some((value) => String(value || '').toLowerCase().includes(query));
 };
 
 const formatNumber = (value) => {
@@ -1533,6 +1661,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [emergencyMedicalData, setEmergencyMedicalData] = useState(null);
   const [religiousInstitutionsData, setReligiousInstitutionsData] = useState(null);
   const [universitiesData, setUniversitiesData] = useState(null);
+  const [emergencyRoutesData, setEmergencyRoutesData] = useState(null);
+  const [osmMonumentsData, setOsmMonumentsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
   const combinedSewerLayerRef = useRef(null);
@@ -1557,6 +1687,20 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     (feature) => emergencyMedicalMatchesSearch(feature, normalizedSearchQuery),
     [normalizedSearchQuery]
   );
+  const combinedMonumentsData = useMemo(() => {
+    if (!osmMonumentsData) return monumentsData;
+    const seen = new Set(monumentsData.features.map((feature) => normalizeMonumentName(feature.properties?.NAME)));
+    const osmFeatures = (osmMonumentsData.features || []).filter((feature) => {
+      const normalized = normalizeMonumentName(feature.properties?.NAME);
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
+    return {
+      type: 'FeatureCollection',
+      features: [...monumentsData.features, ...osmFeatures]
+    };
+  }, [osmMonumentsData]);
 
   const toggleNeighborhoodSelection = (name) => {
     setSelectedNeighborhoods(prev => {
@@ -1737,6 +1881,28 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   }, [activeLayers.historicLandmarks, historicLandmarksData]);
 
   useEffect(() => {
+    if (activeLayers.monuments && !osmMonumentsData) {
+      const overpassQuery = `[out:json][timeout:30];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["tourism"="artwork"]["artwork_type"~"statue|sculpture|bust|relief|installation"](area.dc);
+  way["tourism"="artwork"]["artwork_type"~"statue|sculpture|bust|relief|installation"](area.dc);
+  relation["tourism"="artwork"]["artwork_type"~"statue|sculpture|bust|relief|installation"](area.dc);
+  node["historic"~"^(memorial|monument)$"](area.dc);
+  way["historic"~"^(memorial|monument)$"](area.dc);
+  relation["historic"~"^(memorial|monument)$"](area.dc);
+);
+out center tags;`;
+
+      fetchOverpassJson(overpassQuery)
+        .then((data) => {
+          setOsmMonumentsData(osmStatuesMemorialsToGeoJson(data.elements || []));
+        })
+        .catch((err) => console.error('Error fetching OSM statues and memorials data:', err));
+    }
+  }, [activeLayers.monuments, osmMonumentsData]);
+
+  useEffect(() => {
     if (activeLayers.religiousInstitutions && !religiousInstitutionsData) {
       const overpassQuery = `[out:json][timeout:25];
 area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
@@ -1774,6 +1940,52 @@ out center geom tags;`;
         .catch((err) => console.error('Error fetching universities data:', err));
     }
   }, [activeLayers.universities, universitiesData]);
+
+  useEffect(() => {
+    if (activeLayers.emergencyRoutes && !emergencyRoutesData) {
+      const snowBase = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Snow_WebMercator/MapServer';
+      const publicSafetyBase = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Public_Safety_WebMercator/MapServer';
+      const query = 'query?where=1%3D1&outFields=*&outSR=4326&f=geojson';
+
+      Promise.all([
+        fetchPagedArcGisGeoJson(`${snowBase}/19/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Snow Emergency Road' }
+          }))
+        })),
+        fetchPagedArcGisGeoJson(`${snowBase}/18/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Snow Emergency Ramp' }
+          }))
+        })),
+        fetchPagedArcGisGeoJson(`${snowBase}/17/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Snow Emergency Service Road' }
+          }))
+        })),
+        fetchPagedArcGisGeoJson(`${publicSafetyBase}/8/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Regional Evacuation Route' }
+          }))
+        }))
+      ])
+        .then((collections) => {
+          setEmergencyRoutesData({
+            type: 'FeatureCollection',
+            features: collections.flatMap((collection) => collection.features || [])
+          });
+        })
+        .catch((err) => console.error('Error fetching emergency routes data:', err));
+    }
+  }, [activeLayers.emergencyRoutes, emergencyRoutesData]);
 
   useEffect(() => {
     if (activeLayers.propertyValues && !propertyValuesData) {
@@ -2911,41 +3123,53 @@ out center geom tags;`;
       {/* Monuments & Memorials Layer */}
       {activeLayers.monuments && monumentsData && (
         <GeoJSON 
-          key={`monuments-${searchQuery}`}
-          data={monumentsData}
+          key={`monuments-${searchQuery}-${osmMonumentsData ? 'osm' : 'curated'}`}
+          data={combinedMonumentsData}
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
             const name = feature.properties?.NAME || "";
             const summary = feature.properties?.SUMMARY || "";
             const type = feature.properties?.TYPE || "";
-            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q) || type.toLowerCase().includes(q);
+            const source = feature.properties?.SOURCE || "";
+            const artist = feature.properties?.ARTIST || "";
+            const subject = feature.properties?.SUBJECT || "";
+            return [name, summary, type, source, artist, subject]
+              .some((value) => String(value || '').toLowerCase().includes(q));
           }}
           pointToLayer={(feature, latlng) => {
+            const fromOsm = feature.properties?.SOURCE === 'OpenStreetMap';
             return L.circleMarker(latlng, {
               pane: 'markerPane',
-              radius: 6,
-              fillColor: '#0d9488', // teal
-              color: '#14b8a6',
-              weight: 2,
+              radius: fromOsm ? 4.8 : 6,
+              fillColor: fromOsm ? '#14b8a6' : '#0d9488',
+              color: fromOsm ? '#ccfbf1' : '#14b8a6',
+              weight: fromOsm ? 1.5 : 2,
               opacity: 1,
               fillOpacity: 0.8
             });
           }}
           onEachFeature={(feature, layer) => {
-            const { NAME, TYPE, SUMMARY } = feature.properties;
+            const { NAME, TYPE, SUMMARY, SOURCE, OSM_ID } = feature.properties;
+            const fromOsm = SOURCE === 'OpenStreetMap';
+            const nameSafe = escapeHtml(NAME || 'Statue / Memorial');
+            const typeSafe = escapeHtml(TYPE || 'Statue / Memorial');
+            const summarySafe = escapeHtml(SUMMARY || '');
+            const sourceSafe = escapeHtml(OSM_ID ? `${SOURCE} ${OSM_ID}` : SOURCE || '');
+            const accent = fromOsm ? '#14b8a6' : '#0d9488';
             
             const tooltipContent = `
               <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
                 <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(20, 184, 166, 0.3); padding-bottom: 4px;">
-                  <span style="color: #14b8a6; margin-right: 4px;">•</span>${NAME}
+                  <span style="color: ${accent}; margin-right: 4px;">•</span>${nameSafe}
                 </div>
-                <div style="font-size: 11px; font-weight: 600; color: #14b8a6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                  ${TYPE}
+                <div style="font-size: 11px; font-weight: 600; color: ${accent}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${typeSafe}
                 </div>
                 <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.3;">
-                  ${SUMMARY}
+                  ${summarySafe}
                 </div>
+                ${sourceSafe ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">${sourceSafe}</div>` : ''}
               </div>
             `;
 
@@ -4419,6 +4643,74 @@ out center geom tags;`;
               },
               mouseout: (e) => {
                 emergencyMedicalLayerRef.current?.resetStyle(e.target);
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.emergencyRoutes && emergencyRoutesData && (
+        <GeoJSON
+          key={`emergency-routes-${searchQuery}`}
+          data={emergencyRoutesData}
+          filter={(feature) => emergencyRouteMatchesSearch(feature, normalizedSearchQuery)}
+          style={(feature) => getEmergencyRouteStyle(feature.properties)}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const style = getEmergencyRouteStyle(props);
+            const routeClass = escapeHtml(props.ROUTE_CLASS || 'Emergency Route');
+            const roadName = escapeHtml(
+              props.NAME ||
+              [props.REGISTEREDNAME, props.STREETTYPE, props.QUADRANT].filter(Boolean).join(' ') ||
+              props.FULLSTREET ||
+              'Route segment'
+            );
+            const routeType = escapeHtml(props.ROUTE_TYPE || '');
+            const status = escapeHtml(props.STATUS || '');
+            const functionalClass = escapeHtml(props.FC || '');
+            const gisId = escapeHtml(props.GIS_ID || '');
+
+            const lines = [`<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 340px;">`];
+            lines.push(
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid ${style.color}; padding-bottom: 4px;">
+                 <span style="color: ${style.color}; margin-right: 4px;">━</span>${roadName}
+               </div>`
+            );
+            lines.push(
+              `<div style="font-size: 11px; font-weight: 700; color: ${style.color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                 ${routeClass}
+               </div>`
+            );
+            if (routeType) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">${routeType}</div>`);
+            if (status || functionalClass) {
+              lines.push(
+                `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35; margin-top: 4px;">
+                   ${status ? `<strong>Status:</strong> ${status}` : ''}${status && functionalClass ? '<br>' : ''}${functionalClass ? `<strong>Road class:</strong> ${functionalClass}` : ''}
+                 </div>`
+              );
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                 Official DCGIS snow emergency and regional evacuation route data.${gisId ? ` ${gisId}` : ''}
+               </div>`
+            );
+            lines.push(`</div>`);
+
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle(getEmergencyRouteStyle(props, true));
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                e.target.setStyle(getEmergencyRouteStyle(props));
               }
             });
           }}
