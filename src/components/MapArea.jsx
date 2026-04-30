@@ -2491,7 +2491,75 @@ out center tags;`;
     };
   };
 
+  const loadingLayerNames = useMemo(() => {
+    const names = [];
+    if (activeLayers.neighborhoods && !geoJsonData) names.push('Neighborhoods');
+    if ((activeLayers.parks || activeLayers.squares) && (!parksData || !squaresData)) names.push('Parks / Squares');
+    if (activeLayers.museums && !museumsData) names.push('Museums');
+    if (activeLayers.dcps && !dcpsSchoolsData) names.push('DC Public Schools');
+    if (activeLayers.librariesRecPools && !librariesRecPoolsData) names.push('Libraries & Rec Centers');
+    if (activeLayers.muralsPublicArt && !muralsPublicArtData) names.push('Murals & Public Art');
+    if (activeLayers.historicLandmarks && !historicLandmarksData) names.push('Historic Landmarks');
+    if (activeLayers.metro && (!metroLinesData || !metroStationsData)) names.push('Metro');
+    if (activeLayers.bus && !busRoutesData) names.push('Metrobus');
+    if (activeLayers.federal && (!federalPropertyData || !federalBuildingsData)) names.push('Federal Footprint');
+    if (activeLayers.zoning && !zoningData) names.push('Zoning');
+    if (activeLayers.wards && !wardsData) names.push('Wards');
+    if (activeLayers.floodZones && !floodZonesData) names.push('Flood Zones');
+    if (activeLayers.foodDeserts && !foodDesertsData) names.push('Food Deserts');
+    if (activeLayers.farmersMarkets && !farmersMarketsData) names.push('Farmers Markets');
+    if (activeLayers.treeCanopy && !treeCanopyData) names.push('Urban Tree Canopy');
+    if (activeLayers.combinedSewer && !combinedSewerData) names.push('Combined Sewer');
+    if (activeLayers.wetland && !wetlandData) names.push('Wetlands');
+    if (activeLayers.emergencyMedical && !emergencyMedicalData) names.push('Emergency Medical');
+    if (activeLayers.religiousInstitutions && !religiousInstitutionsData) names.push('Religious Institutions');
+    if (activeLayers.universities && !universitiesData) names.push('Universities');
+    if (activeLayers.emergencyRoutes && !emergencyRoutesData) names.push('Emergency Routes');
+    if (activeLayers.propertyValues && !propertyValuesData) names.push('Property Values');
+    if (activeLayers.crime && !crimeData) names.push('Crime');
+    if (activeLayers.bikeLanes && !bikeLanesData) names.push('Bike Lanes');
+    return names;
+  }, [
+    activeLayers,
+    geoJsonData,
+    parksData,
+    squaresData,
+    museumsData,
+    dcpsSchoolsData,
+    librariesRecPoolsData,
+    muralsPublicArtData,
+    historicLandmarksData,
+    metroLinesData,
+    metroStationsData,
+    busRoutesData,
+    federalPropertyData,
+    federalBuildingsData,
+    zoningData,
+    wardsData,
+    floodZonesData,
+    foodDesertsData,
+    farmersMarketsData,
+    treeCanopyData,
+    combinedSewerData,
+    wetlandData,
+    emergencyMedicalData,
+    religiousInstitutionsData,
+    universitiesData,
+    emergencyRoutesData,
+    propertyValuesData,
+    crimeData,
+    bikeLanesData
+  ]);
+
+  const loadingSummary =
+    loadingLayerNames.length > 1
+      ? `Loading ${loadingLayerNames[0]} +${loadingLayerNames.length - 1} more...`
+      : loadingLayerNames.length === 1
+        ? `Loading ${loadingLayerNames[0]}...`
+        : '';
+
   return (
+    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
     <MapContainer 
       center={dcCenter} 
       zoom={13} 
@@ -5330,6 +5398,34 @@ out center tags;`;
 
       <ZoomWidget isLeftAligned={isLeftAligned} />
     </MapContainer>
+    {loadingSummary && (
+      <div
+        style={{
+          position: 'absolute',
+          top: '16px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1200,
+          background: 'rgba(15, 23, 42, 0.78)',
+          color: '#e2e8f0',
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          borderRadius: '999px',
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          backdropFilter: 'blur(6px)',
+          boxShadow: '0 8px 30px rgba(2, 6, 23, 0.45)',
+          fontSize: '12px',
+          fontWeight: 600,
+          pointerEvents: 'none'
+        }}
+      >
+        <span className="loading-spinner" />
+        <span>{loadingSummary}</span>
+      </div>
+    )}
+    </div>
   );
 };
 
