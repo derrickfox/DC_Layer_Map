@@ -701,7 +701,10 @@ const customOverrides = {
   "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
   "Connecticut Avenue/K Street": { center: [38.9020, -77.0396], radius: 500 },
   "Union Station": { center: [38.8977, -77.0068], radius: 450 },
-  "Truxton Circle": { center: [38.9100, -77.0100], radius: 450 },
+  // Match OSM label anchors: Bloomingdale/Truxton = place nodes; Le Droit = Nominatim neighbourhood point (not relation centroid).
+  "Truxton Circle": { center: [38.9098338, -77.0149764], radius: 450 },
+  "Bloomingdale": { center: [38.9167782, -77.0113652], radius: 450 },
+  "Le Droit Park": { center: [38.9159068, -77.0157211], radius: 430 },
   "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 },
   "Foxhall Crescent": { center: [38.9230, -77.0890], radius: 450 },
   "Spring Valley": { center: [38.9380, -77.0950], radius: 500 },
@@ -747,6 +750,18 @@ const normalizeNeighborhoodKey = (value) => {
   if (base === 'southwest waterfront the wharf') return 'southwest waterfront';
   if (base.startsWith('the ')) return base.slice(4);
   return base;
+};
+
+/** Resolves customOverrides for GIS names that differ from override keys (e.g. slash variants). */
+const getCustomOverrideEntry = (name) => {
+  if (customOverrides[name]) return customOverrides[name];
+  const disp = getNeighborhoodDisplayName(name);
+  if (customOverrides[disp]) return customOverrides[disp];
+  const nk = normalizeNeighborhoodKey(name);
+  for (const [k, v] of Object.entries(customOverrides)) {
+    if (normalizeNeighborhoodKey(k) === nk) return v;
+  }
+  return null;
 };
 
 const escapeHtml = (value) => String(value || '')
@@ -1686,7 +1701,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const combinedSewerLayerRef = useRef(null);
   const wetlandLayerRef = useRef(null);
   const emergencyMedicalLayerRef = useRef(null);
-  const getNeighborhoodAnchor = useCallback((name) => {
+  const getNeighborhoodAnchor = useCallback((name, referencePos = null) => {
+    const manual = getCustomOverrideEntry(name);
+    if (manual?.center) return manual.center;
+
     const keyCandidates = [
       name,
       getNeighborhoodDisplayName(name),
@@ -1695,14 +1713,29 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     ].map(normalizeNeighborhoodKey);
 
     for (const key of keyCandidates) {
-      const anchor = osmNeighborhoodAnchors[key];
-      if (anchor) return anchor;
+      const anchors = osmNeighborhoodAnchors[key];
+      if (!anchors || anchors.length === 0) continue;
+      if (!referencePos || anchors.length === 1) return anchors[0];
+
+      let best = anchors[0];
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (const candidate of anchors) {
+        const dLat = candidate[0] - referencePos[0];
+        const dLon = candidate[1] - referencePos[1];
+        const dist = dLat * dLat + dLon * dLon;
+        if (dist < bestDist) {
+          best = candidate;
+          bestDist = dist;
+        }
+      }
+      return best;
     }
-    return customOverrides[name]?.center || null;
+    return null;
   }, [osmNeighborhoodAnchors]);
 
   const getNeighborhoodRadius = useCallback((name, fallbackRadius) => {
-    if (customOverrides[name]?.radius) return customOverrides[name].radius;
+    const manual = getCustomOverrideEntry(name);
+    if (manual?.radius) return manual.radius;
     return fallbackRadius;
   }, []);
   const treeCanopyStyleFn = useCallback((feature) => getTreeCanopyStyle(feature), []);
@@ -2368,7 +2401,8 @@ out center tags;`;
           const lon = el.lon ?? el.center?.lon;
           if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
           const key = normalizeNeighborhoodKey(name);
-          if (!map[key]) map[key] = [lat, lon];
+          if (!map[key]) map[key] = [];
+          map[key].push([lat, lon]);
         }
         setOsmNeighborhoodAnchors(map);
       })
@@ -2401,7 +2435,7 @@ out center tags;`;
 
       neighborhoods.forEach((name, i) => {
         let pos = [center.lat, center.lng];
-        const anchor = getNeighborhoodAnchor(name);
+        const anchor = getNeighborhoodAnchor(name, [center.lat, center.lng]);
         if (anchor) {
           pos = anchor;
         } else if (N > 1) {
@@ -2631,7 +2665,7 @@ out center tags;`;
               let pos = [center.lat, center.lng];
               let finalRadius = radiusMeters;
 
-              const anchor = getNeighborhoodAnchor(name);
+              const anchor = getNeighborhoodAnchor(name, [center.lat, center.lng]);
               if (anchor) {
                 pos = anchor;
                 finalRadius = getNeighborhoodRadius(name, finalRadius);
