@@ -676,25 +676,32 @@ const HISTORIC_DISTRICT_COLORS = [
   '#9e8061'
 ];
 
+/** Cap bounds-derived radius (merged DC clusters are geographically huge). */
+const NEIGHBORHOOD_RADIUS_FALLBACK_MAX = 400;
+/** Cap explicit per-neighborhood radii (customOverrides previously up to 800 m). */
+const NEIGHBORHOOD_RADIUS_OVERRIDE_MAX = 480;
+
 const customOverrides = {
   "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
-  "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
-  "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
-  "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 },
+  "Adams Morgan": { center: [38.9215002, -77.0421992], radius: 500 },
+  "Woodley Park": { center: [38.9250248, -77.0523627], radius: 550 },
+  "Cleveland Park": { center: [38.9352305, -77.0587072], radius: 600 },
   "Palisades": { center: [38.9280, -77.1080], radius: 500 },
   "Dalecarlia": { center: [38.9380, -77.1080], radius: 450 },
   "Kent": { center: [38.9320, -77.1060], radius: 450 },
   "American University Park": { center: [38.9480, -77.0930], radius: 500 },
   "Berkley": { center: [38.9170, -77.0940], radius: 450 },
   "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
-  "Columbia Heights": { center: [38.9283, -77.0327], radius: 500 },
-  "Mt. Pleasant": { center: [38.9317, -77.0383], radius: 450 },
-  "Cardozo/Shaw": { center: [38.9170, -77.0320], radius: 450 },
-  "Dupont Circle": { center: [38.9096, -77.0434], radius: 500 },
-  "Kalorama Heights": { center: [38.9174, -77.0505], radius: 450 },
+  "Columbia Heights": { center: [38.9287474, -77.032895], radius: 500 },
+  "Mt. Pleasant": { center: [38.9309121, -77.0382234], radius: 450 },
+  "Park View": { center: [38.9334691, -77.0213014], radius: 430 },
+  "Lanier Heights": { center: [38.9265002, -77.039977], radius: 420 },
+  "Cardozo/Shaw": { center: [38.9172239, -77.0282196], radius: 450 },
+  "Dupont Circle": { center: [38.9124233, -77.0412512], radius: 500 },
+  "Kalorama Heights": { center: [38.9183738, -77.0480828], radius: 450 },
   "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
   "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
-  "Georgetown": { center: [38.9048, -77.0628], radius: 550 },
+  "Georgetown": { center: [38.9087134, -77.0653494], radius: 550 },
   "Burleith/Hillandale": { center: [38.9145, -77.0700], radius: 450 },
   "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
   "National Mall": { center: [38.8895, -77.0230], radius: 600 },
@@ -705,6 +712,10 @@ const customOverrides = {
   "Truxton Circle": { center: [38.9098338, -77.0149764], radius: 450 },
   "Bloomingdale": { center: [38.9167782, -77.0113652], radius: 450 },
   "Le Droit Park": { center: [38.9159068, -77.0157211], radius: 430 },
+  "Manor Park": { center: [38.9639995, -77.0158099], radius: 420 },
+  "Lamond Riggs": { center: [38.9664995, -77.0074764], radius: 430 },
+  // Keep typo alias for any stale data/reference still using "Lamont".
+  "Lamont Riggs": { center: [38.9664995, -77.0074764], radius: 430 },
   "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 },
   "Foxhall Crescent": { center: [38.9230, -77.0890], radius: 450 },
   "Spring Valley": { center: [38.9380, -77.0950], radius: 500 },
@@ -716,6 +727,7 @@ const customOverrides = {
   "Stanton Park": { center: [38.8930, -76.9930], radius: 400 },
   "Kingman Park": { center: [38.8960, -76.9700], radius: 450 },
   "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 },
+  "Shepherd Park": { center: [38.9826559, -77.0319626], radius: 430 },
   // Force anchors for dense downtown polygons so labels align with OSM basemap text.
   "Downtown": { center: [38.8978, -77.0307], radius: 460 },
   "Penn Quarter": { center: [38.8925, -77.0227], radius: 440 },
@@ -731,10 +743,12 @@ const NEIGHBORHOOD_DISPLAY_NAMES = {
 };
 
 const syntheticNeighborhoods = [
-  { name: 'U Street Corridor', center: [38.9170, -77.0270], radius: 450 },
-  { name: 'H Street Corridor', center: [38.9007, -76.9955], radius: 450 },
-  { name: 'Barracks Row', center: [38.8817, -76.9952], radius: 350 },
-  { name: 'Hill East', center: [38.8845, -76.9785], radius: 500 }
+  { name: 'U Street Corridor', center: [38.9170, -77.0270], radius: 380 },
+  { name: 'H Street Corridor', center: [38.9007, -76.9955], radius: 380 },
+  { name: 'Barracks Row', center: [38.8817, -76.9952], radius: 300 },
+  { name: 'Hill East', center: [38.8845, -76.9785], radius: 400 },
+  { name: '16th Street Heights', center: [38.9503318, -77.0327194], radius: 420 },
+  { name: 'Hampshire Knolls', center: [38.9616585, -77.0044533], radius: 390 }
 ];
 
 const getNeighborhoodDisplayName = (name) => NEIGHBORHOOD_DISPLAY_NAMES[name] || name;
@@ -1735,8 +1749,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   const getNeighborhoodRadius = useCallback((name, fallbackRadius) => {
     const manual = getCustomOverrideEntry(name);
-    if (manual?.radius) return manual.radius;
-    return fallbackRadius;
+    const raw = manual?.radius ?? fallbackRadius;
+    return Math.min(raw, NEIGHBORHOOD_RADIUS_OVERRIDE_MAX);
   }, []);
   const treeCanopyStyleFn = useCallback((feature) => getTreeCanopyStyle(feature), []);
   const treeCanopyFilterFn = useCallback(
@@ -2640,8 +2654,8 @@ out center tags;`;
             const bounds = layer.getBounds();
             const center = bounds.getCenter();
             
-            // Base radius related to the cluster's size
-            const radiusMeters = center.distanceTo(bounds.getNorthEast()) / 2;
+            const radiusFromBounds = center.distanceTo(bounds.getNorthEast()) / 2;
+            const radiusMeters = Math.min(radiusFromBounds, NEIGHBORHOOD_RADIUS_FALLBACK_MAX);
 
             const latDiff = bounds.getNorth() - bounds.getSouth();
             const lngDiff = bounds.getEast() - bounds.getWest();
@@ -2738,7 +2752,7 @@ out center tags;`;
               <Circle
                 key={`synthetic-${name}`}
                 center={center}
-                radius={showNeighborhoodBackgrounds ? radius * (isSelected ? 1.5 : 1.2) : 1}
+                radius={showNeighborhoodBackgrounds ? Math.min(radius, NEIGHBORHOOD_RADIUS_OVERRIDE_MAX) * (isSelected ? 1.5 : 1.2) : 1}
                 pathOptions={{
                   color: showNeighborhoodBackgrounds ? (isSelected ? '#ffffff' : color) : 'transparent',
                   weight: showNeighborhoodBackgrounds ? (isSelected ? 2 : 0) : 0,

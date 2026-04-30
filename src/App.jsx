@@ -10,6 +10,7 @@ const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
   'Berkley',
   'Bloomingdale',
   'Brightwood',
+  'Brightwood Park',
   'Buzzard Point',
   'Cardozo/Shaw',
   'Cathedral Heights',
@@ -36,6 +37,7 @@ const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
   'North Cleveland Park',
   'Palisades',
   'Petworth',
+  'Park View',
   'Shaw',
   'Spring Valley',
   'Takoma',
@@ -55,9 +57,10 @@ const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
   'H Street Corridor',
   'Ivy City',
   'Langdon',
-  'Lamont Riggs',
+  'Lamond Riggs',
   'Le Droit Park',
   'Michigan Park',
+  'Manor Park',
   'Queens Chapel',
   'Trinidad',
   'Woodridge',
@@ -68,6 +71,9 @@ const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
   'Historic Anacostia',
   'Kenilworth',
   'Kingman Park',
+  'Lanier Heights',
+  '16th Street Heights',
+  'Hampshire Knolls',
   'River Terrace',
   'Barracks Row',
   'Barry Farm',
@@ -85,6 +91,7 @@ const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
   'Penn Branch',
   'Randle Highlands',
   'Shipley Terrace',
+  'Shepherd Park',
   'Stanton Park',
   'Southwest/Waterfront',
   'Washington Highlands',
@@ -95,7 +102,9 @@ const SYNTHETIC_NEIGHBORHOODS = [
   'U Street Corridor',
   'H Street Corridor',
   'Barracks Row',
-  'Hill East'
+  'Hill East',
+  '16th Street Heights',
+  'Hampshire Knolls'
 ];
 
 function App() {
@@ -165,6 +174,11 @@ function App() {
           // Inject missing neighborhoods that the DC dataset grouped together
           if (rawNames.includes('Spring Valley, Palisades')) {
             rawNames += ', Kent, Berkley, Dalecarlia';
+            feature.properties.NBH_NAMES = rawNames;
+          }
+          // Normalize source typo so the UI and matching use the canonical name.
+          if (rawNames.includes('Lamont Riggs')) {
+            rawNames = rawNames.replace(/\bLamont Riggs\b/g, 'Lamond Riggs');
             feature.properties.NBH_NAMES = rawNames;
           }
 
