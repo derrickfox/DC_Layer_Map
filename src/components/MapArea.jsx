@@ -878,6 +878,177 @@ const osmPlacesOfWorshipToGeoJson = (elements = []) => ({
     .filter(Boolean)
 });
 
+const UNIVERSITY_PROFILES = [
+  { name: 'Georgetown University', color: '#2563eb', center: [-77.0730, 38.9076], radiusMeters: 1800, patterns: ['georgetown university', 'georgetown law'] },
+  { name: 'George Washington University', color: '#f59e0b', center: [-77.0486, 38.8997], radiusMeters: 1500, patterns: ['george washington university', 'gwu', 'gw university'] },
+  { name: 'Howard University', color: '#dc2626', center: [-77.0209, 38.9227], radiusMeters: 1700, patterns: ['howard university'] },
+  { name: 'American University', color: '#0f766e', center: [-77.0889, 38.9370], radiusMeters: 1600, patterns: ['american university'] },
+  { name: 'Catholic University of America', color: '#7c3aed', center: [-76.9991, 38.9369], radiusMeters: 1800, patterns: ['catholic university', 'cua'] },
+  { name: 'Gallaudet University', color: '#14b8a6', center: [-76.9936, 38.9067], radiusMeters: 1200, patterns: ['gallaudet university'] },
+  { name: 'University of the District of Columbia', color: '#16a34a', center: [-77.0656, 38.9438], radiusMeters: 1000, patterns: ['university of the district of columbia', 'udc'] },
+  { name: 'Trinity Washington University', color: '#db2777', center: [-77.0048, 38.9276], radiusMeters: 1000, patterns: ['trinity washington university', 'trinity college'] },
+  { name: 'Johns Hopkins University', color: '#0ea5e9', center: [-77.0402, 38.9087], radiusMeters: 700, patterns: ['johns hopkins', 'sais'] },
+  { name: 'National Defense University', color: '#64748b', center: [-77.0176, 38.8664], radiusMeters: 900, patterns: ['national defense university'] },
+  { name: 'University of Southern California', color: '#b91c1c', center: [-77.0188, 38.8934], radiusMeters: 500, patterns: ['university of southern california', 'usc'] },
+  { name: 'Arizona State University', color: '#8b5cf6', center: [-77.0400, 38.9020], radiusMeters: 500, patterns: ['arizona state university', 'asu'] },
+  { name: 'Princeton University', color: '#f97316', center: [-77.0395, 38.9085], radiusMeters: 500, patterns: ['princeton university'] },
+  { name: 'Strayer University', color: '#4f46e5', center: [-77.0314, 38.9046], radiusMeters: 500, patterns: ['strayer university'] },
+  { name: 'University of the Potomac', color: '#0891b2', center: [-77.0432, 38.9040], radiusMeters: 500, patterns: ['university of the potomac'] }
+];
+
+const UNIVERSITY_FALLBACK_COLORS = ['#2563eb', '#f59e0b', '#dc2626', '#0f766e', '#7c3aed', '#14b8a6', '#16a34a', '#db2777', '#0ea5e9', '#f97316', '#4f46e5', '#be185d'];
+
+const getDistanceMeters = ([lng1, lat1], [lng2, lat2]) => {
+  const toRad = (value) => value * Math.PI / 180;
+  const earthRadius = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const getStableColorFromText = (value, palette) => {
+  const text = String(value || '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
+};
+
+const getUniversityProfile = (tags = {}, coordinates = null) => {
+  const haystack = [
+    tags.name,
+    tags.operator,
+    tags.brand,
+    tags.owner,
+    tags['official_name'],
+    tags['alt_name'],
+    tags['short_name']
+  ].map((value) => String(value || '').toLowerCase()).join(' ');
+
+  const matchedByName = UNIVERSITY_PROFILES.find((profile) =>
+    profile.patterns.some((pattern) => haystack.includes(pattern))
+  );
+  if (matchedByName) return matchedByName;
+
+  if (coordinates) {
+    const nearbyProfile = UNIVERSITY_PROFILES
+      .map((profile) => ({
+        ...profile,
+        distance: getDistanceMeters(coordinates, profile.center)
+      }))
+      .filter((profile) => profile.distance <= profile.radiusMeters)
+      .sort((a, b) => a.distance - b.distance)[0];
+    if (nearbyProfile) return nearbyProfile;
+  }
+
+  const fallbackName = tags.operator || tags.name || 'Other University / College';
+  return {
+    name: fallbackName,
+    color: getStableColorFromText(fallbackName, UNIVERSITY_FALLBACK_COLORS),
+    center: coordinates || [-77.0365, 38.9072],
+    radiusMeters: 0,
+    patterns: []
+  };
+};
+
+const getOsmElementCenter = (element) => {
+  if (Number.isFinite(element.lon) && Number.isFinite(element.lat)) return [element.lon, element.lat];
+  if (element.center && Number.isFinite(element.center.lon) && Number.isFinite(element.center.lat)) {
+    return [element.center.lon, element.center.lat];
+  }
+  if (Array.isArray(element.geometry) && element.geometry.length) {
+    const points = element.geometry.filter((point) => Number.isFinite(point.lon) && Number.isFinite(point.lat));
+    if (!points.length) return null;
+    const sums = points.reduce((acc, point) => {
+      acc.lng += point.lon;
+      acc.lat += point.lat;
+      return acc;
+    }, { lng: 0, lat: 0 });
+    return [sums.lng / points.length, sums.lat / points.length];
+  }
+  return null;
+};
+
+const getOsmPolygonGeometry = (element) => {
+  if (!Array.isArray(element.geometry) || element.geometry.length < 4) return null;
+  const coordinates = element.geometry
+    .filter((point) => Number.isFinite(point.lon) && Number.isFinite(point.lat))
+    .map((point) => [point.lon, point.lat]);
+  if (coordinates.length < 4) return null;
+  const first = coordinates[0];
+  const last = coordinates[coordinates.length - 1];
+  if (first[0] !== last[0] || first[1] !== last[1]) coordinates.push(first);
+  return { type: 'Polygon', coordinates: [coordinates] };
+};
+
+const getUniversityFeatureKind = (tags = {}, geometryType = 'Point') => {
+  if (tags.building) return 'University Building';
+  if (geometryType !== 'Point' && (tags.amenity === 'university' || tags.amenity === 'college')) return 'Campus Area';
+  if (tags.amenity === 'college') return 'College Campus';
+  return 'University Campus';
+};
+
+const osmUniversitiesToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const center = getOsmElementCenter(element);
+      if (!center) return null;
+      const tags = element.tags || {};
+      const polygon = getOsmPolygonGeometry(element);
+      const profile = getUniversityProfile(tags, center);
+      const geometry = polygon || { type: 'Point', coordinates: center };
+      const name = tags.name || tags['official_name'] || profile.name || 'University / College';
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: name,
+          UNIVERSITY: profile.name,
+          COLOR: profile.color,
+          FEATURE_KIND: getUniversityFeatureKind(tags, geometry.type),
+          AMENITY: tags.amenity || '',
+          BUILDING: tags.building || '',
+          ADDRESS: [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' '),
+          OSM_TAGS: tags
+        },
+        geometry
+      };
+    })
+    .filter(Boolean)
+});
+
+const fetchOverpassJson = async (query) => {
+  const endpoints = [
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass-api.de/api/interpreter'
+  ];
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: new URLSearchParams({ data: query })
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`${endpoint} failed: ${res.status} ${text.slice(0, 120)}`);
+      return JSON.parse(text);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('All Overpass endpoints failed');
+};
+
 const formatNumber = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return '';
@@ -1361,6 +1532,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [wetlandData, setWetlandData] = useState(null);
   const [emergencyMedicalData, setEmergencyMedicalData] = useState(null);
   const [religiousInstitutionsData, setReligiousInstitutionsData] = useState(null);
+  const [universitiesData, setUniversitiesData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
   const combinedSewerLayerRef = useRef(null);
@@ -1575,25 +1747,33 @@ area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="
 );
 out center tags;`;
 
-      fetch('https://overpass-api.de/api/interpreter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
-        },
-        body: new URLSearchParams({ data: overpassQuery })
-      })
-        .then(async (res) => {
-          const text = await res.text();
-          if (!res.ok) throw new Error(`Overpass request failed: ${res.status} ${text.slice(0, 120)}`);
-          return JSON.parse(text);
-        })
+      fetchOverpassJson(overpassQuery)
         .then((data) => {
           setReligiousInstitutionsData(osmPlacesOfWorshipToGeoJson(data.elements || []));
         })
         .catch((err) => console.error('Error fetching religious institutions data:', err));
     }
   }, [activeLayers.religiousInstitutions, religiousInstitutionsData]);
+
+  useEffect(() => {
+    if (activeLayers.universities && !universitiesData) {
+      const overpassQuery = `[out:json][timeout:60];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["amenity"~"^(university|college)$"](area.dc);
+  way["amenity"~"^(university|college)$"](area.dc);
+  relation["amenity"~"^(university|college)$"](area.dc);
+  way["building"~"^(university|college)$"](area.dc);
+);
+out center geom tags;`;
+
+      fetchOverpassJson(overpassQuery)
+        .then((data) => {
+          setUniversitiesData(osmUniversitiesToGeoJson(data.elements || []));
+        })
+        .catch((err) => console.error('Error fetching universities data:', err));
+    }
+  }, [activeLayers.universities, universitiesData]);
 
   useEffect(() => {
     if (activeLayers.propertyValues && !propertyValuesData) {
@@ -3426,6 +3606,104 @@ out center tags;`;
                 const l = e.target;
                 l.setRadius(5.5);
                 l.setStyle({ weight: 1.8, fillColor: style.fillColor, color: style.color });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Universities Layer */}
+      {activeLayers.universities && universitiesData && (
+        <GeoJSON
+          key={`universities-${searchQuery}`}
+          data={universitiesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [
+              p.NAME,
+              p.UNIVERSITY,
+              p.FEATURE_KIND,
+              p.AMENITY,
+              p.BUILDING,
+              p.ADDRESS
+            ].some((v) => String(v || '').toLowerCase().includes(q));
+          }}
+          style={(feature) => {
+            const p = feature.properties || {};
+            const isBuilding = String(p.FEATURE_KIND || '').toLowerCase().includes('building');
+            return {
+              fillColor: p.COLOR || '#2563eb',
+              color: p.COLOR || '#2563eb',
+              weight: isBuilding ? 1.5 : 2.5,
+              opacity: isBuilding ? 0.72 : 0.9,
+              fillOpacity: isBuilding ? 0.32 : 0.18,
+              dashArray: isBuilding ? null : '5, 4'
+            };
+          }}
+          pointToLayer={(feature, latlng) => {
+            const p = feature.properties || {};
+            const isBuilding = String(p.FEATURE_KIND || '').toLowerCase().includes('building');
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: isBuilding ? 5 : 7,
+              fillColor: p.COLOR || '#2563eb',
+              color: '#dbeafe',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const color = p.COLOR || '#2563eb';
+            const name = escapeHtml(p.NAME || 'University / College');
+            const university = escapeHtml(p.UNIVERSITY || 'University / College');
+            const kind = escapeHtml(p.FEATURE_KIND || 'Campus Feature');
+            const address = escapeHtml(p.ADDRESS || '');
+            const osmId = escapeHtml(p.OSM_ID || '');
+            const isPolygon = feature.geometry?.type !== 'Point';
+
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: ${color};">🎓</span> ${name}
+                 </div>
+                 <div style="font-weight: 700; font-size: 12px; color: ${color}; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${university}
+                 </div>
+                 <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">
+                   <strong>Feature:</strong> ${kind}${isPolygon ? ' footprint' : ''}
+                 </div>
+                 ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Address:</strong> ${address}</div>` : ''}
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Campus areas and buildings from OpenStreetMap.${osmId ? ` Source: ${osmId}` : ''}
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                if (l.setRadius) l.setRadius(9);
+                l.setStyle({ weight: 3, fillOpacity: isPolygon ? 0.42 : 0.95 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const isBuilding = String(p.FEATURE_KIND || '').toLowerCase().includes('building');
+                if (l.setRadius) l.setRadius(isBuilding ? 5 : 7);
+                l.setStyle({
+                  weight: isBuilding ? 1.5 : 2.5,
+                  fillOpacity: isPolygon ? (isBuilding ? 0.32 : 0.18) : 0.9
+                });
               }
             });
           }}

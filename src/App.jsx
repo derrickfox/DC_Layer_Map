@@ -117,6 +117,7 @@ function App() {
     monuments: true,
     embassies: true,
     religiousInstitutions: false,
+    universities: false,
     wards: false,
     floodZones: false,
     topography: false,

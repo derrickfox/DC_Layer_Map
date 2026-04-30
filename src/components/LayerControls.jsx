@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -8,6 +8,7 @@ const initialFilters = [
   { id: 'monuments', label: 'Statues & Memorials', icon: Flag, color: '#14b8a6', activeClass: 'active-teal' },
   { id: 'embassies', label: 'Embassies & Consulates', icon: Globe, color: '#ef4444', activeClass: 'active-red' },
   { id: 'religiousInstitutions', label: 'Religious Institutions', icon: Church, color: '#7c3aed', activeClass: 'active-purple' },
+  { id: 'universities', label: 'Universities', icon: GraduationCap, color: '#2563eb', activeClass: 'active-blue' },
   { id: 'historical', label: 'Places in History', icon: History, color: '#fbbf24', activeClass: 'active-amber' },
   { id: 'events', label: 'Ticketed Events', icon: Ticket, color: '#f472b6', activeClass: 'active-pink' },
   { id: 'liveMusic', label: 'Live Music', icon: Music2, color: '#0f766e', activeClass: 'active-teal' },
