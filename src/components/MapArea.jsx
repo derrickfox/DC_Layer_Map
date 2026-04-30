@@ -245,19 +245,166 @@ const comedyVenuesData = {
 const festivalsParadesData = {
   type: "FeatureCollection",
   features: [
-    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Signature downtown parade route and festivities tied to the Cherry Blossom Festival." }, geometry: { type: "Point", coordinates: [-77.0283, 38.8921] } },
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Citywide spring celebration of the cherry blossoms with cultural programs, performances, and signature events." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8848] } },
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Signature Constitution Avenue parade route and festivities tied to the Cherry Blossom Festival." }, geometry: { type: "Point", coordinates: [-77.0283, 38.8921] } },
+    { type: "Feature", properties: { NAME: "Blossom Kite Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Annual kite festival on the National Mall during cherry blossom season." }, geometry: { type: "Point", coordinates: [-77.0353, 38.8895] } },
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Petalpalooza", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront cherry blossom celebration with live music, art, family activities, and fireworks at The Yards." }, geometry: { type: "Point", coordinates: [-77.0007, 38.8732] } },
+    { type: "Feature", properties: { NAME: "Sakura Matsuri - Japanese Street Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Large Japanese cultural street festival held downtown during cherry blossom season." }, geometry: { type: "Point", coordinates: [-77.0194, 38.8928] } },
+    { type: "Feature", properties: { NAME: "Anacostia River Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront arts and recreation festival focused on ecology, water access, and community." }, geometry: { type: "Point", coordinates: [-76.9652, 38.8722] } },
+    { type: "Feature", properties: { NAME: "Georgetown French Market", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Annual open-air French-inspired market with neighborhood shops, food, music, and sidewalk activations." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9121] } },
+    { type: "Feature", properties: { NAME: "Petworth PorchFest", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Neighborhood music festival with local bands performing from porches, yards, and community stages." }, geometry: { type: "Point", coordinates: [-77.0258, 38.9416] } },
+    { type: "Feature", properties: { NAME: "Flower Mart at Washington National Cathedral", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Long-running spring festival and fundraiser with flowers, crafts, food, music, and family activities." }, geometry: { type: "Point", coordinates: [-77.0703, 38.9306] } },
+    { type: "Feature", properties: { NAME: "Passport DC", TYPE: "Festival", SEASON: "May", SUMMARY: "Month-long international culture festival anchored by embassy open houses, performances, and cultural showcases." }, geometry: { type: "Point", coordinates: [-77.0469, 38.9072] } },
+    { type: "Feature", properties: { NAME: "Around the World Embassy Tour", TYPE: "Festival", SEASON: "May", SUMMARY: "Passport DC open house day when embassies across the city welcome visitors with cultural programming." }, geometry: { type: "Point", coordinates: [-77.0501, 38.9120] } },
+    { type: "Feature", properties: { NAME: "EU Open House", TYPE: "Festival", SEASON: "May", SUMMARY: "European Union embassy open house day with cultural exhibits, food, performances, and family activities." }, geometry: { type: "Point", coordinates: [-77.0465, 38.9141] } },
+    { type: "Feature", properties: { NAME: "Fiesta Asia / National Asian Heritage Festival", TYPE: "Festival", SEASON: "May", SUMMARY: "Pan-Asian heritage street festival with cultural parade elements, performances, food, and marketplace vendors." }, geometry: { type: "Point", coordinates: [-77.0185, 38.8927] } },
     { type: "Feature", properties: { NAME: "DC JazzFest (The Wharf)", TYPE: "Festival", SEASON: "Late Summer", SUMMARY: "Multi-day citywide jazz festival with major performances around The Wharf and nearby venues." }, geometry: { type: "Point", coordinates: [-77.0262, 38.8797] } },
-    { type: "Feature", properties: { NAME: "H Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Large neighborhood street festival along the H Street NE corridor with music, food, and vendors." }, geometry: { type: "Point", coordinates: [-76.9958, 38.9002] } },
-    { type: "Feature", properties: { NAME: "Broccoli City Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Music and culture festival focused on sustainability and community programming." }, geometry: { type: "Point", coordinates: [-76.9792, 38.9190] } },
+    { type: "Feature", properties: { NAME: "Smithsonian Folklife Festival", TYPE: "Festival", SEASON: "Summer", SUMMARY: "Annual National Mall festival celebrating cultural traditions from communities around the world." }, geometry: { type: "Point", coordinates: [-77.0255, 38.8887] } },
+    { type: "Feature", properties: { NAME: "Giant National Capital BBQ Battle", TYPE: "Festival", SEASON: "June", SUMMARY: "Large food and music festival on Pennsylvania Avenue with barbecue competitions, samples, and entertainment." }, geometry: { type: "Point", coordinates: [-77.0186, 38.8926] } },
     { type: "Feature", properties: { NAME: "Capital Pride Festival & Concert", TYPE: "Festival", SEASON: "June", SUMMARY: "Flagship Pride celebration with performances and community organizations in the downtown core." }, geometry: { type: "Point", coordinates: [-77.0283, 38.9014] } },
     { type: "Feature", properties: { NAME: "Capital Pride Parade", TYPE: "Parade", SEASON: "June", SUMMARY: "Annual Pride parade route through central DC, drawing large crowds and community groups." }, geometry: { type: "Point", coordinates: [-77.0419, 38.9096] } },
-    { type: "Feature", properties: { NAME: "Fiesta DC Parade of Nations", TYPE: "Parade", SEASON: "Fall", SUMMARY: "Long-running Latino heritage parade and festival celebrating cultures from across the Americas." }, geometry: { type: "Point", coordinates: [-77.0335, 38.9025] } },
-    { type: "Feature", properties: { NAME: "Funk Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Community parade and music festival centered around U Street and historic Black music culture." }, geometry: { type: "Point", coordinates: [-77.0338, 38.9161] } },
+    { type: "Feature", properties: { NAME: "DC Black Pride", TYPE: "Festival", SEASON: "May", SUMMARY: "Annual Black LGBTQ+ Pride weekend with cultural, wellness, nightlife, and community events around DC." }, geometry: { type: "Point", coordinates: [-77.0238, 38.9016] } },
+    { type: "Feature", properties: { NAME: "DC Diaspora Caribbean Carnival Parade & Festival", TYPE: "Parade & Festival", SEASON: "June", SUMMARY: "Caribbean culture parade and festival with music, costumes, vendors, and performances downtown." }, geometry: { type: "Point", coordinates: [-77.0264, 38.8925] } },
+    { type: "Feature", properties: { NAME: "Broccoli City Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Music and culture festival focused on sustainability, community programming, and contemporary Black culture." }, geometry: { type: "Point", coordinates: [-77.0125, 38.8683] } },
+    { type: "Feature", properties: { NAME: "A Taste of the DMV", TYPE: "Festival", SEASON: "June", SUMMARY: "Food, music, and community festival highlighting restaurants and makers from across the DMV." }, geometry: { type: "Point", coordinates: [-77.0186, 38.8926] } },
+    { type: "Feature", properties: { NAME: "Taste of DC", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Culinary and cultural festival showcasing local restaurants, drinks, music, and food experiences." }, geometry: { type: "Point", coordinates: [-76.9718, 38.8898] } },
+    { type: "Feature", properties: { NAME: "Juneteenth for the City", TYPE: "Festival", SEASON: "June", SUMMARY: "Community Juneteenth celebration in Anacostia with music, food, services, and neighborhood programming." }, geometry: { type: "Point", coordinates: [-76.9797, 38.8667] } },
+    { type: "Feature", properties: { NAME: "National Memorial Day Parade", TYPE: "Parade", SEASON: "May", SUMMARY: "Major national parade on Constitution Avenue honoring military service members and veterans." }, geometry: { type: "Point", coordinates: [-77.0288, 38.8922] } },
+    { type: "Feature", properties: { NAME: "National Independence Day Parade", TYPE: "Parade", SEASON: "July", SUMMARY: "Annual July 4th parade along Constitution Avenue with bands, floats, military units, and patriotic displays." }, geometry: { type: "Point", coordinates: [-77.0288, 38.8922] } },
+    { type: "Feature", properties: { NAME: "National Mall Fourth of July Celebration", TYPE: "Festival", SEASON: "July", SUMMARY: "Independence Day gathering on the National Mall with concerts, public celebrations, and fireworks." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8895] } },
+    { type: "Feature", properties: { NAME: "National Archives July 4th Celebration", TYPE: "Festival", SEASON: "July", SUMMARY: "Annual Independence Day celebration and Declaration of Independence reading outside the National Archives." }, geometry: { type: "Point", coordinates: [-77.0230, 38.8929] } },
+    { type: "Feature", properties: { NAME: "National Book Festival", TYPE: "Festival", SEASON: "Late Summer", SUMMARY: "Library of Congress book festival with authors, talks, signings, and family programming." }, geometry: { type: "Point", coordinates: [-77.0231, 38.9049] } },
+    { type: "Feature", properties: { NAME: "African American Heritage Festival", TYPE: "Festival", SEASON: "August", SUMMARY: "Downtown cultural festival celebrating African American heritage with music, vendors, food, and community programming." }, geometry: { type: "Point", coordinates: [-77.0186, 38.8926] } },
+    { type: "Feature", properties: { NAME: "DC AfroLatino Festival", TYPE: "Festival", SEASON: "August", SUMMARY: "Cultural festival celebrating Afro-Latino music, food, art, and community in Adams Morgan." }, geometry: { type: "Point", coordinates: [-77.0437, 38.9227] } },
+    { type: "Feature", properties: { NAME: "Washington Chinese Culture Festival", TYPE: "Festival", SEASON: "August", SUMMARY: "Annual Chinese cultural festival with performances, exhibits, food, and community organizations downtown." }, geometry: { type: "Point", coordinates: [-77.0166, 38.8930] } },
+    { type: "Feature", properties: { NAME: "Panda Fest DC", TYPE: "Festival", SEASON: "August", SUMMARY: "Asian food and culture festival with performances, vendors, and family-friendly programming downtown." }, geometry: { type: "Point", coordinates: [-77.0186, 38.8926] } },
+    { type: "Feature", properties: { NAME: "Adams Morgan Day", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Historic neighborhood festival featuring live music, restaurants, art, and local vendors." }, geometry: { type: "Point", coordinates: [-77.0436, 38.9226] } },
+    { type: "Feature", properties: { NAME: "Adams Morgan PorchFest", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Neighborhood music festival with bands performing across porch and storefront stages in Adams Morgan." }, geometry: { type: "Point", coordinates: [-77.0436, 38.9226] } },
+    { type: "Feature", properties: { NAME: "H Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Large neighborhood street festival along the H Street NE corridor with music, food, art, vendors, and performances." }, geometry: { type: "Point", coordinates: [-76.9958, 38.9002] } },
+    { type: "Feature", properties: { NAME: "Fiesta DC Festival & Parade", TYPE: "Parade & Festival", SEASON: "Fall", SUMMARY: "Long-running Latino heritage festival and Parade of Nations celebrating cultures from across the Americas." }, geometry: { type: "Point", coordinates: [-77.0264, 38.8925] } },
+    { type: "Feature", properties: { NAME: "Turkish Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Annual Pennsylvania Avenue cultural festival with Turkish food, music, dance, art, and community vendors." }, geometry: { type: "Point", coordinates: [-77.0185, 38.8927] } },
+    { type: "Feature", properties: { NAME: "Sawasdee DC Thai Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Thai cultural festival on the National Mall with food, music, dance, demonstrations, and interactive workshops." }, geometry: { type: "Point", coordinates: [-77.0214, 38.8890] } },
+    { type: "Feature", properties: { NAME: "Around The World Cultural Food Festival", TYPE: "Festival", SEASON: "Summer", SUMMARY: "Outdoor cultural food festival featuring international cuisines, crafts, and performances." }, geometry: { type: "Point", coordinates: [-77.0308, 38.8959] } },
     { type: "Feature", properties: { NAME: "Barracks Row Fall Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Neighborhood street festival on Capitol Hill with local businesses, food, and family activities." }, geometry: { type: "Point", coordinates: [-76.9954, 38.8803] } },
-    { type: "Feature", properties: { NAME: "Adams Morgan Day", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Historic neighborhood festival featuring live music, restaurants, and local vendors." }, geometry: { type: "Point", coordinates: [-77.0436, 38.9226] } },
-    { type: "Feature", properties: { NAME: "Anacostia River Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront arts and recreation festival focused on ecology, water access, and community." }, geometry: { type: "Point", coordinates: [-76.9652, 38.8722] } },
-    { type: "Feature", properties: { NAME: "Downtown Holiday Market", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Seasonal open-air market with crafts, food, and performances in the Penn Quarter area." }, geometry: { type: "Point", coordinates: [-77.0265, 38.9009] } }
+    { type: "Feature", properties: { NAME: "20th Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Dupont Circle neighborhood street festival with local businesses, vendors, entertainment, and community groups." }, geometry: { type: "Point", coordinates: [-77.0447, 38.9111] } },
+    { type: "Feature", properties: { NAME: "Funk Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Community parade and music festival centered around U Street and historic Black music culture." }, geometry: { type: "Point", coordinates: [-77.0338, 38.9161] } },
+    { type: "Feature", properties: { NAME: "Martin Luther King Jr. Holiday Peace Walk and Parade", TYPE: "Parade", SEASON: "January", SUMMARY: "Annual Ward 8 peace walk and parade honoring Dr. King's legacy along the MLK Avenue corridor." }, geometry: { type: "Point", coordinates: [-76.9955, 38.8624] } },
+    { type: "Feature", properties: { NAME: "Chinese New Year Parade", TYPE: "Parade", SEASON: "Winter", SUMMARY: "Chinatown Lunar New Year parade and street celebration with lion dances, firecrackers, and community groups." }, geometry: { type: "Point", coordinates: [-77.0211, 38.8995] } },
+    { type: "Feature", properties: { NAME: "DC x Krewe of Pyros Mardi Gras Second Line Parade", TYPE: "Parade", SEASON: "Winter", SUMMARY: "Mardi Gras second line parade through the Penn Quarter and Chinatown area." }, geometry: { type: "Point", coordinates: [-77.0217, 38.9009] } },
+    { type: "Feature", properties: { NAME: "DowntownDC Holiday Market", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Seasonal open-air market with crafts, food, and performances in the Penn Quarter area." }, geometry: { type: "Point", coordinates: [-77.0265, 38.9009] } },
+    { type: "Feature", properties: { NAME: "National Christmas Tree Lighting", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Annual holiday lighting ceremony and seasonal display at President's Park near the White House." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8959] } },
+    { type: "Feature", properties: { NAME: "DC Art All Night", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Citywide overnight arts festival with activations across DC Main Streets and neighborhood corridors." }, geometry: { type: "Point", coordinates: [-77.0219, 38.9061] } },
+    { type: "Feature", properties: { NAME: "DC State Fair", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Annual community fair celebrating DC makers, growers, food, crafts, contests, and local culture." }, geometry: { type: "Point", coordinates: [-77.0310, 38.9019] } }
   ]
+};
+
+const festivalParadeEventDates = {
+  "National Cherry Blossom Festival": { start: "03-20", end: "04-12", label: "Mar 20 - Apr 12" },
+  "National Cherry Blossom Festival Parade": { start: "04-11", end: "04-11", label: "Apr 11" },
+  "Blossom Kite Festival": { start: "03-28", end: "03-28", label: "Late March" },
+  "National Cherry Blossom Festival Petalpalooza": { start: "04-04", end: "04-04", label: "Apr 4" },
+  "Sakura Matsuri - Japanese Street Festival": { start: "04-11", end: "04-12", label: "Apr 11 - 12" },
+  "Anacostia River Festival": { start: "04-19", end: "04-19", label: "April" },
+  "Georgetown French Market": { start: "04-24", end: "04-26", label: "Late April" },
+  "Petworth PorchFest": { start: "04-25", end: "04-25", label: "Late April" },
+  "Flower Mart at Washington National Cathedral": { start: "05-01", end: "05-02", label: "Early May" },
+  "Passport DC": { start: "05-01", end: "05-31", label: "May" },
+  "Around the World Embassy Tour": { start: "05-02", end: "05-02", label: "Early May" },
+  "EU Open House": { start: "05-09", end: "05-09", label: "May" },
+  "Fiesta Asia / National Asian Heritage Festival": { start: "05-16", end: "05-16", label: "May" },
+  "DC JazzFest (The Wharf)": { start: "08-26", end: "08-30", label: "Late August" },
+  "Smithsonian Folklife Festival": { start: "06-24", end: "06-29", label: "Late June" },
+  "Giant National Capital BBQ Battle": { start: "06-27", end: "06-28", label: "Late June" },
+  "Capital Pride Festival & Concert": { start: "06-20", end: "06-21", label: "June" },
+  "Capital Pride Parade": { start: "06-20", end: "06-20", label: "June" },
+  "DC Black Pride": { start: "05-22", end: "05-25", label: "Memorial Day weekend" },
+  "DC Diaspora Caribbean Carnival Parade & Festival": { start: "06-01", end: "06-01", label: "June" },
+  "Broccoli City Festival": { start: "08-08", end: "08-09", label: "Summer" },
+  "A Taste of the DMV": { start: "06-15", end: "06-15", label: "June" },
+  "Taste of DC": { start: "10-10", end: "10-11", label: "Fall" },
+  "Juneteenth for the City": { start: "06-19", end: "06-19", label: "Jun 19" },
+  "National Memorial Day Parade": { start: "05-25", end: "05-25", label: "Memorial Day" },
+  "National Independence Day Parade": { start: "07-04", end: "07-04", label: "Jul 4" },
+  "National Mall Fourth of July Celebration": { start: "07-04", end: "07-04", label: "Jul 4" },
+  "National Archives July 4th Celebration": { start: "07-04", end: "07-04", label: "Jul 4" },
+  "National Book Festival": { start: "09-05", end: "09-05", label: "Late summer" },
+  "African American Heritage Festival": { start: "08-15", end: "08-15", label: "August" },
+  "DC AfroLatino Festival": { start: "08-23", end: "08-23", label: "August" },
+  "Washington Chinese Culture Festival": { start: "08-30", end: "08-30", label: "August" },
+  "Panda Fest DC": { start: "08-15", end: "08-16", label: "August" },
+  "Adams Morgan Day": { start: "09-13", end: "09-13", label: "September" },
+  "Adams Morgan PorchFest": { start: "10-25", end: "10-25", label: "Fall" },
+  "H Street Festival": { start: "09-20", end: "09-20", label: "September" },
+  "Fiesta DC Festival & Parade": { start: "09-26", end: "09-27", label: "Late September" },
+  "Turkish Festival": { start: "10-19", end: "10-19", label: "October" },
+  "Sawasdee DC Thai Festival": { start: "09-13", end: "09-13", label: "September" },
+  "Around The World Cultural Food Festival": { start: "08-23", end: "08-23", label: "Summer" },
+  "Barracks Row Fall Festival": { start: "09-27", end: "09-27", label: "Fall" },
+  "20th Street Festival": { start: "11-08", end: "11-08", label: "November" },
+  "Funk Parade": { start: "05-10", end: "05-10", label: "Spring" },
+  "Martin Luther King Jr. Holiday Peace Walk and Parade": { start: "01-19", end: "01-19", label: "MLK Day" },
+  "Chinese New Year Parade": { start: "02-22", end: "02-22", label: "Lunar New Year" },
+  "DC x Krewe of Pyros Mardi Gras Second Line Parade": { start: "01-31", end: "01-31", label: "Mardi Gras season" },
+  "DowntownDC Holiday Market": { start: "11-20", end: "12-23", label: "Holiday season" },
+  "National Christmas Tree Lighting": { start: "12-03", end: "12-03", label: "Early December" },
+  "DC Art All Night": { start: "09-12", end: "09-13", label: "September" },
+  "DC State Fair": { start: "09-06", end: "09-06", label: "September" }
+};
+
+const getAnnualEventDate = (monthDay, year) => {
+  if (!monthDay) return null;
+  const [month, day] = monthDay.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const getFestivalParadeTiming = (feature, now = new Date()) => {
+  const event = festivalParadeEventDates[feature.properties?.NAME];
+  if (!event) {
+    return {
+      fillColor: '#f97316',
+      strokeColor: '#fcd34d',
+      label: feature.properties?.SEASON || '',
+      status: 'Date varies by year'
+    };
+  }
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startDate = getAnnualEventDate(event.start, today.getFullYear());
+  const endDate = getAnnualEventDate(event.end || event.start, today.getFullYear());
+  const dayMs = 24 * 60 * 60 * 1000;
+  const daysUntilStart = Math.ceil((startDate - today) / dayMs);
+  const daysSinceEnd = Math.floor((today - endDate) / dayMs);
+
+  if (daysSinceEnd > 0) {
+    return {
+      fillColor: '#2563eb',
+      strokeColor: '#93c5fd',
+      label: event.label,
+      status: `Passed ${daysSinceEnd === 1 ? 'yesterday' : `${daysSinceEnd} days ago`}`
+    };
+  }
+
+  if (daysUntilStart <= 0) {
+    return {
+      fillColor: '#dc2626',
+      strokeColor: '#fecaca',
+      label: event.label,
+      status: 'Happening now'
+    };
+  }
+
+  const closeness = Math.max(0, Math.min(1, 1 - (daysUntilStart / 90)));
+  const start = { r: 245, g: 158, b: 11 };
+  const end = { r: 220, g: 38, b: 38 };
+  const channel = (from, to) => Math.round(from + ((to - from) * closeness));
+  const fillColor = `rgb(${channel(start.r, end.r)}, ${channel(start.g, end.g)}, ${channel(start.b, end.b)})`;
+
+  return {
+    fillColor,
+    strokeColor: closeness > 0.7 ? '#fecaca' : '#fcd34d',
+    label: event.label,
+    status: daysUntilStart === 1 ? 'Tomorrow' : `${daysUntilStart} days away`
+  };
 };
 
 const breweriesDistilleriesData = {
@@ -2598,11 +2745,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             const isParade = String(feature.properties?.TYPE || "").toLowerCase().includes("parade");
+            const timing = getFestivalParadeTiming(feature);
             return L.circleMarker(latlng, {
               pane: 'markerPane',
               radius: isParade ? 8 : 7,
-              fillColor: isParade ? '#f59e0b' : '#f97316',
-              color: '#fcd34d',
+              fillColor: timing.fillColor,
+              color: timing.strokeColor,
               weight: 2,
               opacity: 1,
               fillOpacity: 0.9
@@ -2610,23 +2758,29 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           onEachFeature={(feature, layer) => {
             const { NAME, TYPE, SUMMARY, SEASON } = feature.properties;
+            const timing = getFestivalParadeTiming(feature);
             const typeSafe = escapeHtml(TYPE || 'Festival');
             const seasonSafe = escapeHtml(SEASON || '');
             const nameSafe = escapeHtml(NAME || 'Festival / Parade');
             const summarySafe = escapeHtml(SUMMARY || '');
+            const timingLabelSafe = escapeHtml(timing.label || '');
+            const timingStatusSafe = escapeHtml(timing.status || '');
             layer.bindTooltip(
               `<div style="font-family: 'Outfit', sans-serif; max-width: 420px;">
                  <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                   <span style="color: #f59e0b;">🎉</span> ${nameSafe}
+                   <span style="color: ${timing.fillColor};">🎉</span> ${nameSafe}
                  </div>
-                 <div style="font-weight: 600; font-size: 12px; color: #f59e0b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                 <div style="font-weight: 600; font-size: 12px; color: ${timing.fillColor}; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
                    ${typeSafe}${seasonSafe ? ` · ${seasonSafe}` : ''}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: var(--text-primary); margin-bottom: 6px;">
+                   ${timingLabelSafe ? `${timingLabelSafe} · ` : ''}${timingStatusSafe}
                  </div>
                  <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
                    ${summarySafe}
                  </div>
                  <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
-                   Representative anchor locations; routes/footprints can vary by year.
+                   Color key: upcoming events shift amber to red as they get closer; passed events turn blue. Representative locations/routes can vary by year.
                  </div>
                </div>`,
               {
@@ -2648,7 +2802,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 const l = e.target;
                 const isParade = String(feature.properties?.TYPE || "").toLowerCase().includes("parade");
                 l.setRadius(isParade ? 8 : 7);
-                l.setStyle({ weight: 2 });
+                l.setStyle({ weight: 2, fillColor: timing.fillColor, color: timing.strokeColor });
               }
             });
           }}
