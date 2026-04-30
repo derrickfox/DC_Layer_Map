@@ -712,7 +712,11 @@ const customOverrides = {
   "Carver Langston": { center: [38.8990, -76.9780], radius: 400 },
   "Stanton Park": { center: [38.8930, -76.9930], radius: 400 },
   "Kingman Park": { center: [38.8960, -76.9700], radius: 450 },
-  "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 }
+  "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 },
+  // Force anchors for dense downtown polygons so labels align with OSM basemap text.
+  "Downtown": { center: [38.8978, -77.0307], radius: 460 },
+  "Penn Quarter": { center: [38.8925, -77.0227], radius: 440 },
+  "Penn Quarters": { center: [38.8925, -77.0227], radius: 440 }
 };
 
 const NEIGHBORHOOD_DISPLAY_NAMES = {
@@ -731,6 +735,19 @@ const syntheticNeighborhoods = [
 ];
 
 const getNeighborhoodDisplayName = (name) => NEIGHBORHOOD_DISPLAY_NAMES[name] || name;
+
+const normalizeNeighborhoodKey = (value) => {
+  const base = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\bmount\b/g, 'mt')
+    .replace(/\bquarters\b/g, 'quarter');
+
+  if (base === 'southwest waterfront the wharf') return 'southwest waterfront';
+  if (base.startsWith('the ')) return base.slice(4);
+  return base;
+};
 
 const escapeHtml = (value) => String(value || '')
   .replace(/&/g, '&amp;')
@@ -1655,6 +1672,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [wardsData, setWardsData] = useState(null);
   const [foodDesertsData, setFoodDesertsData] = useState(null);
   const [farmersMarketsData, setFarmersMarketsData] = useState(null);
+  const [osmNeighborhoodAnchors, setOsmNeighborhoodAnchors] = useState({});
   const [treeCanopyData, setTreeCanopyData] = useState(null);
   const [combinedSewerData, setCombinedSewerData] = useState(null);
   const [wetlandData, setWetlandData] = useState(null);
@@ -1668,6 +1686,25 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const combinedSewerLayerRef = useRef(null);
   const wetlandLayerRef = useRef(null);
   const emergencyMedicalLayerRef = useRef(null);
+  const getNeighborhoodAnchor = useCallback((name) => {
+    const keyCandidates = [
+      name,
+      getNeighborhoodDisplayName(name),
+      String(name || '').replace('/', ' '),
+      String(name || '').replace(/\//g, ' ')
+    ].map(normalizeNeighborhoodKey);
+
+    for (const key of keyCandidates) {
+      const anchor = osmNeighborhoodAnchors[key];
+      if (anchor) return anchor;
+    }
+    return customOverrides[name]?.center || null;
+  }, [osmNeighborhoodAnchors]);
+
+  const getNeighborhoodRadius = useCallback((name, fallbackRadius) => {
+    if (customOverrides[name]?.radius) return customOverrides[name].radius;
+    return fallbackRadius;
+  }, []);
   const treeCanopyStyleFn = useCallback((feature) => getTreeCanopyStyle(feature), []);
   const treeCanopyFilterFn = useCallback(
     (feature) => treeCanopyMatchesSearch(feature, normalizedSearchQuery),
@@ -2307,6 +2344,41 @@ out center geom tags;`;
     };
   }, [activeLayers.emergencyMedical, emergencyMedicalData]);
 
+  useEffect(() => {
+    if (!activeLayers.neighborhoods || !geoJsonData?.features?.length) return;
+    if (Object.keys(osmNeighborhoodAnchors).length > 0) return;
+
+    let cancelled = false;
+    const overpassQuery = `[out:json][timeout:25];
+(
+  node["place"~"^(neighbourhood|suburb|quarter)$"](38.79,-77.12,38.995,-76.91);
+  way["place"~"^(neighbourhood|suburb|quarter)$"](38.79,-77.12,38.995,-76.91);
+  relation["place"~"^(neighbourhood|suburb|quarter)$"](38.79,-77.12,38.995,-76.91);
+);
+out center tags;`;
+
+    fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        const map = {};
+        for (const el of data.elements || []) {
+          const name = el.tags?.name;
+          const lat = el.lat ?? el.center?.lat;
+          const lon = el.lon ?? el.center?.lon;
+          if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+          const key = normalizeNeighborhoodKey(name);
+          if (!map[key]) map[key] = [lat, lon];
+        }
+        setOsmNeighborhoodAnchors(map);
+      })
+      .catch((err) => console.error('Error fetching OSM neighborhood anchors:', err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.neighborhoods, geoJsonData, osmNeighborhoodAnchors]);
+
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
     
@@ -2329,8 +2401,9 @@ out center geom tags;`;
 
       neighborhoods.forEach((name, i) => {
         let pos = [center.lat, center.lng];
-        if (customOverrides[name]) {
-          pos = customOverrides[name].center;
+        const anchor = getNeighborhoodAnchor(name);
+        if (anchor) {
+          pos = anchor;
         } else if (N > 1) {
           const angle = (i / N) * Math.PI * 2;
           pos = [
@@ -2389,7 +2462,7 @@ out center geom tags;`;
       console.error("COLOR MAP ERROR:", e);
       return {};
     }
-  }, [geoJsonData]);
+  }, [geoJsonData, getNeighborhoodAnchor]);
 
   const parksStyle = {
     fillColor: '#22c55e',
@@ -2490,9 +2563,10 @@ out center geom tags;`;
               let pos = [center.lat, center.lng];
               let finalRadius = radiusMeters;
 
-              if (customOverrides[name]) {
-                pos = customOverrides[name].center;
-                finalRadius = customOverrides[name].radius;
+              const anchor = getNeighborhoodAnchor(name);
+              if (anchor) {
+                pos = anchor;
+                finalRadius = getNeighborhoodRadius(name, finalRadius);
               } else if (N > 1) {
                 const angle = (i / N) * Math.PI * 2;
                 pos = [
