@@ -226,19 +226,58 @@ const ticketedEventsData = {
   ]
 };
 
+const liveMusicData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "Blues Alley", TYPE: "Jazz Supper Club", SUMMARY: "Georgetown's landmark jazz supper club with seated table service and intimate nightly shows.", NEIGHBORHOOD: "Georgetown" }, geometry: { type: "Point", coordinates: [-77.0635, 38.9049] } },
+    { type: "Feature", properties: { NAME: "JoJo Restaurant & Bar", TYPE: "Jazz & Blues Restaurant", SUMMARY: "U Street restaurant with dinner service and live jazz, blues, and soul in a close-up dining-room setting.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0344, 38.9169] } },
+    { type: "Feature", properties: { NAME: "Takoma Station Tavern", TYPE: "Jazz / Soul Tavern", SUMMARY: "Takoma tavern known for seated live jazz, soul, blues, and neighborhood music nights.", NEIGHBORHOOD: "Takoma" }, geometry: { type: "Point", coordinates: [-77.0181, 38.9748] } },
+    { type: "Feature", properties: { NAME: "Green Island Cafe", TYPE: "Jazz Cafe", SUMMARY: "Adams Morgan cafe and bar carrying forward Columbia Station-style jazz jams in a small, low-key room.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0422, 38.9213] } },
+    { type: "Feature", properties: { NAME: "Georgia Brown's", TYPE: "Jazz Brunch Restaurant", SUMMARY: "Downtown Southern restaurant with a long-running Sunday jazz brunch tradition.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0338, 38.9023] } },
+    { type: "Feature", properties: { NAME: "Bonne Vie Cafe & Bistro", TYPE: "Jazz Brunch / Bistro", SUMMARY: "U Street / Dupont bistro with gypsy-jazz weekend brunch programming and seated dining.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0374, 38.9169] } },
+    { type: "Feature", properties: { NAME: "Mr. Henry's", TYPE: "Jazz Pub", SUMMARY: "Capitol Hill pub with a historic upstairs music room and recurring jazz performances.", NEIGHBORHOOD: "Capitol Hill" }, geometry: { type: "Point", coordinates: [-76.9958, 38.8846] } },
+    { type: "Feature", properties: { NAME: "St. Vincent Wine", TYPE: "Wine Garden / Jazz Brunch", SUMMARY: "Park View wine garden and cocktail bar with Sunday jazz brunch and seated live music programming.", NEIGHBORHOOD: "Park View" }, geometry: { type: "Point", coordinates: [-77.0237, 38.9309] } },
+    { type: "Feature", properties: { NAME: "Bar Angie", TYPE: "Restaurant Lounge", SUMMARY: "West End restaurant lounge with dinner and brunch service plus recurring live jazz and lounge music.", NEIGHBORHOOD: "West End" }, geometry: { type: "Point", coordinates: [-77.0502, 38.9074] } },
+    { type: "Feature", properties: { NAME: "CUT Above at Rosewood Washington DC", TYPE: "Jazz Brunch / Hotel Lounge", SUMMARY: "Georgetown hotel lounge and restaurant space associated with Sunday jazz brunch programming.", NEIGHBORHOOD: "Georgetown" }, geometry: { type: "Point", coordinates: [-77.0598, 38.9048] } },
+    { type: "Feature", properties: { NAME: "The Hamilton Live", TYPE: "Supper Club / Listening Room", SUMMARY: "Downtown seated live room with dinner service and a calendar spanning jazz, roots, soul, and singer-songwriters.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } },
+    { type: "Feature", properties: { NAME: "Pearl Street Warehouse", TYPE: "Listening Room", SUMMARY: "Wharf music room with seated dinner-show style options for Americana, blues, roots, and singer-songwriter sets.", NEIGHBORHOOD: "The Wharf" }, geometry: { type: "Point", coordinates: [-77.0270, 38.8787] } },
+    { type: "Feature", properties: { NAME: "Tabard Inn", TYPE: "Hotel Restaurant / Jazz Brunch", SUMMARY: "Dupont hotel restaurant with an intimate dining-room feel and periodic jazz brunch or live music programming.", NEIGHBORHOOD: "Dupont Circle" }, geometry: { type: "Point", coordinates: [-77.0390, 38.9077] } },
+    { type: "Feature", properties: { NAME: "Marx Cafe", TYPE: "Cafe / Jazz Jam", SUMMARY: "Mount Pleasant cafe and bar associated with neighborhood jazz jams and intimate live music nights.", NEIGHBORHOOD: "Mount Pleasant" }, geometry: { type: "Point", coordinates: [-77.0388, 38.9317] } }
+  ]
+};
+
 const comedyVenuesData = {
   type: "FeatureCollection",
   features: [
-    { type: "Feature", properties: { NAME: "DC Improv", TYPE: "Comedy Club", SUMMARY: "Flagship comedy club in downtown DC hosting national touring comics.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0215, 38.9000] } },
+    { type: "Feature", properties: { NAME: "DC Improv Comedy Club", TYPE: "Comedy Club", SUMMARY: "DC's flagship dedicated comedy club on Connecticut Avenue, booking national touring comics, showcases, classes, and open mics.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0412, 38.9043] } },
     { type: "Feature", properties: { NAME: "The DC Comedy Loft", TYPE: "Comedy Club", SUMMARY: "Dedicated comedy room above Bier Baron with frequent local and touring stand-up shows.", NEIGHBORHOOD: "Dupont Circle" }, geometry: { type: "Point", coordinates: [-77.0419, 38.9139] } },
     { type: "Feature", properties: { NAME: "Room 808 (DC Comedy Clubhouse)", TYPE: "Comedy Venue", SUMMARY: "Independent venue for stand-up showcases, indie productions, and open mics.", NEIGHBORHOOD: "Petworth" }, geometry: { type: "Point", coordinates: [-77.0238, 38.9334] } },
+    { type: "Feature", properties: { NAME: "Hotbed Comedy Club", TYPE: "Comedy Club", SUMMARY: "Adams Morgan comedy club and home base for Underground Comedy, with frequent local showcases and late-night stand-up.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0428, 38.9228] } },
+    { type: "Feature", properties: { NAME: "Comedy Club DC at Ethio Vegan", TYPE: "Comedy Night Venue", SUMMARY: "Recurring DC Comedy Showcase room upstairs at Ethio Vegan on H Street NE.", NEIGHBORHOOD: "H Street NE" }, geometry: { type: "Point", coordinates: [-76.9857, 38.9001] } },
     { type: "Feature", properties: { NAME: "Capital Laughs", TYPE: "Comedy Venue", SUMMARY: "Small-format comedy room hosting local lineups and monthly showcases.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0288, 38.9059] } },
+    { type: "Feature", properties: { NAME: "Wonderland Ballroom", TYPE: "Comedy Night Venue", SUMMARY: "Columbia Heights bar with recurring Underground Comedy and open-mic stand-up nights.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0277, 38.9297] } },
+    { type: "Feature", properties: { NAME: "Reliable Tavern", TYPE: "Comedy Night Venue", SUMMARY: "Petworth / Park View bar used by Underground Comedy for independent stand-up shows.", NEIGHBORHOOD: "Park View" }, geometry: { type: "Point", coordinates: [-77.0252, 38.9356] } },
+    { type: "Feature", properties: { NAME: "Wild Days at Eaton DC", TYPE: "Comedy Night Venue", SUMMARY: "Rooftop bar and event space that has hosted Underground Comedy and pop-up stand-up shows.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0287, 38.9026] } },
     { type: "Feature", properties: { NAME: "Arlington Drafthouse (near DC)", TYPE: "Comedy Club", SUMMARY: "Regional comedy destination frequently booking touring comics for DMV audiences.", NEIGHBORHOOD: "Arlington" }, geometry: { type: "Point", coordinates: [-77.1040, 38.8793] } },
     { type: "Feature", properties: { NAME: "Kennedy Center (Comedy Programming)", TYPE: "Performance Venue", SUMMARY: "Hosts ticketed stand-up and comedic performances as part of broader programming.", NEIGHBORHOOD: "Foggy Bottom" }, geometry: { type: "Point", coordinates: [-77.0560, 38.8954] } },
     { type: "Feature", properties: { NAME: "Warner Theatre (Comedy Tours)", TYPE: "Theater", SUMMARY: "Large theater that regularly books major stand-up comedy tours.", NEIGHBORHOOD: "Penn Quarter" }, geometry: { type: "Point", coordinates: [-77.0305, 38.8961] } },
     { type: "Feature", properties: { NAME: "Lincoln Theatre (Comedy Shows)", TYPE: "Theater", SUMMARY: "Historic venue on U Street with recurring stand-up and comedy special events.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0240, 38.9175] } },
     { type: "Feature", properties: { NAME: "Capital Turnaround (Comedy Nights)", TYPE: "Performance Venue", SUMMARY: "Navy Yard venue that occasionally hosts stand-up showcases and comedy podcasts.", NEIGHBORHOOD: "Navy Yard" }, geometry: { type: "Point", coordinates: [-77.0023, 38.8769] } },
-    { type: "Feature", properties: { NAME: "The Hamilton Live (Comedy Sets)", TYPE: "Music & Comedy Venue", SUMMARY: "Downtown live venue featuring periodic comedy nights and touring acts.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } }
+    { type: "Feature", properties: { NAME: "Union Stage", TYPE: "Music & Comedy Venue", SUMMARY: "Wharf venue with a range of comedy, podcasts, open mics, drag, and live entertainment alongside concerts.", NEIGHBORHOOD: "The Wharf" }, geometry: { type: "Point", coordinates: [-77.0269, 38.8790] } },
+    { type: "Feature", properties: { NAME: "Miracle Theatre", TYPE: "Theater", SUMMARY: "Capitol Hill theater and live events room that hosts touring comics and spoken-word comedy programming.", NEIGHBORHOOD: "Capitol Hill" }, geometry: { type: "Point", coordinates: [-76.9958, 38.8823] } },
+    { type: "Feature", properties: { NAME: "Howard Theatre", TYPE: "Music & Comedy Venue", SUMMARY: "Historic Shaw theater that books national comedy acts in addition to concerts and cultural programming.", NEIGHBORHOOD: "Shaw" }, geometry: { type: "Point", coordinates: [-77.0219, 38.9164] } },
+    { type: "Feature", properties: { NAME: "Black Cat", TYPE: "Music & Comedy Venue", SUMMARY: "14th Street venue best known for music but also hosts stand-up comedy and comedy-adjacent performances.", NEIGHBORHOOD: "14th Street" }, geometry: { type: "Point", coordinates: [-77.0316, 38.9150] } },
+    { type: "Feature", properties: { NAME: "The Hamilton Live (Comedy Sets)", TYPE: "Music & Comedy Venue", SUMMARY: "Downtown live venue featuring periodic comedy nights and touring acts.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } },
+    { type: "Feature", properties: { NAME: "Aura Bar & Lounge", TYPE: "Comedy Night Venue", SUMMARY: "U Street lounge with recurring free stand-up comedy nights and local showcases.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0274, 38.9172] } },
+    { type: "Feature", properties: { NAME: "City-State Public House", TYPE: "Comedy Night Venue", SUMMARY: "Edgewood beer hall / public house listed for recurring comedy open mic programming.", NEIGHBORHOOD: "Edgewood" }, geometry: { type: "Point", coordinates: [-77.0115, 38.9238] } },
+    { type: "Feature", properties: { NAME: "Haydee's Restaurant", TYPE: "Comedy Night Venue", SUMMARY: "Mount Pleasant neighborhood bar and restaurant with recurring stand-up open mic listings.", NEIGHBORHOOD: "Mount Pleasant" }, geometry: { type: "Point", coordinates: [-77.0386, 38.9312] } },
+    { type: "Feature", properties: { NAME: "Madam's Organ", TYPE: "Comedy Night Venue", SUMMARY: "Adams Morgan bar and music venue that appears in DC stand-up open mic listings.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0420, 38.9216] } },
+    { type: "Feature", properties: { NAME: "BloomBars", TYPE: "Comedy Night Venue", SUMMARY: "Columbia Heights arts space with comedy and open-mic programming among community performances.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0283, 38.9294] } },
+    { type: "Feature", properties: { NAME: "Cafe Saint-Ex", TYPE: "Comedy Night Venue", SUMMARY: "14th Street bar and cafe with recurring stand-up open mic listings.", NEIGHBORHOOD: "14th Street" }, geometry: { type: "Point", coordinates: [-77.0317, 38.9143] } },
+    { type: "Feature", properties: { NAME: "Fat Pete's BBQ", TYPE: "Comedy Night Venue", SUMMARY: "Cleveland Park barbecue restaurant and bar with recurring Sunday comedy open mic listings.", NEIGHBORHOOD: "Cleveland Park" }, geometry: { type: "Point", coordinates: [-77.0621, 38.9345] } },
+    { type: "Feature", properties: { NAME: "Tonic at Quigley's", TYPE: "Comedy Night Venue", SUMMARY: "Foggy Bottom tavern with stage space and recurring comedy/open mic history.", NEIGHBORHOOD: "Foggy Bottom" }, geometry: { type: "Point", coordinates: [-77.0489, 38.8996] } },
+    { type: "Feature", properties: { NAME: "Sudhouse DC", TYPE: "Comedy Night Venue", SUMMARY: "U Street sports bar included in current DC stand-up open mic listings.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0285, 38.9173] } },
+    { type: "Feature", properties: { NAME: "The Artemis", TYPE: "Comedy Night Venue", SUMMARY: "Columbia Heights sports bar with recurring open mic comedy programming.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0323, 38.9362] } }
   ]
 };
 
@@ -737,6 +776,108 @@ const formatDate = (value) => {
   return date.getUTCFullYear().toString();
 };
 
+const RELIGIOUS_CATEGORY_COLORS = {
+  'Roman Catholic': '#dc2626',
+  Baptist: '#2563eb',
+  Methodist: '#16a34a',
+  Episcopal: '#7c3aed',
+  Presbyterian: '#0f766e',
+  Lutheran: '#d97706',
+  Orthodox: '#9333ea',
+  Pentecostal: '#ea580c',
+  Adventist: '#0891b2',
+  "Jehovah's Witness": '#64748b',
+  'Latter-day Saint': '#4f46e5',
+  'Non-denominational Christian': '#db2777',
+  'Other Christian': '#f59e0b',
+  Jewish: '#0ea5e9',
+  Muslim: '#15803d',
+  Buddhist: '#eab308',
+  Hindu: '#f97316',
+  Sikh: '#c2410c',
+  Unitarian: '#14b8a6',
+  Quaker: '#84cc16',
+  Other: '#6b7280'
+};
+
+const formatOsmTag = (value) => String(value || '')
+  .replace(/_/g, ' ')
+  .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const getReligiousCategory = (tags = {}) => {
+  const religion = String(tags.religion || '').toLowerCase();
+  const denomination = String(tags.denomination || tags['religion:denomination'] || '').toLowerCase();
+  const name = String(tags.name || '').toLowerCase();
+  const haystack = `${religion} ${denomination} ${name}`;
+
+  if (religion === 'jewish' || haystack.includes('synagogue')) return 'Jewish';
+  if (religion === 'muslim' || religion === 'islam' || haystack.includes('mosque') || haystack.includes('masjid')) return 'Muslim';
+  if (religion === 'buddhist') return 'Buddhist';
+  if (religion === 'hindu') return 'Hindu';
+  if (religion === 'sikh') return 'Sikh';
+  if (denomination.includes('unitarian')) return 'Unitarian';
+  if (denomination.includes('quaker') || haystack.includes('friends meeting')) return 'Quaker';
+  if (denomination.includes('roman_catholic') || denomination.includes('catholic') || haystack.includes('catholic')) return 'Roman Catholic';
+  if (denomination.includes('baptist') || haystack.includes('baptist')) return 'Baptist';
+  if (denomination.includes('methodist') || haystack.includes('methodist') || haystack.includes('ame ')) return 'Methodist';
+  if (denomination.includes('episcopal') || haystack.includes('episcopal')) return 'Episcopal';
+  if (denomination.includes('presbyterian') || haystack.includes('presbyterian')) return 'Presbyterian';
+  if (denomination.includes('lutheran') || haystack.includes('lutheran')) return 'Lutheran';
+  if (denomination.includes('orthodox') || haystack.includes('orthodox')) return 'Orthodox';
+  if (denomination.includes('pentecostal') || haystack.includes('pentecostal')) return 'Pentecostal';
+  if (denomination.includes('adventist') || haystack.includes('adventist')) return 'Adventist';
+  if (denomination.includes('jehovah') || haystack.includes("jehovah's witness")) return "Jehovah's Witness";
+  if (denomination.includes('mormon') || denomination.includes('latter_day_saints') || haystack.includes('latter-day')) return 'Latter-day Saint';
+  if (denomination.includes('nondenominational') || denomination.includes('non_denominational') || denomination.includes('independent')) return 'Non-denominational Christian';
+  if (religion === 'christian' || haystack.includes('church')) return 'Other Christian';
+  return 'Other';
+};
+
+const getReligiousInstitutionStyle = (tags = {}) => {
+  const category = getReligiousCategory(tags);
+  const fillColor = RELIGIOUS_CATEGORY_COLORS[category] || RELIGIOUS_CATEGORY_COLORS.Other;
+  return {
+    category,
+    fillColor,
+    color: '#f5f3ff'
+  };
+};
+
+const getOsmElementCoordinates = (element) => {
+  if (Number.isFinite(element.lon) && Number.isFinite(element.lat)) return [element.lon, element.lat];
+  if (element.center && Number.isFinite(element.center.lon) && Number.isFinite(element.center.lat)) {
+    return [element.center.lon, element.center.lat];
+  }
+  return null;
+};
+
+const osmPlacesOfWorshipToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const coordinates = getOsmElementCoordinates(element);
+      if (!coordinates) return null;
+      const tags = element.tags || {};
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: tags.name || tags['official_name'] || 'Place of Worship',
+          RELIGION: tags.religion || '',
+          DENOMINATION: tags.denomination || tags['religion:denomination'] || '',
+          WORSHIP_TYPE: tags.place_of_worship || tags.building || '',
+          ADDRESS: [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' '),
+          WEBSITE: tags.website || tags['contact:website'] || '',
+          PHONE: tags.phone || tags['contact:phone'] || '',
+          CATEGORY: getReligiousCategory(tags),
+          OSM_TAGS: tags
+        },
+        geometry: { type: 'Point', coordinates }
+      };
+    })
+    .filter(Boolean)
+});
+
 const formatNumber = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) return '';
@@ -1219,6 +1360,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [combinedSewerData, setCombinedSewerData] = useState(null);
   const [wetlandData, setWetlandData] = useState(null);
   const [emergencyMedicalData, setEmergencyMedicalData] = useState(null);
+  const [religiousInstitutionsData, setReligiousInstitutionsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
   const combinedSewerLayerRef = useRef(null);
@@ -1421,6 +1563,37 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch(err => console.error("Error fetching historic landmarks data:", err));
     }
   }, [activeLayers.historicLandmarks, historicLandmarksData]);
+
+  useEffect(() => {
+    if (activeLayers.religiousInstitutions && !religiousInstitutionsData) {
+      const overpassQuery = `[out:json][timeout:25];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["amenity"="place_of_worship"](area.dc);
+  way["amenity"="place_of_worship"](area.dc);
+  relation["amenity"="place_of_worship"](area.dc);
+);
+out center tags;`;
+
+      fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: new URLSearchParams({ data: overpassQuery })
+      })
+        .then(async (res) => {
+          const text = await res.text();
+          if (!res.ok) throw new Error(`Overpass request failed: ${res.status} ${text.slice(0, 120)}`);
+          return JSON.parse(text);
+        })
+        .then((data) => {
+          setReligiousInstitutionsData(osmPlacesOfWorshipToGeoJson(data.elements || []));
+        })
+        .catch((err) => console.error('Error fetching religious institutions data:', err));
+    }
+  }, [activeLayers.religiousInstitutions, religiousInstitutionsData]);
 
   useEffect(() => {
     if (activeLayers.propertyValues && !propertyValuesData) {
@@ -2660,6 +2833,79 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
+      {/* Live Music Layer */}
+      {activeLayers.liveMusic && (
+        <GeoJSON
+          key={`live-music-${searchQuery}`}
+          data={liveMusicData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [p.NAME, p.TYPE, p.SUMMARY, p.NEIGHBORHOOD]
+              .some((v) => String(v || "").toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            const type = String(feature.properties?.TYPE || "").toLowerCase();
+            const supperClub = type.includes("supper") || type.includes("restaurant") || type.includes("brunch");
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: supperClub ? 8 : 7,
+              fillColor: supperClub ? '#0f766e' : '#14b8a6',
+              color: '#99f6e4',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Live music venue');
+            const type = escapeHtml(p.TYPE || 'Live Music');
+            const summary = escapeHtml(p.SUMMARY || '');
+            const nbh = escapeHtml(p.NEIGHBORHOOD || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #0f766e;">🎷</span> ${name}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #0f766e; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${type}${nbh ? ` · ${nbh}` : ''}
+                 </div>
+                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summary}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Focused on seated, intimate, restaurant, lounge, brunch, and listening-room music experiences.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const type = String(feature.properties?.TYPE || "").toLowerCase();
+                const supperClub = type.includes("supper") || type.includes("restaurant") || type.includes("brunch");
+                l.setRadius(supperClub ? 8 : 7);
+                l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
       {/* Comedy Venues Layer */}
       {activeLayers.comedyVenues && (
         <GeoJSON
@@ -3099,6 +3345,87 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 const l = e.target;
                 l.setRadius(6);
                 l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Religious Institutions Layer */}
+      {activeLayers.religiousInstitutions && religiousInstitutionsData && (
+        <GeoJSON
+          key={`religious-institutions-${searchQuery}`}
+          data={religiousInstitutionsData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [
+              p.NAME,
+              p.CATEGORY,
+              p.RELIGION,
+              p.DENOMINATION,
+              p.WORSHIP_TYPE,
+              p.ADDRESS
+            ].some((v) => String(v || '').toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            const style = getReligiousInstitutionStyle(feature.properties?.OSM_TAGS || {});
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: 5.5,
+              fillColor: style.fillColor,
+              color: style.color,
+              weight: 1.8,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const style = getReligiousInstitutionStyle(p.OSM_TAGS || {});
+            const name = escapeHtml(p.NAME || 'Place of Worship');
+            const category = escapeHtml(p.CATEGORY || style.category || 'Other');
+            const religion = escapeHtml(formatOsmTag(p.RELIGION));
+            const denomination = escapeHtml(formatOsmTag(p.DENOMINATION));
+            const worshipType = escapeHtml(formatOsmTag(p.WORSHIP_TYPE));
+            const address = escapeHtml(p.ADDRESS || '');
+            const osmId = escapeHtml(p.OSM_ID || '');
+            const details = [religion, denomination, worshipType].filter(Boolean).join(' · ');
+
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: ${style.fillColor};">✦</span> ${name}
+                 </div>
+                 <div style="font-weight: 700; font-size: 12px; color: ${style.fillColor}; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${category}
+                 </div>
+                 ${details ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35; margin-bottom: 3px;">${details}</div>` : ''}
+                 ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Address:</strong> ${address}</div>` : ''}
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Color is based on OSM religion / denomination tags.${osmId ? ` Source: ${osmId}` : ''}
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(8);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(5.5);
+                l.setStyle({ weight: 1.8, fillColor: style.fillColor, color: style.color });
               }
             });
           }}
