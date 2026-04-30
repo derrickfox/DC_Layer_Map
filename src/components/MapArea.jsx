@@ -4,6 +4,10 @@ import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
 import 'esri-leaflet';
 import 'leaflet/dist/leaflet.css';
+import {
+  LOCKED_NEIGHBORHOOD_ALIASES,
+  LOCKED_NEIGHBORHOOD_ANCHORS
+} from '../data/lockedNeighborhoodAnchors.js';
 
 // Fix for default marker icons in Vite + Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -681,57 +685,73 @@ const NEIGHBORHOOD_RADIUS_FALLBACK_MAX = 400;
 /** Cap explicit per-neighborhood radii (customOverrides previously up to 800 m). */
 const NEIGHBORHOOD_RADIUS_OVERRIDE_MAX = 480;
 
+/**
+ * Manual label/circle centers (see getNeighborhoodAnchor — these win over live OSM fetch).
+ * Basemap text placement can shift when Carto/OSM update tiles even if these numbers stay the same.
+ */
 const customOverrides = {
   "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
   "Adams Morgan": { center: [38.9215002, -77.0421992], radius: 500 },
   "Woodley Park": { center: [38.9250248, -77.0523627], radius: 550 },
   "Cleveland Park": { center: [38.9352305, -77.0587072], radius: 600 },
-  "Palisades": { center: [38.9280, -77.1080], radius: 500 },
+  "Palisades": { center: [38.9251112, -77.1013673], radius: 440 },
   "Dalecarlia": { center: [38.9380, -77.1080], radius: 450 },
   "Kent": { center: [38.9320, -77.1060], radius: 450 },
-  "American University Park": { center: [38.9480, -77.0930], radius: 500 },
+  "American University Park": { center: [38.9514996, -77.0899781], radius: 500 },
   "Berkley": { center: [38.9170, -77.0940], radius: 450 },
-  "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
-  "Columbia Heights": { center: [38.9287474, -77.032895], radius: 500 },
+  "Wesley Heights": { center: [38.9312222, -77.0880336], radius: 420 },
+  "Columbia Heights": { center: [38.9256753, -77.0296598], radius: 500 },
+  "Pleasant Plains": { center: [38.9293745, -77.0228255], radius: 400 },
   "Mt. Pleasant": { center: [38.9309121, -77.0382234], radius: 450 },
   "Park View": { center: [38.9334691, -77.0213014], radius: 430 },
   "Lanier Heights": { center: [38.9265002, -77.039977], radius: 420 },
   "Cardozo/Shaw": { center: [38.9172239, -77.0282196], radius: 450 },
-  "Dupont Circle": { center: [38.9124233, -77.0412512], radius: 500 },
+  "Dupont Circle": { center: [38.9109436, -77.0427259], radius: 480 },
+  "Edgewood": { center: [38.9226131, -77.0005375], radius: 430 },
+  "Forest Hills": { center: [38.9509441, -77.0580329], radius: 450 },
   "Kalorama Heights": { center: [38.9183738, -77.0480828], radius: 450 },
   "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
   "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
   "Georgetown": { center: [38.9087134, -77.0653494], radius: 550 },
-  "Burleith/Hillandale": { center: [38.9145, -77.0700], radius: 450 },
-  "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
+  "Burleith/Hillandale": { center: [38.9146516, -77.0736641], radius: 420 },
+  "Burleith / Hillandale": { center: [38.9146516, -77.0736641], radius: 420 },
   "National Mall": { center: [38.8895, -77.0230], radius: 600 },
   "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
   "Connecticut Avenue/K Street": { center: [38.9020, -77.0396], radius: 500 },
   "Union Station": { center: [38.8977, -77.0068], radius: 450 },
+  "West End": { center: [38.907056, -77.0496994], radius: 420 },
   // Match OSM label anchors: Bloomingdale/Truxton = place nodes; Le Droit = Nominatim neighbourhood point (not relation centroid).
   "Truxton Circle": { center: [38.9098338, -77.0149764], radius: 450 },
   "Bloomingdale": { center: [38.9167782, -77.0113652], radius: 450 },
+  "Brightwood": { center: [38.9656333, -77.0271149], radius: 430 },
   "Le Droit Park": { center: [38.9159068, -77.0157211], radius: 430 },
   "Manor Park": { center: [38.9639995, -77.0158099], radius: 420 },
+  "Michigan Park": { center: [38.9469841, -76.9935758], radius: 420 },
   "Lamond Riggs": { center: [38.9664995, -77.0074764], radius: 430 },
   // Keep typo alias for any stale data/reference still using "Lamont".
   "Lamont Riggs": { center: [38.9664995, -77.0074764], radius: 430 },
   "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 },
-  "Foxhall Crescent": { center: [38.9230, -77.0890], radius: 450 },
-  "Spring Valley": { center: [38.9380, -77.0950], radius: 500 },
-  "Foxhall Village": { center: [38.9110, -77.0810], radius: 400 },
+  "Foxhall Crescent": { center: [38.9231668, -77.0922004], radius: 420 },
+  "Spring Valley": { center: [38.9395553, -77.0988672], radius: 440 },
+  "University Heights": { center: [38.9398333, -76.9935871], radius: 420 },
+  "Bellair": { center: [38.9328, -76.9933], radius: 390 },
+  "Bell Air": { center: [38.9328, -76.9933], radius: 390 },
+  "BellAir": { center: [38.9328, -76.9933], radius: 390 },
+  "Foxhall Village": { center: [38.9117781, -77.0844224], radius: 420 },
   "Georgetown Reservoir": { center: [38.9123, -77.0928], radius: 450 },
   "Trinidad": { center: [38.9050, -76.9880], radius: 450 },
   "Ivy City": { center: [38.9130, -76.9850], radius: 450 },
-  "Carver Langston": { center: [38.8990, -76.9780], radius: 400 },
+  "Carver": { center: [38.9039499, -76.9776375], radius: 380 },
+  "Langston": { center: [38.9030392, -76.972532], radius: 380 },
   "Stanton Park": { center: [38.8930, -76.9930], radius: 400 },
-  "Kingman Park": { center: [38.8960, -76.9700], radius: 450 },
-  "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 },
+  "Kingman Park": { center: [38.8966073, -76.9782112], radius: 420 },
+  "Capitol Hill": { center: [38.8890009, -77.0002537], radius: 450 },
+  "Navy Yard": { center: [38.8741823, -77.0005122], radius: 420 },
   "Shepherd Park": { center: [38.9826559, -77.0319626], radius: 430 },
   // Force anchors for dense downtown polygons so labels align with OSM basemap text.
-  "Downtown": { center: [38.8978, -77.0307], radius: 460 },
-  "Penn Quarter": { center: [38.8925, -77.0227], radius: 440 },
-  "Penn Quarters": { center: [38.8925, -77.0227], radius: 440 }
+  "Downtown": { center: [38.8994909, -77.0280672], radius: 460 },
+  "Penn Quarter": { center: [38.8958959, -77.022268], radius: 440 },
+  "Penn Quarters": { center: [38.8958959, -77.022268], radius: 440 }
 };
 
 const NEIGHBORHOOD_DISPLAY_NAMES = {
@@ -748,7 +768,9 @@ const syntheticNeighborhoods = [
   { name: 'Barracks Row', center: [38.8817, -76.9952], radius: 300 },
   { name: 'Hill East', center: [38.8845, -76.9785], radius: 400 },
   { name: '16th Street Heights', center: [38.9503318, -77.0327194], radius: 420 },
-  { name: 'Hampshire Knolls', center: [38.9616585, -77.0044533], radius: 390 }
+  { name: 'Hampshire Knolls', center: [38.9616585, -77.0044533], radius: 390 },
+  { name: 'NOMA', center: [38.9055979, -77.0059222], radius: 390 },
+  { name: 'BellAir', center: [38.9328, -76.9933], radius: 390 }
 ];
 
 const getNeighborhoodDisplayName = (name) => NEIGHBORHOOD_DISPLAY_NAMES[name] || name;
@@ -766,8 +788,34 @@ const normalizeNeighborhoodKey = (value) => {
   return base;
 };
 
+const getLockedNeighborhoodEntry = (name) => {
+  if (!name) return null;
+  if (LOCKED_NEIGHBORHOOD_ANCHORS[name]) return LOCKED_NEIGHBORHOOD_ANCHORS[name];
+
+  const alias = LOCKED_NEIGHBORHOOD_ALIASES[name];
+  if (alias && LOCKED_NEIGHBORHOOD_ANCHORS[alias]) return LOCKED_NEIGHBORHOOD_ANCHORS[alias];
+
+  const nk = normalizeNeighborhoodKey(name);
+  for (const [k, v] of Object.entries(LOCKED_NEIGHBORHOOD_ANCHORS)) {
+    if (normalizeNeighborhoodKey(k) === nk) return v;
+  }
+  return null;
+};
+
 /** Resolves customOverrides for GIS names that differ from override keys (e.g. slash variants). */
 const getCustomOverrideEntry = (name) => {
+  /**
+   * PROCEDURE GUARANTEE:
+   * 1) locked map (hard stop, deterministic)
+   * 2) local customOverrides map (legacy/manual)
+   * 3) normalized-key scan fallback
+   *
+   * If a tuned neighborhood keeps drifting, add/update it in LOCKED_NEIGHBORHOOD_ANCHORS
+   * instead of only editing customOverrides.
+   */
+  const locked = getLockedNeighborhoodEntry(name);
+  if (locked) return locked;
+
   if (customOverrides[name]) return customOverrides[name];
   const disp = getNeighborhoodDisplayName(name);
   if (customOverrides[disp]) return customOverrides[disp];

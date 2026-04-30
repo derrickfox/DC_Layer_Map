@@ -3,100 +3,52 @@ import MapArea from './components/MapArea';
 import LayerControls from './components/LayerControls';
 import './index.css';
 
-const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
-  'Adams Morgan',
-  'American University Park',
-  'Barnaby Woods',
-  'Berkley',
-  'Bloomingdale',
-  'Brightwood',
-  'Brightwood Park',
-  'Buzzard Point',
-  'Cardozo/Shaw',
-  'Cathedral Heights',
-  'Chevy Chase',
-  'Chinatown',
-  'Cleveland Park',
-  'Columbia Heights',
-  'Connecticut Avenue/K Street',
-  'Downtown',
-  'Dupont Circle',
-  'Foggy Bottom',
-  'Friendship Heights',
-  'Forest Hills',
-  'Foxhall Crescent',
-  'Foxhall Village',
-  'Georgetown',
-  'Glover Park',
-  'Burleith/Hillandale',
-  'Kalorama Heights',
-  'Observatory Circle',
-  'Logan Circle',
-  'Mt. Pleasant',
-  'Kent',
-  'North Cleveland Park',
-  'Palisades',
-  'Petworth',
-  'Park View',
-  'Shaw',
-  'Spring Valley',
-  'Takoma',
-  'Tenleytown',
-  'Truxton Circle',
-  'U Street Corridor',
-  'Union Station',
-  'Van Ness',
-  'Wesley Heights',
-  'Woodley Park',
-  'Brookland',
-  'Brentwood',
-  'Fort Lincoln',
-  'Fort Totten',
-  'Eckington',
-  'Edgewood',
-  'H Street Corridor',
-  'Ivy City',
-  'Langdon',
-  'Lamond Riggs',
-  'Le Droit Park',
-  'Michigan Park',
-  'Manor Park',
-  'Queens Chapel',
-  'Trinidad',
-  'Woodridge',
-  'Arboretum',
-  'Benning',
-  'Carver Langston',
-  'Deanwood',
-  'Historic Anacostia',
-  'Kenilworth',
-  'Kingman Park',
-  'Lanier Heights',
-  '16th Street Heights',
-  'Hampshire Knolls',
-  'River Terrace',
-  'Barracks Row',
-  'Barry Farm',
-  'Bellevue',
-  'Capitol Hill',
-  'Capitol View',
-  'Congress Heights',
-  'Crestwood',
-  'Fairlawn',
-  'Fort Dupont',
-  'Hill East',
-  'Hillcrest',
-  'National Mall',
-  'Navy Yard',
-  'Penn Branch',
-  'Randle Highlands',
-  'Shipley Terrace',
-  'Shepherd Park',
-  'Stanton Park',
-  'Southwest/Waterfront',
-  'Washington Highlands',
-  'Woodland/Fort Stanton'
-]);
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('App render error:', error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          style={{
+            padding: 24,
+            fontFamily: 'system-ui, sans-serif',
+            maxWidth: 640,
+            lineHeight: 1.5
+          }}
+        >
+          <h1 style={{ fontSize: '1.25rem', marginTop: 0 }}>The map couldn’t load</h1>
+          <p style={{ color: '#444' }}>
+            Something threw an error while rendering. Check the browser console for details, then try a hard refresh.
+          </p>
+          <pre
+            style={{
+              background: '#f4f4f5',
+              padding: 12,
+              borderRadius: 8,
+              overflow: 'auto',
+              fontSize: 13
+            }}
+          >
+            {String(this.state.error?.message || this.state.error)}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const SYNTHETIC_NEIGHBORHOODS = [
   'U Street Corridor',
@@ -104,7 +56,9 @@ const SYNTHETIC_NEIGHBORHOODS = [
   'Barracks Row',
   'Hill East',
   '16th Street Heights',
-  'Hampshire Knolls'
+  'Hampshire Knolls',
+  'NOMA',
+  'BellAir'
 ];
 
 function App() {
@@ -176,6 +130,10 @@ function App() {
             rawNames += ', Kent, Berkley, Dalecarlia';
             feature.properties.NBH_NAMES = rawNames;
           }
+          if (rawNames.includes('Carver Langston')) {
+            rawNames = rawNames.replace(/\bCarver Langston\b/g, 'Carver, Langston');
+            feature.properties.NBH_NAMES = rawNames;
+          }
           // Normalize source typo so the UI and matching use the canonical name.
           if (rawNames.includes('Lamont Riggs')) {
             rawNames = rawNames.replace(/\bLamont Riggs\b/g, 'Lamond Riggs');
@@ -194,7 +152,7 @@ function App() {
         
         const sortedNames = Array.from(allNames).sort();
         setNeighborhoodList(sortedNames);
-        setHiddenNeighborhoods(new Set(sortedNames.filter(name => !DEFAULT_VISIBLE_NEIGHBORHOODS.has(name))));
+        setHiddenNeighborhoods(new Set());
       })
       .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
 
@@ -303,4 +261,10 @@ function App() {
   );
 }
 
-export default App;
+export default function AppWithErrorBoundary() {
+  return (
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
+  );
+}

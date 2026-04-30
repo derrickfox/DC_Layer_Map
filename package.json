@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "anchors:verify": "node scripts/verify-locked-neighborhood-anchors.mjs",
+    "anchors:update-baseline": "node scripts/verify-locked-neighborhood-anchors.mjs --update",
+    "build": "npm run anchors:verify && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
