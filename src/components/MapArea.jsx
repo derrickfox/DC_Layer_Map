@@ -1371,12 +1371,19 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.historicLandmarks && !historicLandmarksData) {
-      const landmarksUrl = 'https://opendata.dc.gov/api/download/v1/items/288a8c4db1b641b28748dbad958b5272/geojson?layers=23';
-      const districtsUrl = 'https://opendata.dc.gov/api/download/v1/items/a443bfb6d078439e9e1941773879c7f6/geojson?layers=6';
+      const fetchGeoJson = async (url, label) => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`${label} request failed: ${res.status}`);
+        const data = await res.json();
+        if (data.error) throw new Error(`${label} API error: ${data.error.message || 'Unknown error'}`);
+        return data;
+      };
+      const landmarksUrl = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Planning_Landuse_and_Zoning_WebMercator/MapServer/23/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=2000';
+      const districtsUrl = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Historic/MapServer/6/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=2000';
 
       Promise.all([
-        fetch(landmarksUrl).then(res => res.json()),
-        fetch(districtsUrl).then(res => res.json())
+        fetchGeoJson(landmarksUrl, 'Historic landmarks'),
+        fetchGeoJson(districtsUrl, 'Historic districts')
       ])
         .then(([landmarks, districts]) => {
           const landmarkPoints = (landmarks.features || [])
