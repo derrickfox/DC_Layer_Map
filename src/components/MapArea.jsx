@@ -4,6 +4,12 @@ import ZoomWidget from './ZoomWidget';
 import L from 'leaflet';
 import 'esri-leaflet';
 import 'leaflet/dist/leaflet.css';
+import {
+  LOCKED_NEIGHBORHOOD_ALIASES,
+  LOCKED_NEIGHBORHOOD_ANCHORS
+} from '../data/lockedNeighborhoodAnchors.js';
+import { getCached, setCached, fetchWithCache } from '../utils/layerCache.js';
+import { fetchApartmentBuildings } from '../services/dcApartmentBuildingsService.js';
 
 // Fix for default marker icons in Vite + Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -19,6 +25,8 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
+
+const largePointCanvasRenderer = L.canvas({ padding: 0.5 });
 
 // Custom Canvas Layer to decode Mapzen Terrain-RGB and apply a Red-to-Blue heatmap
 const TerrainHeatmapLayer = L.GridLayer.extend({
@@ -226,38 +234,230 @@ const ticketedEventsData = {
   ]
 };
 
+const liveMusicData = {
+  type: "FeatureCollection",
+  features: [
+    { type: "Feature", properties: { NAME: "Blues Alley", TYPE: "Jazz Supper Club", SUMMARY: "Georgetown's landmark jazz supper club with seated table service and intimate nightly shows.", NEIGHBORHOOD: "Georgetown" }, geometry: { type: "Point", coordinates: [-77.0635, 38.9049] } },
+    { type: "Feature", properties: { NAME: "JoJo Restaurant & Bar", TYPE: "Jazz & Blues Restaurant", SUMMARY: "U Street restaurant with dinner service and live jazz, blues, and soul in a close-up dining-room setting.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0344, 38.9169] } },
+    { type: "Feature", properties: { NAME: "Takoma Station Tavern", TYPE: "Jazz / Soul Tavern", SUMMARY: "Takoma tavern known for seated live jazz, soul, blues, and neighborhood music nights.", NEIGHBORHOOD: "Takoma" }, geometry: { type: "Point", coordinates: [-77.0181, 38.9748] } },
+    { type: "Feature", properties: { NAME: "Green Island Cafe", TYPE: "Jazz Cafe", SUMMARY: "Adams Morgan cafe and bar carrying forward Columbia Station-style jazz jams in a small, low-key room.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0422, 38.9213] } },
+    { type: "Feature", properties: { NAME: "Georgia Brown's", TYPE: "Jazz Brunch Restaurant", SUMMARY: "Downtown Southern restaurant with a long-running Sunday jazz brunch tradition.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0338, 38.9023] } },
+    { type: "Feature", properties: { NAME: "Bonne Vie Cafe & Bistro", TYPE: "Jazz Brunch / Bistro", SUMMARY: "U Street / Dupont bistro with gypsy-jazz weekend brunch programming and seated dining.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0374, 38.9169] } },
+    { type: "Feature", properties: { NAME: "Mr. Henry's", TYPE: "Jazz Pub", SUMMARY: "Capitol Hill pub with a historic upstairs music room and recurring jazz performances.", NEIGHBORHOOD: "Capitol Hill" }, geometry: { type: "Point", coordinates: [-76.9958, 38.8846] } },
+    { type: "Feature", properties: { NAME: "St. Vincent Wine", TYPE: "Wine Garden / Jazz Brunch", SUMMARY: "Park View wine garden and cocktail bar with Sunday jazz brunch and seated live music programming.", NEIGHBORHOOD: "Park View" }, geometry: { type: "Point", coordinates: [-77.0237, 38.9309] } },
+    { type: "Feature", properties: { NAME: "Bar Angie", TYPE: "Restaurant Lounge", SUMMARY: "West End restaurant lounge with dinner and brunch service plus recurring live jazz and lounge music.", NEIGHBORHOOD: "West End" }, geometry: { type: "Point", coordinates: [-77.0502, 38.9074] } },
+    { type: "Feature", properties: { NAME: "CUT Above at Rosewood Washington DC", TYPE: "Jazz Brunch / Hotel Lounge", SUMMARY: "Georgetown hotel lounge and restaurant space associated with Sunday jazz brunch programming.", NEIGHBORHOOD: "Georgetown" }, geometry: { type: "Point", coordinates: [-77.0598, 38.9048] } },
+    { type: "Feature", properties: { NAME: "The Hamilton Live", TYPE: "Supper Club / Listening Room", SUMMARY: "Downtown seated live room with dinner service and a calendar spanning jazz, roots, soul, and singer-songwriters.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } },
+    { type: "Feature", properties: { NAME: "Pearl Street Warehouse", TYPE: "Listening Room", SUMMARY: "Wharf music room with seated dinner-show style options for Americana, blues, roots, and singer-songwriter sets.", NEIGHBORHOOD: "The Wharf" }, geometry: { type: "Point", coordinates: [-77.0270, 38.8787] } },
+    { type: "Feature", properties: { NAME: "Tabard Inn", TYPE: "Hotel Restaurant / Jazz Brunch", SUMMARY: "Dupont hotel restaurant with an intimate dining-room feel and periodic jazz brunch or live music programming.", NEIGHBORHOOD: "Dupont Circle" }, geometry: { type: "Point", coordinates: [-77.0390, 38.9077] } },
+    { type: "Feature", properties: { NAME: "Marx Cafe", TYPE: "Cafe / Jazz Jam", SUMMARY: "Mount Pleasant cafe and bar associated with neighborhood jazz jams and intimate live music nights.", NEIGHBORHOOD: "Mount Pleasant" }, geometry: { type: "Point", coordinates: [-77.0388, 38.9317] } }
+  ]
+};
+
 const comedyVenuesData = {
   type: "FeatureCollection",
   features: [
-    { type: "Feature", properties: { NAME: "DC Improv", TYPE: "Comedy Club", SUMMARY: "Flagship comedy club in downtown DC hosting national touring comics.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0215, 38.9000] } },
+    { type: "Feature", properties: { NAME: "DC Improv Comedy Club", TYPE: "Comedy Club", SUMMARY: "DC's flagship dedicated comedy club on Connecticut Avenue, booking national touring comics, showcases, classes, and open mics.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0412, 38.9043] } },
     { type: "Feature", properties: { NAME: "The DC Comedy Loft", TYPE: "Comedy Club", SUMMARY: "Dedicated comedy room above Bier Baron with frequent local and touring stand-up shows.", NEIGHBORHOOD: "Dupont Circle" }, geometry: { type: "Point", coordinates: [-77.0419, 38.9139] } },
     { type: "Feature", properties: { NAME: "Room 808 (DC Comedy Clubhouse)", TYPE: "Comedy Venue", SUMMARY: "Independent venue for stand-up showcases, indie productions, and open mics.", NEIGHBORHOOD: "Petworth" }, geometry: { type: "Point", coordinates: [-77.0238, 38.9334] } },
+    { type: "Feature", properties: { NAME: "Hotbed Comedy Club", TYPE: "Comedy Club", SUMMARY: "Adams Morgan comedy club and home base for Underground Comedy, with frequent local showcases and late-night stand-up.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0428, 38.9228] } },
+    { type: "Feature", properties: { NAME: "Comedy Club DC at Ethio Vegan", TYPE: "Comedy Night Venue", SUMMARY: "Recurring DC Comedy Showcase room upstairs at Ethio Vegan on H Street NE.", NEIGHBORHOOD: "H Street NE" }, geometry: { type: "Point", coordinates: [-76.9857, 38.9001] } },
     { type: "Feature", properties: { NAME: "Capital Laughs", TYPE: "Comedy Venue", SUMMARY: "Small-format comedy room hosting local lineups and monthly showcases.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0288, 38.9059] } },
+    { type: "Feature", properties: { NAME: "Wonderland Ballroom", TYPE: "Comedy Night Venue", SUMMARY: "Columbia Heights bar with recurring Underground Comedy and open-mic stand-up nights.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0277, 38.9297] } },
+    { type: "Feature", properties: { NAME: "Reliable Tavern", TYPE: "Comedy Night Venue", SUMMARY: "Petworth / Park View bar used by Underground Comedy for independent stand-up shows.", NEIGHBORHOOD: "Park View" }, geometry: { type: "Point", coordinates: [-77.0252, 38.9356] } },
+    { type: "Feature", properties: { NAME: "Wild Days at Eaton DC", TYPE: "Comedy Night Venue", SUMMARY: "Rooftop bar and event space that has hosted Underground Comedy and pop-up stand-up shows.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0287, 38.9026] } },
     { type: "Feature", properties: { NAME: "Arlington Drafthouse (near DC)", TYPE: "Comedy Club", SUMMARY: "Regional comedy destination frequently booking touring comics for DMV audiences.", NEIGHBORHOOD: "Arlington" }, geometry: { type: "Point", coordinates: [-77.1040, 38.8793] } },
     { type: "Feature", properties: { NAME: "Kennedy Center (Comedy Programming)", TYPE: "Performance Venue", SUMMARY: "Hosts ticketed stand-up and comedic performances as part of broader programming.", NEIGHBORHOOD: "Foggy Bottom" }, geometry: { type: "Point", coordinates: [-77.0560, 38.8954] } },
     { type: "Feature", properties: { NAME: "Warner Theatre (Comedy Tours)", TYPE: "Theater", SUMMARY: "Large theater that regularly books major stand-up comedy tours.", NEIGHBORHOOD: "Penn Quarter" }, geometry: { type: "Point", coordinates: [-77.0305, 38.8961] } },
     { type: "Feature", properties: { NAME: "Lincoln Theatre (Comedy Shows)", TYPE: "Theater", SUMMARY: "Historic venue on U Street with recurring stand-up and comedy special events.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0240, 38.9175] } },
     { type: "Feature", properties: { NAME: "Capital Turnaround (Comedy Nights)", TYPE: "Performance Venue", SUMMARY: "Navy Yard venue that occasionally hosts stand-up showcases and comedy podcasts.", NEIGHBORHOOD: "Navy Yard" }, geometry: { type: "Point", coordinates: [-77.0023, 38.8769] } },
-    { type: "Feature", properties: { NAME: "The Hamilton Live (Comedy Sets)", TYPE: "Music & Comedy Venue", SUMMARY: "Downtown live venue featuring periodic comedy nights and touring acts.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } }
+    { type: "Feature", properties: { NAME: "Union Stage", TYPE: "Music & Comedy Venue", SUMMARY: "Wharf venue with a range of comedy, podcasts, open mics, drag, and live entertainment alongside concerts.", NEIGHBORHOOD: "The Wharf" }, geometry: { type: "Point", coordinates: [-77.0269, 38.8790] } },
+    { type: "Feature", properties: { NAME: "Miracle Theatre", TYPE: "Theater", SUMMARY: "Capitol Hill theater and live events room that hosts touring comics and spoken-word comedy programming.", NEIGHBORHOOD: "Capitol Hill" }, geometry: { type: "Point", coordinates: [-76.9958, 38.8823] } },
+    { type: "Feature", properties: { NAME: "Howard Theatre", TYPE: "Music & Comedy Venue", SUMMARY: "Historic Shaw theater that books national comedy acts in addition to concerts and cultural programming.", NEIGHBORHOOD: "Shaw" }, geometry: { type: "Point", coordinates: [-77.0219, 38.9164] } },
+    { type: "Feature", properties: { NAME: "Black Cat", TYPE: "Music & Comedy Venue", SUMMARY: "14th Street venue best known for music but also hosts stand-up comedy and comedy-adjacent performances.", NEIGHBORHOOD: "14th Street" }, geometry: { type: "Point", coordinates: [-77.0316, 38.9150] } },
+    { type: "Feature", properties: { NAME: "The Hamilton Live (Comedy Sets)", TYPE: "Music & Comedy Venue", SUMMARY: "Downtown live venue featuring periodic comedy nights and touring acts.", NEIGHBORHOOD: "Downtown" }, geometry: { type: "Point", coordinates: [-77.0318, 38.8975] } },
+    { type: "Feature", properties: { NAME: "Aura Bar & Lounge", TYPE: "Comedy Night Venue", SUMMARY: "U Street lounge with recurring free stand-up comedy nights and local showcases.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0274, 38.9172] } },
+    { type: "Feature", properties: { NAME: "City-State Public House", TYPE: "Comedy Night Venue", SUMMARY: "Edgewood beer hall / public house listed for recurring comedy open mic programming.", NEIGHBORHOOD: "Edgewood" }, geometry: { type: "Point", coordinates: [-77.0115, 38.9238] } },
+    { type: "Feature", properties: { NAME: "Haydee's Restaurant", TYPE: "Comedy Night Venue", SUMMARY: "Mount Pleasant neighborhood bar and restaurant with recurring stand-up open mic listings.", NEIGHBORHOOD: "Mount Pleasant" }, geometry: { type: "Point", coordinates: [-77.0386, 38.9312] } },
+    { type: "Feature", properties: { NAME: "Madam's Organ", TYPE: "Comedy Night Venue", SUMMARY: "Adams Morgan bar and music venue that appears in DC stand-up open mic listings.", NEIGHBORHOOD: "Adams Morgan" }, geometry: { type: "Point", coordinates: [-77.0420, 38.9216] } },
+    { type: "Feature", properties: { NAME: "BloomBars", TYPE: "Comedy Night Venue", SUMMARY: "Columbia Heights arts space with comedy and open-mic programming among community performances.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0283, 38.9294] } },
+    { type: "Feature", properties: { NAME: "Cafe Saint-Ex", TYPE: "Comedy Night Venue", SUMMARY: "14th Street bar and cafe with recurring stand-up open mic listings.", NEIGHBORHOOD: "14th Street" }, geometry: { type: "Point", coordinates: [-77.0317, 38.9143] } },
+    { type: "Feature", properties: { NAME: "Fat Pete's BBQ", TYPE: "Comedy Night Venue", SUMMARY: "Cleveland Park barbecue restaurant and bar with recurring Sunday comedy open mic listings.", NEIGHBORHOOD: "Cleveland Park" }, geometry: { type: "Point", coordinates: [-77.0621, 38.9345] } },
+    { type: "Feature", properties: { NAME: "Tonic at Quigley's", TYPE: "Comedy Night Venue", SUMMARY: "Foggy Bottom tavern with stage space and recurring comedy/open mic history.", NEIGHBORHOOD: "Foggy Bottom" }, geometry: { type: "Point", coordinates: [-77.0489, 38.8996] } },
+    { type: "Feature", properties: { NAME: "Sudhouse DC", TYPE: "Comedy Night Venue", SUMMARY: "U Street sports bar included in current DC stand-up open mic listings.", NEIGHBORHOOD: "U Street" }, geometry: { type: "Point", coordinates: [-77.0285, 38.9173] } },
+    { type: "Feature", properties: { NAME: "The Artemis", TYPE: "Comedy Night Venue", SUMMARY: "Columbia Heights sports bar with recurring open mic comedy programming.", NEIGHBORHOOD: "Columbia Heights" }, geometry: { type: "Point", coordinates: [-77.0323, 38.9362] } }
   ]
 };
 
 const festivalsParadesData = {
   type: "FeatureCollection",
   features: [
-    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Signature downtown parade route and festivities tied to the Cherry Blossom Festival." }, geometry: { type: "Point", coordinates: [-77.0283, 38.8921] } },
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Citywide spring celebration of the cherry blossoms with cultural programs, performances, and signature events." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8848] } },
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Signature Constitution Avenue parade route and festivities tied to the Cherry Blossom Festival." }, geometry: { type: "Point", coordinates: [-77.02942, 38.89215] } },
+    { type: "Feature", properties: { NAME: "Blossom Kite Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Annual kite festival on the National Mall during cherry blossom season." }, geometry: { type: "Point", coordinates: [-77.0353, 38.8895] } },
+    { type: "Feature", properties: { NAME: "National Cherry Blossom Festival Petalpalooza", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront cherry blossom celebration with live music, art, family activities, and fireworks at The Yards." }, geometry: { type: "Point", coordinates: [-77.0007, 38.8732] } },
+    { type: "Feature", properties: { NAME: "Sakura Matsuri - Japanese Street Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Large Japanese cultural street festival held downtown during cherry blossom season." }, geometry: { type: "Point", coordinates: [-77.02065, 38.89338] } },
+    { type: "Feature", properties: { NAME: "Anacostia River Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront arts and recreation festival focused on ecology, water access, and community." }, geometry: { type: "Point", coordinates: [-76.9652, 38.8722] } },
+    { type: "Feature", properties: { NAME: "Georgetown French Market", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Annual open-air French-inspired market with neighborhood shops, food, music, and sidewalk activations." }, geometry: { type: "Point", coordinates: [-77.0660, 38.9121] } },
+    { type: "Feature", properties: { NAME: "Petworth PorchFest", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Volunteer-led Petworth event (petworthporchfest.org): porch hosts and local bands; main stage at Petworth Park (Taylor St NW). Organizers schedule late May with a Sunday rain date — moved from April for better weather." }, geometry: { type: "Point", coordinates: [-77.0249, 38.9389] } },
+    { type: "Feature", properties: { NAME: "Takoma PorchFest", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Free porch-and-yard music from Old Town to the Junction (Takoma Radio). The corridor crosses the DC line into Takoma Park, MD — check the schedule map for exact porch locations." }, geometry: { type: "Point", coordinates: [-77.0176, 38.9760] } },
+    { type: "Feature", properties: { NAME: "Rhode Island Avenue The Fest", TYPE: "Festival", SEASON: "Spring", SUMMARY: "DC Squared spring stage day along Rhode Island Ave NE (successor branding to early RIA 'PorchFest' events). Confirm each year's date on dcsquared.org." }, geometry: { type: "Point", coordinates: [-76.9982, 38.9164] } },
+    { type: "Feature", properties: { NAME: "Southeast PorchFest", TYPE: "Festival", SEASON: "Summer", SUMMARY: "Porchfest DC nonprofit Southeast edition — porch performances in Southeast communities such as Penn Branch and Hillcrest; annual date announced at porchfestdc.org." }, geometry: { type: "Point", coordinates: [-76.9838, 38.8816] } },
+    { type: "Feature", properties: { NAME: "Flower Mart at Washington National Cathedral", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Long-running spring festival and fundraiser with flowers, crafts, food, music, and family activities." }, geometry: { type: "Point", coordinates: [-77.0703, 38.9306] } },
+    { type: "Feature", properties: { NAME: "Passport DC", TYPE: "Festival", SEASON: "May", SUMMARY: "Month-long international culture festival anchored by embassy open houses, performances, and cultural showcases." }, geometry: { type: "Point", coordinates: [-77.0469, 38.9072] } },
+    { type: "Feature", properties: { NAME: "Around the World Embassy Tour", TYPE: "Festival", SEASON: "May", SUMMARY: "Passport DC open house day when embassies across the city welcome visitors with cultural programming." }, geometry: { type: "Point", coordinates: [-77.0501, 38.9120] } },
+    { type: "Feature", properties: { NAME: "EU Open House", TYPE: "Festival", SEASON: "May", SUMMARY: "European Union embassy open house day with cultural exhibits, food, performances, and family activities." }, geometry: { type: "Point", coordinates: [-77.0465, 38.9141] } },
+    { type: "Feature", properties: { NAME: "Fiesta Asia / National Asian Heritage Festival", TYPE: "Festival", SEASON: "May", SUMMARY: "Pan-Asian heritage street festival with cultural parade elements, performances, food, and marketplace vendors." }, geometry: { type: "Point", coordinates: [-77.01755, 38.89312] } },
     { type: "Feature", properties: { NAME: "DC JazzFest (The Wharf)", TYPE: "Festival", SEASON: "Late Summer", SUMMARY: "Multi-day citywide jazz festival with major performances around The Wharf and nearby venues." }, geometry: { type: "Point", coordinates: [-77.0262, 38.8797] } },
-    { type: "Feature", properties: { NAME: "H Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Large neighborhood street festival along the H Street NE corridor with music, food, and vendors." }, geometry: { type: "Point", coordinates: [-76.9958, 38.9002] } },
-    { type: "Feature", properties: { NAME: "Broccoli City Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Music and culture festival focused on sustainability and community programming." }, geometry: { type: "Point", coordinates: [-76.9792, 38.9190] } },
+    { type: "Feature", properties: { NAME: "Smithsonian Folklife Festival", TYPE: "Festival", SEASON: "Summer", SUMMARY: "Annual National Mall festival celebrating cultural traditions from communities around the world." }, geometry: { type: "Point", coordinates: [-77.0255, 38.8887] } },
+    { type: "Feature", properties: { NAME: "Giant National Capital BBQ Battle", TYPE: "Festival", SEASON: "June", SUMMARY: "Large food and music festival on Pennsylvania Avenue with barbecue competitions, samples, and entertainment." }, geometry: { type: "Point", coordinates: [-77.01922, 38.89288] } },
     { type: "Feature", properties: { NAME: "Capital Pride Festival & Concert", TYPE: "Festival", SEASON: "June", SUMMARY: "Flagship Pride celebration with performances and community organizations in the downtown core." }, geometry: { type: "Point", coordinates: [-77.0283, 38.9014] } },
     { type: "Feature", properties: { NAME: "Capital Pride Parade", TYPE: "Parade", SEASON: "June", SUMMARY: "Annual Pride parade route through central DC, drawing large crowds and community groups." }, geometry: { type: "Point", coordinates: [-77.0419, 38.9096] } },
-    { type: "Feature", properties: { NAME: "Fiesta DC Parade of Nations", TYPE: "Parade", SEASON: "Fall", SUMMARY: "Long-running Latino heritage parade and festival celebrating cultures from across the Americas." }, geometry: { type: "Point", coordinates: [-77.0335, 38.9025] } },
-    { type: "Feature", properties: { NAME: "Funk Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Community parade and music festival centered around U Street and historic Black music culture." }, geometry: { type: "Point", coordinates: [-77.0338, 38.9161] } },
+    { type: "Feature", properties: { NAME: "DC Black Pride", TYPE: "Festival", SEASON: "May", SUMMARY: "Annual Black LGBTQ+ Pride weekend with cultural, wellness, nightlife, and community events around DC." }, geometry: { type: "Point", coordinates: [-77.0238, 38.9016] } },
+    { type: "Feature", properties: { NAME: "DC Diaspora Caribbean Carnival Parade & Festival", TYPE: "Parade & Festival", SEASON: "June", SUMMARY: "Caribbean culture parade and festival with music, costumes, vendors, and performances downtown." }, geometry: { type: "Point", coordinates: [-77.02688, 38.89272] } },
+    { type: "Feature", properties: { NAME: "Broccoli City Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Music and culture festival focused on sustainability, community programming, and contemporary Black culture." }, geometry: { type: "Point", coordinates: [-77.0125, 38.8683] } },
+    { type: "Feature", properties: { NAME: "A Taste of the DMV", TYPE: "Festival", SEASON: "June", SUMMARY: "Food, music, and community festival highlighting restaurants and makers from across the DMV." }, geometry: { type: "Point", coordinates: [-77.01798, 38.89288] } },
+    { type: "Feature", properties: { NAME: "Taste of DC", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Culinary and cultural festival showcasing local restaurants, drinks, music, and food experiences." }, geometry: { type: "Point", coordinates: [-76.9718, 38.8898] } },
+    { type: "Feature", properties: { NAME: "Juneteenth for the City", TYPE: "Festival", SEASON: "June", SUMMARY: "Community Juneteenth celebration in Anacostia with music, food, services, and neighborhood programming." }, geometry: { type: "Point", coordinates: [-76.9797, 38.8667] } },
+    { type: "Feature", properties: { NAME: "National Memorial Day Parade", TYPE: "Parade", SEASON: "May", SUMMARY: "Major national parade on Constitution Avenue honoring military service members and veterans." }, geometry: { type: "Point", coordinates: [-77.02905, 38.89242] } },
+    { type: "Feature", properties: { NAME: "National Independence Day Parade", TYPE: "Parade", SEASON: "July", SUMMARY: "Annual July 4th parade along Constitution Avenue with bands, floats, military units, and patriotic displays." }, geometry: { type: "Point", coordinates: [-77.02855, 38.89198] } },
+    { type: "Feature", properties: { NAME: "National Mall Fourth of July Celebration", TYPE: "Festival", SEASON: "July", SUMMARY: "Independence Day gathering on the National Mall with concerts, public celebrations, and fireworks." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8895] } },
+    { type: "Feature", properties: { NAME: "National Archives July 4th Celebration", TYPE: "Festival", SEASON: "July", SUMMARY: "Annual Independence Day celebration and Declaration of Independence reading outside the National Archives." }, geometry: { type: "Point", coordinates: [-77.0230, 38.8929] } },
+    { type: "Feature", properties: { NAME: "National Book Festival", TYPE: "Festival", SEASON: "Late Summer", SUMMARY: "Library of Congress book festival with authors, talks, signings, and family programming." }, geometry: { type: "Point", coordinates: [-77.0231, 38.9049] } },
+    { type: "Feature", properties: { NAME: "African American Heritage Festival", TYPE: "Festival", SEASON: "August", SUMMARY: "Downtown cultural festival celebrating African American heritage with music, vendors, food, and community programming." }, geometry: { type: "Point", coordinates: [-77.01922, 38.89232] } },
+    { type: "Feature", properties: { NAME: "DC AfroLatino Festival", TYPE: "Festival", SEASON: "August", SUMMARY: "Cultural festival celebrating Afro-Latino music, food, art, and community in Adams Morgan." }, geometry: { type: "Point", coordinates: [-77.04425, 38.92308] } },
+    { type: "Feature", properties: { NAME: "Washington Chinese Culture Festival", TYPE: "Festival", SEASON: "August", SUMMARY: "Annual Chinese cultural festival with performances, exhibits, food, and community organizations downtown." }, geometry: { type: "Point", coordinates: [-77.0166, 38.8930] } },
+    { type: "Feature", properties: { NAME: "Panda Fest DC", TYPE: "Festival", SEASON: "August", SUMMARY: "Asian food and culture festival with performances, vendors, and family-friendly programming downtown." }, geometry: { type: "Point", coordinates: [-77.01798, 38.89232] } },
+    { type: "Feature", properties: { NAME: "Adams Morgan Day", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Historic neighborhood festival featuring live music, restaurants, art, and local vendors." }, geometry: { type: "Point", coordinates: [-77.04355, 38.92158] } },
+    { type: "Feature", properties: { NAME: "Adams Morgan Spring PorchFest", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Adams Morgan Partnership BID (admoporchfest.com): 100+ acts on 20+ stages, 2–6pm on and around 18th Street NW." }, geometry: { type: "Point", coordinates: [-77.04292, 38.92248] } },
+    { type: "Feature", properties: { NAME: "Adams Morgan Fall PorchFest", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Second annual Adams Morgan PorchFest on 18th Street NW — same free neighborhood format as spring; lineup and map on admoporchfest.com." }, geometry: { type: "Point", coordinates: [-77.04435, 38.92345] } },
+    { type: "Feature", properties: { NAME: "H Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Large neighborhood street festival along the H Street NE corridor with music, food, art, vendors, and performances." }, geometry: { type: "Point", coordinates: [-76.9958, 38.9002] } },
+    { type: "Feature", properties: { NAME: "Fiesta DC Festival & Parade", TYPE: "Parade & Festival", SEASON: "Fall", SUMMARY: "Long-running Latino heritage festival and Parade of Nations celebrating cultures from across the Americas." }, geometry: { type: "Point", coordinates: [-77.02592, 38.89228] } },
+    { type: "Feature", properties: { NAME: "Turkish Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Annual Pennsylvania Avenue cultural festival with Turkish food, music, dance, art, and community vendors." }, geometry: { type: "Point", coordinates: [-77.01972, 38.89218] } },
+    { type: "Feature", properties: { NAME: "Sawasdee DC Thai Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Thai cultural festival on the National Mall with food, music, dance, demonstrations, and interactive workshops." }, geometry: { type: "Point", coordinates: [-77.0214, 38.8890] } },
+    { type: "Feature", properties: { NAME: "Around The World Cultural Food Festival", TYPE: "Festival", SEASON: "Summer", SUMMARY: "Outdoor cultural food festival featuring international cuisines, crafts, and performances." }, geometry: { type: "Point", coordinates: [-77.0308, 38.8959] } },
     { type: "Feature", properties: { NAME: "Barracks Row Fall Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Neighborhood street festival on Capitol Hill with local businesses, food, and family activities." }, geometry: { type: "Point", coordinates: [-76.9954, 38.8803] } },
-    { type: "Feature", properties: { NAME: "Adams Morgan Day", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Historic neighborhood festival featuring live music, restaurants, and local vendors." }, geometry: { type: "Point", coordinates: [-77.0436, 38.9226] } },
-    { type: "Feature", properties: { NAME: "Anacostia River Festival", TYPE: "Festival", SEASON: "Spring", SUMMARY: "Riverfront arts and recreation festival focused on ecology, water access, and community." }, geometry: { type: "Point", coordinates: [-76.9652, 38.8722] } },
-    { type: "Feature", properties: { NAME: "Downtown Holiday Market", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Seasonal open-air market with crafts, food, and performances in the Penn Quarter area." }, geometry: { type: "Point", coordinates: [-77.0265, 38.9009] } }
+    { type: "Feature", properties: { NAME: "20th Street Festival", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Dupont Circle neighborhood street festival with local businesses, vendors, entertainment, and community groups." }, geometry: { type: "Point", coordinates: [-77.0447, 38.9111] } },
+    { type: "Feature", properties: { NAME: "Funk Parade", TYPE: "Parade", SEASON: "Spring", SUMMARY: "Community parade and music festival centered around U Street and historic Black music culture." }, geometry: { type: "Point", coordinates: [-77.0338, 38.9161] } },
+    { type: "Feature", properties: { NAME: "Martin Luther King Jr. Holiday Peace Walk and Parade", TYPE: "Parade", SEASON: "January", SUMMARY: "Annual Ward 8 peace walk and parade honoring Dr. King's legacy along the MLK Avenue corridor." }, geometry: { type: "Point", coordinates: [-76.9955, 38.8624] } },
+    { type: "Feature", properties: { NAME: "Chinese New Year Parade", TYPE: "Parade", SEASON: "Winter", SUMMARY: "Chinatown Lunar New Year parade and street celebration with lion dances, firecrackers, and community groups." }, geometry: { type: "Point", coordinates: [-77.0211, 38.8995] } },
+    { type: "Feature", properties: { NAME: "DC x Krewe of Pyros Mardi Gras Second Line Parade", TYPE: "Parade", SEASON: "Winter", SUMMARY: "Mardi Gras second line parade through the Penn Quarter and Chinatown area." }, geometry: { type: "Point", coordinates: [-77.0217, 38.9009] } },
+    { type: "Feature", properties: { NAME: "DowntownDC Holiday Market", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Seasonal open-air market with crafts, food, and performances in the Penn Quarter area." }, geometry: { type: "Point", coordinates: [-77.0265, 38.9009] } },
+    { type: "Feature", properties: { NAME: "National Christmas Tree Lighting", TYPE: "Festival", SEASON: "Winter", SUMMARY: "Annual holiday lighting ceremony and seasonal display at President's Park near the White House." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8959] } },
+    { type: "Feature", properties: { NAME: "DC Art All Night", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Citywide overnight arts festival with activations across DC Main Streets and neighborhood corridors." }, geometry: { type: "Point", coordinates: [-77.0219, 38.9061] } },
+    { type: "Feature", properties: { NAME: "DC State Fair", TYPE: "Festival", SEASON: "Fall", SUMMARY: "Annual community fair celebrating DC makers, growers, food, crafts, contests, and local culture." }, geometry: { type: "Point", coordinates: [-77.0310, 38.9019] } }
   ]
+};
+
+const festivalParadeEventDates = {
+  "National Cherry Blossom Festival": { start: "03-20", end: "04-12", label: "Mar 20 - Apr 12" },
+  "National Cherry Blossom Festival Parade": { start: "04-11", end: "04-11", label: "Apr 11" },
+  "Blossom Kite Festival": { start: "03-28", end: "03-28", label: "Late March" },
+  "National Cherry Blossom Festival Petalpalooza": { start: "04-04", end: "04-04", label: "Apr 4" },
+  "Sakura Matsuri - Japanese Street Festival": { start: "04-11", end: "04-12", label: "Apr 11 - 12" },
+  "Anacostia River Festival": { start: "04-19", end: "04-19", label: "April" },
+  "Georgetown French Market": { start: "04-24", end: "04-26", label: "Late April" },
+  "Petworth PorchFest": { start: "05-30", end: "05-31", label: "Late May" },
+  "Flower Mart at Washington National Cathedral": { start: "05-01", end: "05-02", label: "Early May" },
+  "Passport DC": { start: "05-01", end: "05-31", label: "May" },
+  "Around the World Embassy Tour": { start: "05-02", end: "05-02", label: "Early May" },
+  "EU Open House": { start: "05-09", end: "05-09", label: "May" },
+  "Fiesta Asia / National Asian Heritage Festival": { start: "05-16", end: "05-16", label: "May" },
+  "DC JazzFest (The Wharf)": { start: "08-26", end: "08-30", label: "Late August" },
+  "Smithsonian Folklife Festival": { start: "06-24", end: "06-29", label: "Late June" },
+  "Giant National Capital BBQ Battle": { start: "06-27", end: "06-28", label: "Late June" },
+  "Capital Pride Festival & Concert": { start: "06-20", end: "06-21", label: "June" },
+  "Capital Pride Parade": { start: "06-20", end: "06-20", label: "June" },
+  "DC Black Pride": { start: "05-22", end: "05-25", label: "Memorial Day weekend" },
+  "DC Diaspora Caribbean Carnival Parade & Festival": { start: "06-01", end: "06-01", label: "June" },
+  "Broccoli City Festival": { start: "08-08", end: "08-09", label: "Summer" },
+  "A Taste of the DMV": { start: "06-15", end: "06-15", label: "June" },
+  "Taste of DC": { start: "10-10", end: "10-11", label: "Fall" },
+  "Juneteenth for the City": { start: "06-19", end: "06-19", label: "Jun 19" },
+  "National Memorial Day Parade": { start: "05-25", end: "05-25", label: "Memorial Day" },
+  "National Independence Day Parade": { start: "07-04", end: "07-04", label: "Jul 4" },
+  "National Mall Fourth of July Celebration": { start: "07-04", end: "07-04", label: "Jul 4" },
+  "National Archives July 4th Celebration": { start: "07-04", end: "07-04", label: "Jul 4" },
+  "National Book Festival": { start: "09-05", end: "09-05", label: "Late summer" },
+  "African American Heritage Festival": { start: "08-15", end: "08-15", label: "August" },
+  "DC AfroLatino Festival": { start: "08-23", end: "08-23", label: "August" },
+  "Washington Chinese Culture Festival": { start: "08-30", end: "08-30", label: "August" },
+  "Panda Fest DC": { start: "08-15", end: "08-16", label: "August" },
+  "Adams Morgan Day": { start: "09-13", end: "09-13", label: "September" },
+  "Adams Morgan Spring PorchFest": { start: "05-02", end: "05-02", label: "Early May" },
+  "Adams Morgan Fall PorchFest": { start: "10-03", end: "10-03", label: "Early October" },
+  "Takoma PorchFest": { start: "05-09", end: "05-09", label: "Early May" },
+  "H Street Festival": { start: "09-20", end: "09-20", label: "September" },
+  "Fiesta DC Festival & Parade": { start: "09-26", end: "09-27", label: "Late September" },
+  "Turkish Festival": { start: "10-19", end: "10-19", label: "October" },
+  "Sawasdee DC Thai Festival": { start: "09-13", end: "09-13", label: "September" },
+  "Around The World Cultural Food Festival": { start: "08-23", end: "08-23", label: "Summer" },
+  "Barracks Row Fall Festival": { start: "09-27", end: "09-27", label: "Fall" },
+  "20th Street Festival": { start: "11-08", end: "11-08", label: "November" },
+  "Funk Parade": { start: "05-10", end: "05-10", label: "Spring" },
+  "Martin Luther King Jr. Holiday Peace Walk and Parade": { start: "01-19", end: "01-19", label: "MLK Day" },
+  "Chinese New Year Parade": { start: "02-22", end: "02-22", label: "Lunar New Year" },
+  "DC x Krewe of Pyros Mardi Gras Second Line Parade": { start: "01-31", end: "01-31", label: "Mardi Gras season" },
+  "DowntownDC Holiday Market": { start: "11-20", end: "12-23", label: "Holiday season" },
+  "National Christmas Tree Lighting": { start: "12-03", end: "12-03", label: "Early December" },
+  "DC Art All Night": { start: "09-12", end: "09-13", label: "September" },
+  "DC State Fair": { start: "09-06", end: "09-06", label: "September" }
+};
+
+const getAnnualEventDate = (monthDay, year) => {
+  if (!monthDay) return null;
+  const [month, day] = monthDay.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const getFestivalParadeTiming = (feature, now = new Date()) => {
+  const event = festivalParadeEventDates[feature.properties?.NAME];
+  if (!event) {
+    return {
+      fillColor: '#f97316',
+      strokeColor: '#fcd34d',
+      label: feature.properties?.SEASON || '',
+      status: 'Date varies by year'
+    };
+  }
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startDate = getAnnualEventDate(event.start, today.getFullYear());
+  const endDate = getAnnualEventDate(event.end || event.start, today.getFullYear());
+  const dayMs = 24 * 60 * 60 * 1000;
+  const daysUntilStart = Math.ceil((startDate - today) / dayMs);
+  const daysSinceEnd = Math.floor((today - endDate) / dayMs);
+
+  if (daysSinceEnd > 0) {
+    return {
+      fillColor: '#2563eb',
+      strokeColor: '#93c5fd',
+      label: event.label,
+      status: `Passed ${daysSinceEnd === 1 ? 'yesterday' : `${daysSinceEnd} days ago`}`
+    };
+  }
+
+  if (daysUntilStart <= 0) {
+    return {
+      fillColor: '#dc2626',
+      strokeColor: '#fecaca',
+      label: event.label,
+      status: 'Happening now'
+    };
+  }
+
+  const closeness = Math.max(0, Math.min(1, 1 - (daysUntilStart / 90)));
+  const start = { r: 245, g: 158, b: 11 };
+  const end = { r: 220, g: 38, b: 38 };
+  const channel = (from, to) => Math.round(from + ((to - from) * closeness));
+  const fillColor = `rgb(${channel(start.r, end.r)}, ${channel(start.g, end.g)}, ${channel(start.b, end.b)})`;
+
+  return {
+    fillColor,
+    strokeColor: closeness > 0.7 ? '#fecaca' : '#fcd34d',
+    label: event.label,
+    status: daysUntilStart === 1 ? 'Tomorrow' : `${daysUntilStart} days away`
+  };
 };
 
 const breweriesDistilleriesData = {
@@ -318,9 +518,15 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "Thomas Jefferson Memorial", TYPE: "Memorial", SUMMARY: "Neoclassical memorial building honoring the third U.S. president." }, geometry: { type: "Point", coordinates: [-77.0365, 38.8814] } },
     { type: "Feature", properties: { NAME: "Martin Luther King Jr. Memorial", TYPE: "Memorial", SUMMARY: "Stone of Hope memorial honoring the civil rights leader." }, geometry: { type: "Point", coordinates: [-77.0443, 38.8861] } },
     { type: "Feature", properties: { NAME: "Franklin Delano Roosevelt Memorial", TYPE: "Memorial", SUMMARY: "Sprawling memorial spanning four outdoor rooms representing his four terms." }, geometry: { type: "Point", coordinates: [-77.0433, 38.8827] } },
+    { type: "Feature", properties: { NAME: "Theodore Roosevelt Memorial", TYPE: "Memorial", SUMMARY: "Wooded island memorial plaza with a bronze statue of Theodore Roosevelt, fountains, and granite quotation tablets." }, geometry: { type: "Point", coordinates: [-77.06394, 38.897436] } },
+    { type: "Feature", properties: { NAME: "Dwight D. Eisenhower Memorial", TYPE: "Memorial", SUMMARY: "National memorial honoring the 34th president and Supreme Allied Commander, with sculpture, bas-relief, and woven-metal tapestry." }, geometry: { type: "Point", coordinates: [-77.0188, 38.8871] } },
     { type: "Feature", properties: { NAME: "World War II Memorial", TYPE: "Memorial", SUMMARY: "Honors the 16 million people who served in the U.S. armed forces during WWII." }, geometry: { type: "Point", coordinates: [-77.0405, 38.8894] } },
+    { type: "Feature", properties: { NAME: "National World War I Memorial", TYPE: "Memorial", SUMMARY: "Pershing Park memorial honoring Americans who served in World War I, incorporating the Pershing statue and A Soldier's Journey sculpture." }, geometry: { type: "Point", coordinates: [-77.0328, 38.8959] } },
     { type: "Feature", properties: { NAME: "Vietnam Veterans Memorial", TYPE: "Memorial", SUMMARY: "A black granite wall inscribed with the names of over 58,000 servicemembers." }, geometry: { type: "Point", coordinates: [-77.0477, 38.8913] } },
     { type: "Feature", properties: { NAME: "Korean War Veterans Memorial", TYPE: "Memorial", SUMMARY: "Features 19 stainless steel statues of soldiers on patrol." }, geometry: { type: "Point", coordinates: [-77.0475, 38.8878] } },
+    { type: "Feature", properties: { NAME: "District of Columbia War Memorial", TYPE: "Memorial", SUMMARY: "Classical open-air memorial honoring District residents who died in World War I." }, geometry: { type: "Point", coordinates: [-77.0435, 38.8876] } },
+    { type: "Feature", properties: { NAME: "American Veterans Disabled for Life Memorial", TYPE: "Memorial", SUMMARY: "Memorial honoring veterans permanently disabled during national service." }, geometry: { type: "Point", coordinates: [-77.0132, 38.8864] } },
+    { type: "Feature", properties: { NAME: "National Native American Veterans Memorial", TYPE: "Memorial", SUMMARY: "Smithsonian memorial honoring the military service of Native American, Alaska Native, and Native Hawaiian veterans." }, geometry: { type: "Point", coordinates: [-77.0156, 38.8886] } },
     { type: "Feature", properties: { NAME: "Albert Einstein Memorial", TYPE: "Statue", SUMMARY: "A monumental bronze statue of Albert Einstein seated." }, geometry: { type: "Point", coordinates: [-77.0484, 38.8923] } },
     { type: "Feature", properties: { NAME: "African American Civil War Memorial", TYPE: "Memorial", SUMMARY: "Honors the service of the United States Colored Troops during the Civil War." }, geometry: { type: "Point", coordinates: [-77.0256, 38.9166] } },
     { type: "Feature", properties: { NAME: "Ulysses S. Grant Memorial", TYPE: "Memorial", SUMMARY: "One of the largest equestrian statues in the U.S., honoring the 18th President." }, geometry: { type: "Point", coordinates: [-77.0136, 38.8899] } },
@@ -330,6 +536,7 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "George Mason Memorial", TYPE: "Memorial", SUMMARY: "Honors the author of the Virginia Declaration of Rights." }, geometry: { type: "Point", coordinates: [-77.0396, 38.8804] } },
     { type: "Feature", properties: { NAME: "Signers of the Declaration of Independence Memorial", TYPE: "Memorial", SUMMARY: "Granite stones honoring the 56 signers of the Declaration of Independence." }, geometry: { type: "Point", coordinates: [-77.0435, 38.8906] } },
     { type: "Feature", properties: { NAME: "John Paul Jones Memorial", TYPE: "Memorial", SUMMARY: "Statue of the American Revolution naval hero." }, geometry: { type: "Point", coordinates: [-77.0402, 38.8885] } },
+    { type: "Feature", properties: { NAME: "John Ericsson Memorial", TYPE: "Memorial", SUMMARY: "Memorial honoring the engineer and naval innovator whose screw-propeller and ironclad designs transformed naval history." }, geometry: { type: "Point", coordinates: [-77.0502, 38.8867] } },
     { type: "Feature", properties: { NAME: "First Division Monument", TYPE: "Monument", SUMMARY: "Honors soldiers of the U.S. Army's First Infantry Division." }, geometry: { type: "Point", coordinates: [-77.0387, 38.8962] } },
     { type: "Feature", properties: { NAME: "Second Division Memorial", TYPE: "Memorial", SUMMARY: "Commemorates the 2nd Infantry Division." }, geometry: { type: "Point", coordinates: [-77.0382, 38.8953] } },
     { type: "Feature", properties: { NAME: "Boy Scout Memorial", TYPE: "Memorial", SUMMARY: "Features a male scout, female scout, and an adult scouter." }, geometry: { type: "Point", coordinates: [-77.0374, 38.8942] } },
@@ -347,6 +554,7 @@ const monumentsData = {
     { type: "Feature", properties: { NAME: "General Winfield Scott Statue", TYPE: "Statue", SUMMARY: "Equestrian statue of the general in Scott Circle." }, geometry: { type: "Point", coordinates: [-77.0365, 38.9075] } },
     { type: "Feature", properties: { NAME: "George Washington Equestrian Statue", TYPE: "Statue", SUMMARY: "Depicts George Washington at the Battle of Princeton, in Washington Circle." }, geometry: { type: "Point", coordinates: [-77.0502, 38.9027] } },
     { type: "Feature", properties: { NAME: "National Law Enforcement Officers Memorial", TYPE: "Memorial", SUMMARY: "Honors federal, state, and local law enforcement officers." }, geometry: { type: "Point", coordinates: [-77.0172, 38.8967] } },
+    { type: "Feature", properties: { NAME: "United States Navy Memorial", TYPE: "Memorial", SUMMARY: "Memorial plaza on Pennsylvania Avenue honoring sailors, Marines, Coast Guardsmen, and the sea services." }, geometry: { type: "Point", coordinates: [-77.0229, 38.8940] } },
     { type: "Feature", properties: { NAME: "Japanese American Memorial to Patriotism", TYPE: "Memorial", SUMMARY: "Commemorates Japanese American patriotism during World War II." }, geometry: { type: "Point", coordinates: [-77.0108, 38.8967] } },
     { type: "Feature", properties: { NAME: "Victims of Communism Memorial", TYPE: "Memorial", SUMMARY: "A bronze replica of the Goddess of Democracy." }, geometry: { type: "Point", coordinates: [-77.0122, 38.8978] } },
     { type: "Feature", properties: { NAME: "Christopher Columbus Memorial", TYPE: "Memorial", SUMMARY: "Features a statue of Columbus in front of Union Station." }, geometry: { type: "Point", coordinates: [-77.0061, 38.8966] } },
@@ -482,43 +690,78 @@ const HISTORIC_DISTRICT_COLORS = [
   '#9e8061'
 ];
 
+/** Cap bounds-derived radius (merged DC clusters are geographically huge). */
+const NEIGHBORHOOD_RADIUS_FALLBACK_MAX = 400;
+/** Cap explicit per-neighborhood radii (customOverrides previously up to 800 m). */
+const NEIGHBORHOOD_RADIUS_OVERRIDE_MAX = 480;
+
+/**
+ * Manual label/circle centers (see getNeighborhoodAnchor — these win over live OSM fetch).
+ * Basemap text placement can shift when Carto/OSM update tiles even if these numbers stay the same.
+ */
 const customOverrides = {
   "Arboretum": { center: [38.9125, -76.9670], radius: 600 },
-  "Adams Morgan": { center: [38.9220, -77.0420], radius: 500 },
-  "Woodley Park": { center: [38.9250, -77.0530], radius: 550 },
-  "Cleveland Park": { center: [38.9350, -77.0580], radius: 600 },
-  "Palisades": { center: [38.9280, -77.1080], radius: 500 },
+  "Adams Morgan": { center: [38.9215002, -77.0421992], radius: 500 },
+  "Woodley Park": { center: [38.9250248, -77.0523627], radius: 550 },
+  "Cleveland Park": { center: [38.9352305, -77.0587072], radius: 600 },
+  "Palisades": { center: [38.9251112, -77.1013673], radius: 440 },
   "Dalecarlia": { center: [38.9380, -77.1080], radius: 450 },
   "Kent": { center: [38.9320, -77.1060], radius: 450 },
-  "American University Park": { center: [38.9480, -77.0930], radius: 500 },
+  "American University Park": { center: [38.9514996, -77.0899781], radius: 500 },
   "Berkley": { center: [38.9170, -77.0940], radius: 450 },
-  "Wesley Heights": { center: [38.9370, -77.0860], radius: 450 },
-  "Columbia Heights": { center: [38.9283, -77.0327], radius: 500 },
-  "Mt. Pleasant": { center: [38.9317, -77.0383], radius: 450 },
-  "Cardozo/Shaw": { center: [38.9170, -77.0320], radius: 450 },
-  "Dupont Circle": { center: [38.9096, -77.0434], radius: 500 },
-  "Kalorama Heights": { center: [38.9174, -77.0505], radius: 450 },
+  "Wesley Heights": { center: [38.9312222, -77.0880336], radius: 420 },
+  "Columbia Heights": { center: [38.9256753, -77.0296598], radius: 500 },
+  "Pleasant Plains": { center: [38.9293745, -77.0228255], radius: 400 },
+  "Mt. Pleasant": { center: [38.9309121, -77.0382234], radius: 450 },
+  "Park View": { center: [38.9334691, -77.0213014], radius: 430 },
+  "Lanier Heights": { center: [38.9265002, -77.039977], radius: 420 },
+  "Cardozo/Shaw": { center: [38.9172239, -77.0282196], radius: 450 },
+  "Dupont Circle": { center: [38.9109436, -77.0427259], radius: 480 },
+  "Edgewood": { center: [38.9226131, -77.0005375], radius: 430 },
+  "Forest Hills": { center: [38.9509441, -77.0580329], radius: 450 },
+  "Kalorama Heights": { center: [38.9183738, -77.0480828], radius: 450 },
   "Southwest / Waterfront": { center: [38.8770, -77.0180], radius: 600 },
   "Southwest Employment Area": { center: [38.8820, -77.0200], radius: 500 },
-  "Georgetown": { center: [38.9048, -77.0628], radius: 550 },
-  "Burleith/Hillandale": { center: [38.9145, -77.0700], radius: 450 },
-  "Burleith / Hillandale": { center: [38.9145, -77.0700], radius: 450 },
+  "Georgetown": { center: [38.9087134, -77.0653494], radius: 550 },
+  "Burleith/Hillandale": { center: [38.9146516, -77.0736641], radius: 420 },
+  "Burleith / Hillandale": { center: [38.9146516, -77.0736641], radius: 420 },
   "National Mall": { center: [38.8895, -77.0230], radius: 600 },
   "Potomac River": { center: [38.8680, -77.0270], radius: 800 },
   "Connecticut Avenue/K Street": { center: [38.9020, -77.0396], radius: 500 },
   "Union Station": { center: [38.8977, -77.0068], radius: 450 },
-  "Truxton Circle": { center: [38.9100, -77.0100], radius: 450 },
+  "West End": { center: [38.907056, -77.0496994], radius: 420 },
+  // Match OSM label anchors: Bloomingdale/Truxton = place nodes; Le Droit = Nominatim neighbourhood point (not relation centroid).
+  "Truxton Circle": { center: [38.9098338, -77.0149764], radius: 450 },
+  "Bloomingdale": { center: [38.9167782, -77.0113652], radius: 450 },
+  "Brightwood": { center: [38.9656333, -77.0271149], radius: 430 },
+  "Le Droit Park": { center: [38.9159068, -77.0157211], radius: 430 },
+  "Manor Park": { center: [38.9639995, -77.0158099], radius: 420 },
+  "Michigan Park": { center: [38.9469841, -76.9935758], radius: 420 },
+  "Lamond Riggs": { center: [38.9664995, -77.0074764], radius: 430 },
+  // Keep typo alias for any stale data/reference still using "Lamont".
+  "Lamont Riggs": { center: [38.9664995, -77.0074764], radius: 430 },
   "North Capitol Street": { center: [38.9050, -77.0090], radius: 400 },
-  "Foxhall Crescent": { center: [38.9230, -77.0890], radius: 450 },
-  "Spring Valley": { center: [38.9380, -77.0950], radius: 500 },
-  "Foxhall Village": { center: [38.9110, -77.0810], radius: 400 },
+  "Foxhall Crescent": { center: [38.9231668, -77.0922004], radius: 420 },
+  "Spring Valley": { center: [38.9395553, -77.0988672], radius: 440 },
+  "University Heights": { center: [38.9398333, -76.9935871], radius: 420 },
+  "Bellair": { center: [38.9328, -76.9933], radius: 390 },
+  "Bell Air": { center: [38.9328, -76.9933], radius: 390 },
+  "BellAir": { center: [38.9328, -76.9933], radius: 390 },
+  "Foxhall Village": { center: [38.9117781, -77.0844224], radius: 420 },
   "Georgetown Reservoir": { center: [38.9123, -77.0928], radius: 450 },
   "Trinidad": { center: [38.9050, -76.9880], radius: 450 },
   "Ivy City": { center: [38.9130, -76.9850], radius: 450 },
-  "Carver Langston": { center: [38.8990, -76.9780], radius: 400 },
+  "Carver": { center: [38.9039499, -76.9776375], radius: 380 },
+  "Langston": { center: [38.9030392, -76.972532], radius: 380 },
   "Stanton Park": { center: [38.8930, -76.9930], radius: 400 },
-  "Kingman Park": { center: [38.8960, -76.9700], radius: 450 },
-  "Capitol Hill": { center: [38.8880, -76.9980], radius: 500 }
+  "Kingman Park": { center: [38.8966073, -76.9782112], radius: 420 },
+  "Capitol Hill": { center: [38.8890009, -77.0002537], radius: 450 },
+  "Navy Yard": { center: [38.8741823, -77.0005122], radius: 420 },
+  "Shepherd Park": { center: [38.9826559, -77.0319626], radius: 430 },
+  // Force anchors for dense downtown polygons so labels align with OSM basemap text.
+  "Downtown": { center: [38.8994909, -77.0280672], radius: 460 },
+  "Penn Quarter": { center: [38.8958959, -77.022268], radius: 440 },
+  "Penn Quarters": { center: [38.8958959, -77.022268], radius: 440 }
 };
 
 const NEIGHBORHOOD_DISPLAY_NAMES = {
@@ -530,13 +773,68 @@ const NEIGHBORHOOD_DISPLAY_NAMES = {
 };
 
 const syntheticNeighborhoods = [
-  { name: 'U Street Corridor', center: [38.9170, -77.0270], radius: 450 },
-  { name: 'H Street Corridor', center: [38.9007, -76.9955], radius: 450 },
-  { name: 'Barracks Row', center: [38.8817, -76.9952], radius: 350 },
-  { name: 'Hill East', center: [38.8845, -76.9785], radius: 500 }
+  { name: 'U Street Corridor', center: [38.9170, -77.0270], radius: 380 },
+  { name: 'H Street Corridor', center: [38.9007, -76.9955], radius: 380 },
+  { name: 'Barracks Row', center: [38.8817, -76.9952], radius: 300 },
+  { name: 'Hill East', center: [38.8845, -76.9785], radius: 400 },
+  { name: '16th Street Heights', center: [38.9503318, -77.0327194], radius: 420 },
+  { name: 'Hampshire Knolls', center: [38.9616585, -77.0044533], radius: 390 },
+  { name: 'NOMA', center: [38.9055979, -77.0059222], radius: 390 },
+  { name: 'BellAir', center: [38.9328, -76.9933], radius: 390 }
 ];
 
 const getNeighborhoodDisplayName = (name) => NEIGHBORHOOD_DISPLAY_NAMES[name] || name;
+
+const normalizeNeighborhoodKey = (value) => {
+  const base = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\bmount\b/g, 'mt')
+    .replace(/\bquarters\b/g, 'quarter');
+
+  if (base === 'southwest waterfront the wharf') return 'southwest waterfront';
+  if (base.startsWith('the ')) return base.slice(4);
+  return base;
+};
+
+const getLockedNeighborhoodEntry = (name) => {
+  if (!name) return null;
+  if (LOCKED_NEIGHBORHOOD_ANCHORS[name]) return LOCKED_NEIGHBORHOOD_ANCHORS[name];
+
+  const alias = LOCKED_NEIGHBORHOOD_ALIASES[name];
+  if (alias && LOCKED_NEIGHBORHOOD_ANCHORS[alias]) return LOCKED_NEIGHBORHOOD_ANCHORS[alias];
+
+  const nk = normalizeNeighborhoodKey(name);
+  for (const [k, v] of Object.entries(LOCKED_NEIGHBORHOOD_ANCHORS)) {
+    if (normalizeNeighborhoodKey(k) === nk) return v;
+  }
+  return null;
+};
+
+/** Resolves customOverrides for GIS names that differ from override keys (e.g. slash variants). */
+const getCustomOverrideEntry = (name) => {
+  /**
+   * PROCEDURE GUARANTEE:
+   * 1) locked map (hard stop, deterministic)
+   * 2) local customOverrides map (legacy/manual)
+   * 3) normalized-key scan fallback
+   *
+   * If a tuned neighborhood keeps drifting, add/update it in LOCKED_NEIGHBORHOOD_ANCHORS
+   * instead of only editing customOverrides.
+   */
+  const locked = getLockedNeighborhoodEntry(name);
+  if (locked) return locked;
+
+  if (customOverrides[name]) return customOverrides[name];
+  const disp = getNeighborhoodDisplayName(name);
+  if (customOverrides[disp]) return customOverrides[disp];
+  const nk = normalizeNeighborhoodKey(name);
+  for (const [k, v] of Object.entries(customOverrides)) {
+    if (normalizeNeighborhoodKey(k) === nk) return v;
+  }
+  return null;
+};
 
 const escapeHtml = (value) => String(value || '')
   .replace(/&/g, '&amp;')
@@ -588,6 +886,493 @@ const formatDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.getUTCFullYear().toString();
+};
+
+const RELIGIOUS_CATEGORY_COLORS = {
+  'Roman Catholic': '#dc2626',
+  Baptist: '#2563eb',
+  Methodist: '#16a34a',
+  Episcopal: '#7c3aed',
+  Presbyterian: '#0f766e',
+  Lutheran: '#d97706',
+  Orthodox: '#9333ea',
+  Pentecostal: '#ea580c',
+  Adventist: '#0891b2',
+  "Jehovah's Witness": '#64748b',
+  'Latter-day Saint': '#4f46e5',
+  'Non-denominational Christian': '#db2777',
+  'Other Christian': '#f59e0b',
+  Jewish: '#0ea5e9',
+  Muslim: '#15803d',
+  Buddhist: '#eab308',
+  Hindu: '#f97316',
+  Sikh: '#c2410c',
+  Unitarian: '#14b8a6',
+  Quaker: '#84cc16',
+  Other: '#6b7280'
+};
+
+const formatOsmTag = (value) => String(value || '')
+  .replace(/_/g, ' ')
+  .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const getReligiousCategory = (tags = {}) => {
+  const t = tags && typeof tags === 'object' && !Array.isArray(tags) ? tags : {};
+  const religion = String(t.religion || '').toLowerCase();
+  const denomination = String(t.denomination || t['religion:denomination'] || '').toLowerCase();
+  const name = String(t.name || '').toLowerCase();
+  const haystack = `${religion} ${denomination} ${name}`;
+
+  if (religion === 'jewish' || haystack.includes('synagogue')) return 'Jewish';
+  if (religion === 'muslim' || religion === 'islam' || haystack.includes('mosque') || haystack.includes('masjid')) return 'Muslim';
+  if (religion === 'buddhist') return 'Buddhist';
+  if (religion === 'hindu') return 'Hindu';
+  if (religion === 'sikh') return 'Sikh';
+  if (denomination.includes('unitarian')) return 'Unitarian';
+  if (denomination.includes('quaker') || haystack.includes('friends meeting')) return 'Quaker';
+  if (denomination.includes('roman_catholic') || denomination.includes('catholic') || haystack.includes('catholic')) return 'Roman Catholic';
+  if (denomination.includes('baptist') || haystack.includes('baptist')) return 'Baptist';
+  if (denomination.includes('methodist') || haystack.includes('methodist') || haystack.includes('ame ')) return 'Methodist';
+  if (denomination.includes('episcopal') || haystack.includes('episcopal')) return 'Episcopal';
+  if (denomination.includes('presbyterian') || haystack.includes('presbyterian')) return 'Presbyterian';
+  if (denomination.includes('lutheran') || haystack.includes('lutheran')) return 'Lutheran';
+  if (denomination.includes('orthodox') || haystack.includes('orthodox')) return 'Orthodox';
+  if (denomination.includes('pentecostal') || haystack.includes('pentecostal')) return 'Pentecostal';
+  if (denomination.includes('adventist') || haystack.includes('adventist')) return 'Adventist';
+  if (denomination.includes('jehovah') || haystack.includes("jehovah's witness")) return "Jehovah's Witness";
+  if (denomination.includes('mormon') || denomination.includes('latter_day_saints') || haystack.includes('latter-day')) return 'Latter-day Saint';
+  if (denomination.includes('nondenominational') || denomination.includes('non_denominational') || denomination.includes('independent')) return 'Non-denominational Christian';
+  if (religion === 'christian' || haystack.includes('church')) return 'Other Christian';
+  return 'Other';
+};
+
+const getReligiousInstitutionStyle = (tags = {}) => {
+  const category = getReligiousCategory(tags);
+  const fillColor = RELIGIOUS_CATEGORY_COLORS[category] || RELIGIOUS_CATEGORY_COLORS.Other;
+  return {
+    category,
+    fillColor,
+    color: '#f5f3ff'
+  };
+};
+
+const getOsmElementCoordinates = (element) => {
+  const num = (v) => {
+    const n = typeof v === 'number' ? v : parseFloat(v);
+    return Number.isFinite(n) ? n : NaN;
+  };
+  const lon = num(element?.lon);
+  const lat = num(element?.lat);
+  if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+  const c = element?.center;
+  if (c) {
+    const clon = num(c.lon ?? c.lng);
+    const clat = num(c.lat);
+    if (Number.isFinite(clon) && Number.isFinite(clat)) return [clon, clat];
+  }
+  return null;
+};
+
+const osmPlacesOfWorshipToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const coordinates = getOsmElementCoordinates(element);
+      if (!coordinates) return null;
+      const tags = element.tags || {};
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: tags.name || tags['official_name'] || 'Place of Worship',
+          RELIGION: tags.religion || '',
+          DENOMINATION: tags.denomination || tags['religion:denomination'] || '',
+          WORSHIP_TYPE: tags.place_of_worship || tags.building || '',
+          ADDRESS: [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' '),
+          WEBSITE: tags.website || tags['contact:website'] || '',
+          PHONE: tags.phone || tags['contact:phone'] || '',
+          CATEGORY: getReligiousCategory(tags),
+          OSM_TAGS: tags
+        },
+        geometry: { type: 'Point', coordinates }
+      };
+    })
+    .filter(Boolean)
+});
+
+const normalizeMonumentName = (name) => String(name || '')
+  .toLowerCase()
+  .replace(/^the\s+/, '')
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim();
+
+const osmStatuesMemorialsToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const coordinates = getOsmElementCoordinates(element);
+      if (!coordinates) return null;
+      const tags = element.tags || {};
+      const name = tags.name || tags['official_name'];
+      if (!name) return null;
+      const artworkType = formatOsmTag(tags.artwork_type);
+      const historicType = formatOsmTag(tags.historic);
+      const type = artworkType || historicType || 'Statue / Memorial';
+      const subject = tags.subject || tags['subject:name'] || tags['name:etymology'] || '';
+      const artist = tags.artist_name || tags.artist || '';
+      const summaryParts = [
+        subject ? `Subject: ${subject}` : '',
+        artist ? `Artist: ${artist}` : '',
+        tags.description || tags.inscription || ''
+      ].filter(Boolean);
+
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: name,
+          TYPE: type,
+          SUMMARY: summaryParts.length ? summaryParts.join(' · ') : 'Public statue, sculpture, monument, or memorial mapped in OpenStreetMap.',
+          SOURCE: 'OpenStreetMap',
+          ARTIST: artist,
+          SUBJECT: subject
+        },
+        geometry: { type: 'Point', coordinates }
+      };
+    })
+    .filter(Boolean)
+});
+
+const UNIVERSITY_PROFILES = [
+  { name: 'Georgetown University', color: '#2563eb', center: [-77.0730, 38.9076], radiusMeters: 1800, patterns: ['georgetown university', 'georgetown law'] },
+  { name: 'George Washington University', color: '#f59e0b', center: [-77.0486, 38.8997], radiusMeters: 1500, patterns: ['george washington university', 'gwu', 'gw university'] },
+  { name: 'Howard University', color: '#dc2626', center: [-77.0209, 38.9227], radiusMeters: 1700, patterns: ['howard university'] },
+  { name: 'American University', color: '#0f766e', center: [-77.0889, 38.9370], radiusMeters: 1600, patterns: ['american university'] },
+  { name: 'Catholic University of America', color: '#7c3aed', center: [-76.9991, 38.9369], radiusMeters: 1800, patterns: ['catholic university', 'cua'] },
+  { name: 'Gallaudet University', color: '#14b8a6', center: [-76.9936, 38.9067], radiusMeters: 1200, patterns: ['gallaudet university'] },
+  { name: 'University of the District of Columbia', color: '#16a34a', center: [-77.0656, 38.9438], radiusMeters: 1000, patterns: ['university of the district of columbia', 'udc'] },
+  { name: 'Trinity Washington University', color: '#db2777', center: [-77.0048, 38.9276], radiusMeters: 1000, patterns: ['trinity washington university', 'trinity college'] },
+  { name: 'Johns Hopkins University', color: '#0ea5e9', center: [-77.0402, 38.9087], radiusMeters: 700, patterns: ['johns hopkins', 'sais'] },
+  { name: 'National Defense University', color: '#64748b', center: [-77.0176, 38.8664], radiusMeters: 900, patterns: ['national defense university'] },
+  { name: 'University of Southern California', color: '#b91c1c', center: [-77.0188, 38.8934], radiusMeters: 500, patterns: ['university of southern california', 'usc'] },
+  { name: 'Arizona State University', color: '#8b5cf6', center: [-77.0400, 38.9020], radiusMeters: 500, patterns: ['arizona state university', 'asu'] },
+  { name: 'Princeton University', color: '#f97316', center: [-77.0395, 38.9085], radiusMeters: 500, patterns: ['princeton university'] },
+  { name: 'Strayer University', color: '#4f46e5', center: [-77.0314, 38.9046], radiusMeters: 500, patterns: ['strayer university'] },
+  { name: 'University of the Potomac', color: '#0891b2', center: [-77.0432, 38.9040], radiusMeters: 500, patterns: ['university of the potomac'] }
+];
+
+const UNIVERSITY_FALLBACK_COLORS = ['#2563eb', '#f59e0b', '#dc2626', '#0f766e', '#7c3aed', '#14b8a6', '#16a34a', '#db2777', '#0ea5e9', '#f97316', '#4f46e5', '#be185d'];
+
+const getDistanceMeters = ([lng1, lat1], [lng2, lat2]) => {
+  const toRad = (value) => value * Math.PI / 180;
+  const earthRadius = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const getStableColorFromText = (value, palette) => {
+  const text = String(value || '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
+};
+
+const getUniversityProfile = (tags = {}, coordinates = null) => {
+  const haystack = [
+    tags.name,
+    tags.operator,
+    tags.brand,
+    tags.owner,
+    tags['official_name'],
+    tags['alt_name'],
+    tags['short_name']
+  ].map((value) => String(value || '').toLowerCase()).join(' ');
+
+  const matchedByName = UNIVERSITY_PROFILES.find((profile) =>
+    profile.patterns.some((pattern) => haystack.includes(pattern))
+  );
+  if (matchedByName) return matchedByName;
+
+  if (coordinates) {
+    const nearbyProfile = UNIVERSITY_PROFILES
+      .map((profile) => ({
+        ...profile,
+        distance: getDistanceMeters(coordinates, profile.center)
+      }))
+      .filter((profile) => profile.distance <= profile.radiusMeters)
+      .sort((a, b) => a.distance - b.distance)[0];
+    if (nearbyProfile) return nearbyProfile;
+  }
+
+  const fallbackName = tags.operator || tags.name || 'Other University / College';
+  return {
+    name: fallbackName,
+    color: getStableColorFromText(fallbackName, UNIVERSITY_FALLBACK_COLORS),
+    center: coordinates || [-77.0365, 38.9072],
+    radiusMeters: 0,
+    patterns: []
+  };
+};
+
+const getOsmElementCenter = (element) => {
+  if (Number.isFinite(element.lon) && Number.isFinite(element.lat)) return [element.lon, element.lat];
+  if (element.center && Number.isFinite(element.center.lon) && Number.isFinite(element.center.lat)) {
+    return [element.center.lon, element.center.lat];
+  }
+  if (Array.isArray(element.geometry) && element.geometry.length) {
+    const points = element.geometry.filter((point) => Number.isFinite(point.lon) && Number.isFinite(point.lat));
+    if (!points.length) return null;
+    const sums = points.reduce((acc, point) => {
+      acc.lng += point.lon;
+      acc.lat += point.lat;
+      return acc;
+    }, { lng: 0, lat: 0 });
+    return [sums.lng / points.length, sums.lat / points.length];
+  }
+  return null;
+};
+
+const getOsmPolygonGeometry = (element) => {
+  if (!Array.isArray(element.geometry) || element.geometry.length < 4) return null;
+  const coordinates = element.geometry
+    .filter((point) => Number.isFinite(point.lon) && Number.isFinite(point.lat))
+    .map((point) => [point.lon, point.lat]);
+  if (coordinates.length < 4) return null;
+  const first = coordinates[0];
+  const last = coordinates[coordinates.length - 1];
+  if (first[0] !== last[0] || first[1] !== last[1]) coordinates.push(first);
+  return { type: 'Polygon', coordinates: [coordinates] };
+};
+
+const getUniversityFeatureKind = (tags = {}, geometryType = 'Point') => {
+  if (tags.building) return 'University Building';
+  if (geometryType !== 'Point' && (tags.amenity === 'university' || tags.amenity === 'college')) return 'Campus Area';
+  if (tags.amenity === 'college') return 'College Campus';
+  return 'University Campus';
+};
+
+const osmUniversitiesToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const center = getOsmElementCenter(element);
+      if (!center) return null;
+      const tags = element.tags || {};
+      const polygon = getOsmPolygonGeometry(element);
+      const profile = getUniversityProfile(tags, center);
+      const geometry = polygon || { type: 'Point', coordinates: center };
+      const name = tags.name || tags['official_name'] || profile.name || 'University / College';
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: name,
+          UNIVERSITY: profile.name,
+          COLOR: profile.color,
+          FEATURE_KIND: getUniversityFeatureKind(tags, geometry.type),
+          AMENITY: tags.amenity || '',
+          BUILDING: tags.building || '',
+          ADDRESS: [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' '),
+          OSM_TAGS: tags
+        },
+        geometry
+      };
+    })
+    .filter(Boolean)
+});
+
+const fetchOverpassJson = async (query) => {
+  // Prefer overpass-api.de first: the kumi mirror often sits behind a slow proxy and
+  // returns 504 after ~2 minutes while the same query succeeds on .de in seconds.
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter'
+  ];
+  let lastError = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: new URLSearchParams({ data: query })
+      });
+      const text = await res.text();
+      if (!res.ok) throw new Error(`${endpoint} failed: ${res.status} ${text.slice(0, 120)}`);
+      return JSON.parse(text);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('All Overpass endpoints failed');
+};
+
+const fetchPagedArcGisGeoJson = async (url, pageSize = 1000) => {
+  const features = [];
+  let offset = 0;
+  let base = null;
+
+  while (true) {
+    const separator = url.includes('?') ? '&' : '?';
+    const pageUrl = `${url}${separator}resultRecordCount=${pageSize}&resultOffset=${offset}`;
+    const res = await fetch(pageUrl);
+    if (!res.ok) throw new Error(`ArcGIS request failed: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'ArcGIS API error');
+    if (!base) base = { ...data, features: [] };
+    const pageFeatures = data.features || [];
+    features.push(...pageFeatures);
+    const exceeded = data.exceededTransferLimit || data.properties?.exceededTransferLimit;
+    if (!exceeded || pageFeatures.length === 0) break;
+    offset += pageSize;
+  }
+
+  return {
+    ...(base || { type: 'FeatureCollection' }),
+    type: 'FeatureCollection',
+    features
+  };
+};
+
+const FOOD_VENDOR_LICENSE_LAYERS = [
+  { id: 0, genre: 'Bakery' },
+  { id: 1, genre: 'Bed and Breakfast' },
+  { id: 2, genre: 'Candy Manufacturing' },
+  { id: 3, genre: 'Catering' },
+  { id: 4, genre: 'Delicatessen' },
+  { id: 5, genre: 'Food Product' },
+  { id: 6, genre: 'Grocery Store' },
+  { id: 7, genre: 'Ice Cream Manufacturer' },
+  { id: 8, genre: 'Marine Food Wholesale' },
+  { id: 9, genre: 'Marine Retail Food' },
+  { id: 10, genre: 'Mobile Delicatessen' },
+  { id: 11, genre: 'Public School Cafeteria' },
+  { id: 12, genre: 'Restaurant' }
+];
+
+const FOOD_VENDOR_LICENSE_SERVICE =
+  'https://services.arcgis.com/neT9SoYxizqTHZPH/arcgis/rest/services/DCRA_Food_Distribution_Data/FeatureServer';
+
+const restaurantGenreColorMap = {
+  Bakery: '#d97706',
+  'Bed and Breakfast': '#7c3aed',
+  'Candy Manufacturing': '#ec4899',
+  Catering: '#f97316',
+  Delicatessen: '#b45309',
+  'Food Product': '#0891b2',
+  'Grocery Store': '#15803d',
+  'Ice Cream Manufacturer': '#38bdf8',
+  'Marine Food Wholesale': '#0f766e',
+  'Marine Retail Food': '#14b8a6',
+  'Mobile Delicatessen': '#ef4444',
+  'Public School Cafeteria': '#6366f1',
+  Restaurant: '#ea580c'
+};
+
+const restaurantGenreStrokeMap = {
+  Bakery: '#fbbf24',
+  'Bed and Breakfast': '#c4b5fd',
+  'Candy Manufacturing': '#f9a8d4',
+  Catering: '#fed7aa',
+  Delicatessen: '#fcd34d',
+  'Food Product': '#67e8f9',
+  'Grocery Store': '#86efac',
+  'Ice Cream Manufacturer': '#bae6fd',
+  'Marine Food Wholesale': '#99f6e4',
+  'Marine Retail Food': '#99f6e4',
+  'Mobile Delicatessen': '#fecaca',
+  'Public School Cafeteria': '#c7d2fe',
+  Restaurant: '#fdba74'
+};
+
+const restaurantFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.RESTAURANT_GENRE,
+    p.Trade_Name,
+    p.Corporate_Name,
+    p.Business_Address,
+    p.MAR_MATCHADDRESS,
+    p.Description,
+    p.License__,
+    p.MAR_WARD,
+    p.MAR_ANC,
+    p.MAR_ZIPCODE
+  ].some((value) => String(value || '').toLowerCase().includes(query));
+};
+
+const getRestaurantPointStyle = (props = {}) => {
+  const genre = props.RESTAURANT_GENRE || 'Restaurant';
+  return {
+    pane: 'markerPane',
+    renderer: largePointCanvasRenderer,
+    radius: genre === 'Restaurant' ? 5 : 4,
+    fillColor: restaurantGenreColorMap[genre] || '#f97316',
+    color: restaurantGenreStrokeMap[genre] || '#fed7aa',
+    weight: 1.5,
+    opacity: 1,
+    fillOpacity: 0.82
+  };
+};
+
+const getEmergencyRouteStyle = (props = {}, highlight = false) => {
+  const routeClass = props.ROUTE_CLASS || '';
+  if (routeClass === 'Regional Evacuation Route') {
+    return {
+      color: '#2563eb',
+      weight: highlight ? 6 : 4,
+      opacity: highlight ? 0.95 : 0.82,
+      dashArray: null
+    };
+  }
+  if (routeClass === 'Snow Emergency Ramp') {
+    return {
+      color: '#f59e0b',
+      weight: highlight ? 5 : 3,
+      opacity: highlight ? 0.95 : 0.82,
+      dashArray: '2, 6'
+    };
+  }
+  if (routeClass === 'Snow Emergency Service Road') {
+    return {
+      color: '#7c3aed',
+      weight: highlight ? 5 : 3,
+      opacity: highlight ? 0.95 : 0.78,
+      dashArray: '8, 5'
+    };
+  }
+  return {
+    color: '#dc2626',
+    weight: highlight ? 6 : 4,
+    opacity: highlight ? 0.95 : 0.86,
+    dashArray: null
+  };
+};
+
+const emergencyRouteMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.ROUTE_CLASS,
+    p.NAME,
+    p.REGISTEREDNAME,
+    p.STREETTYPE,
+    p.QUADRANT,
+    p.ROUTE_TYPE,
+    p.STATUS,
+    p.FC,
+    p.GIS_ID
+  ].some((value) => String(value || '').toLowerCase().includes(query));
 };
 
 const formatNumber = (value) => {
@@ -825,13 +1610,29 @@ const foodDesertMatchesSearch = (feature, query) => {
 
 const BUS_ROUTE_COLOR_PALETTE = ['#2563eb', '#7c3aed', '#db2777', '#0d9488', '#ca8a04', '#4f46e5', '#be185d', '#0369a1'];
 
-const getBusRouteLineStyle = (feature) => {
+/** Stable id for selection: prefer WMATA route number so all segments of a route highlight together. */
+const getBusRouteSelectionKey = (feature) => {
+  const p = feature.properties || {};
+  const r = String(p.ROUTE ?? p.RT_D ?? '').trim();
+  if (r) return r;
+  const fallback = p.SHAPE_ID ?? p.GIS_ID ?? p.OBJECTID;
+  if (fallback != null && String(fallback).trim() !== '') return String(fallback);
+  return String(p.DESCRIPTION || '');
+};
+
+const getBusRouteLineStyle = (feature, selectedRouteKey = null) => {
   const props = feature.properties || {};
   const key = props.ROUTE || props.RT_D || props.SHAPE_ID || props.DESCRIPTION || '';
+  const paletteKey = key;
+  const selKey = getBusRouteSelectionKey(feature);
+  const selected =
+    selectedRouteKey != null && selectedRouteKey !== '' && selKey === selectedRouteKey;
   return {
-    color: getStablePaletteColor(key, BUS_ROUTE_COLOR_PALETTE),
-    weight: 2,
-    opacity: 0.82
+    color: getStablePaletteColor(paletteKey, BUS_ROUTE_COLOR_PALETTE),
+    weight: selected ? 5 : 2,
+    opacity: selected ? 1 : 0.82,
+    // Default true — path click would bubble to the map and MapEvents would clear selection in the same tick.
+    bubblingMouseEvents: false
   };
 };
 
@@ -1047,7 +1848,7 @@ const hospitalCapabilityLine = (label, raw) => {
   return `${label}: ${v}`;
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaurantGenres, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.9076, -77.0058]; // Eckington, NE DC
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -1062,21 +1863,70 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [metroLinesData, setMetroLinesData] = useState(null);
   const [metroStationsData, setMetroStationsData] = useState(null);
   const [busRoutesData, setBusRoutesData] = useState(null);
+  const [selectedBusRouteKey, setSelectedBusRouteKey] = useState(null);
+  const selectedBusRouteKeyRef = useRef(null);
+  selectedBusRouteKeyRef.current = selectedBusRouteKey;
   const [federalPropertyData, setFederalPropertyData] = useState(null);
   const [federalBuildingsData, setFederalBuildingsData] = useState(null);
   const [zoningData, setZoningData] = useState(null);
   const [wardsData, setWardsData] = useState(null);
   const [foodDesertsData, setFoodDesertsData] = useState(null);
   const [farmersMarketsData, setFarmersMarketsData] = useState(null);
+  const [restaurantsData, setRestaurantsData] = useState(null);
+  const [osmNeighborhoodAnchors, setOsmNeighborhoodAnchors] = useState({});
   const [treeCanopyData, setTreeCanopyData] = useState(null);
   const [combinedSewerData, setCombinedSewerData] = useState(null);
   const [wetlandData, setWetlandData] = useState(null);
   const [emergencyMedicalData, setEmergencyMedicalData] = useState(null);
+  const [religiousInstitutionsData, setReligiousInstitutionsData] = useState(null);
+  const [universitiesData, setUniversitiesData] = useState(null);
+  const [emergencyRoutesData, setEmergencyRoutesData] = useState(null);
+  const [apartmentBuildingsData, setApartmentBuildingsData] = useState(null);
+  const [apartmentBuildingsStatus, setApartmentBuildingsStatus] = useState(null);
+  const [apartmentBuildingsError, setApartmentBuildingsError] = useState(null);
+  const [osmMonumentsData, setOsmMonumentsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
   const combinedSewerLayerRef = useRef(null);
   const wetlandLayerRef = useRef(null);
   const emergencyMedicalLayerRef = useRef(null);
+  const getNeighborhoodAnchor = useCallback((name, referencePos = null) => {
+    const manual = getCustomOverrideEntry(name);
+    if (manual?.center) return manual.center;
+
+    const keyCandidates = [
+      name,
+      getNeighborhoodDisplayName(name),
+      String(name || '').replace('/', ' '),
+      String(name || '').replace(/\//g, ' ')
+    ].map(normalizeNeighborhoodKey);
+
+    for (const key of keyCandidates) {
+      const anchors = osmNeighborhoodAnchors[key];
+      if (!anchors || anchors.length === 0) continue;
+      if (!referencePos || anchors.length === 1) return anchors[0];
+
+      let best = anchors[0];
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (const candidate of anchors) {
+        const dLat = candidate[0] - referencePos[0];
+        const dLon = candidate[1] - referencePos[1];
+        const dist = dLat * dLat + dLon * dLon;
+        if (dist < bestDist) {
+          best = candidate;
+          bestDist = dist;
+        }
+      }
+      return best;
+    }
+    return null;
+  }, [osmNeighborhoodAnchors]);
+
+  const getNeighborhoodRadius = useCallback((name, fallbackRadius) => {
+    const manual = getCustomOverrideEntry(name);
+    const raw = manual?.radius ?? fallbackRadius;
+    return Math.min(raw, NEIGHBORHOOD_RADIUS_OVERRIDE_MAX);
+  }, []);
   const treeCanopyStyleFn = useCallback((feature) => getTreeCanopyStyle(feature), []);
   const treeCanopyFilterFn = useCallback(
     (feature) => treeCanopyMatchesSearch(feature, normalizedSearchQuery),
@@ -1096,6 +1946,20 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     (feature) => emergencyMedicalMatchesSearch(feature, normalizedSearchQuery),
     [normalizedSearchQuery]
   );
+  const combinedMonumentsData = useMemo(() => {
+    if (!osmMonumentsData) return monumentsData;
+    const seen = new Set(monumentsData.features.map((feature) => normalizeMonumentName(feature.properties?.NAME)));
+    const osmFeatures = (osmMonumentsData.features || []).filter((feature) => {
+      const normalized = normalizeMonumentName(feature.properties?.NAME);
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
+    return {
+      type: 'FeatureCollection',
+      features: [...monumentsData.features, ...osmFeatures]
+    };
+  }, [osmMonumentsData]);
 
   const toggleNeighborhoodSelection = (name) => {
     setSelectedNeighborhoods(prev => {
@@ -1111,9 +1975,16 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
+      const cached = getCached('parks_squares');
+      if (cached) {
+        setParksData(cached.parks);
+        setSquaresData(cached.squares);
+        return;
+      }
+
       const p1 = fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/9/query?where=1%3D1&outFields=*&outSR=4326&f=geojson').then(res => res.json());
       const p2 = fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/10/query?where=1%3D1&outFields=*&outSR=4326&f=geojson').then(res => res.json());
-      
+
       Promise.all([p1, p2])
         .then(([localParks, nationalParks]) => {
           const allFeatures = [
@@ -1139,8 +2010,11 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             }
           });
 
-          setParksData({ type: "FeatureCollection", features: pFeatures });
-          setSquaresData({ type: "FeatureCollection", features: sFeatures });
+          const parks = { type: "FeatureCollection", features: pFeatures };
+          const squares = { type: "FeatureCollection", features: sFeatures };
+          setCached('parks_squares', { parks, squares });
+          setParksData(parks);
+          setSquaresData(squares);
         })
         .catch(err => console.error("Error fetching parks/squares data:", err));
     }
@@ -1148,36 +2022,45 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.museums && !museumsData) {
-      fetch('https://opendata.dc.gov/api/download/v1/items/2e65fc16edc3481989d2cc17e6f8c533/geojson?layers=54')
-        .then(res => res.json())
-        .then(data => {
-          data.features.push({
-            type: "Feature",
-            properties: {
-              DCGISPLACE_NAMES_PTNAME: "Daughters of the American Revolution Museum"
-            },
-            geometry: {
-              type: "Point",
-              coordinates: [-77.0395, 38.8923]
-            }
-          });
-          setMuseumsData(data);
-        })
-        .catch(err => console.error("Error fetching museums data:", err));
+      fetchWithCache('museums', () =>
+        fetch('https://opendata.dc.gov/api/download/v1/items/2e65fc16edc3481989d2cc17e6f8c533/geojson?layers=54')
+          .then(res => res.json())
+          .then(data => {
+            data.features.push({
+              type: "Feature",
+              properties: {
+                DCGISPLACE_NAMES_PTNAME: "Daughters of the American Revolution Museum"
+              },
+              geometry: {
+                type: "Point",
+                coordinates: [-77.0395, 38.8923]
+              }
+            });
+            return data;
+          })
+      ).then(data => setMuseumsData(data))
+       .catch(err => console.error("Error fetching museums data:", err));
     }
   }, [activeLayers.museums, museumsData]);
 
   useEffect(() => {
     if (activeLayers.dcps && !dcpsSchoolsData) {
-      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Education_WebMercator/MapServer/5/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
-        .then(res => res.json())
-        .then(data => setDcpsSchoolsData(data))
-        .catch(err => console.error("Error fetching DCPS schools data:", err));
+      fetchWithCache('dcps_schools', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Education_WebMercator/MapServer/5/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+          .then(res => res.json())
+      ).then(data => setDcpsSchoolsData(data))
+       .catch(err => console.error("Error fetching DCPS schools data:", err));
     }
   }, [activeLayers.dcps, dcpsSchoolsData]);
 
   useEffect(() => {
     if (activeLayers.librariesRecPools && !librariesRecPoolsData) {
+      const cached = getCached('libraries_rec_pools');
+      if (cached) {
+        setLibrariesRecPoolsData(cached);
+        return;
+      }
+
       // DC GIS "Swimming Pools" (MapServer/11) includes public *and* private residential pools
       // with no attribute to filter—so we only use DCPL libraries + DPR rec center points.
       // Public aquatics appear on rec centers via POOL / POOL_NAME.
@@ -1205,10 +2088,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               AMENITY_SOURCE: 'DPR'
             }
           }));
-          setLibrariesRecPoolsData({
-            type: 'FeatureCollection',
-            features: [...libFeatures, ...recFeatures]
-          });
+          const combined = { type: 'FeatureCollection', features: [...libFeatures, ...recFeatures] };
+          setCached('libraries_rec_pools', combined);
+          setLibrariesRecPoolsData(combined);
         })
         .catch((err) => console.error('Error fetching libraries / recreation centers:', err));
     }
@@ -1224,12 +2106,25 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.historicLandmarks && !historicLandmarksData) {
-      const landmarksUrl = 'https://opendata.dc.gov/api/download/v1/items/288a8c4db1b641b28748dbad958b5272/geojson?layers=23';
-      const districtsUrl = 'https://opendata.dc.gov/api/download/v1/items/a443bfb6d078439e9e1941773879c7f6/geojson?layers=6';
+      const cached = getCached('historic_landmarks');
+      if (cached) {
+        setHistoricLandmarksData(cached);
+        return;
+      }
+
+      const fetchGeoJson = async (url, label) => {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`${label} request failed: ${res.status}`);
+        const data = await res.json();
+        if (data.error) throw new Error(`${label} API error: ${data.error.message || 'Unknown error'}`);
+        return data;
+      };
+      const landmarksUrl = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Planning_Landuse_and_Zoning_WebMercator/MapServer/23/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=2000';
+      const districtsUrl = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Historic/MapServer/6/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=2000';
 
       Promise.all([
-        fetch(landmarksUrl).then(res => res.json()),
-        fetch(districtsUrl).then(res => res.json())
+        fetchGeoJson(landmarksUrl, 'Historic landmarks'),
+        fetchGeoJson(districtsUrl, 'Historic districts')
       ])
         .then(([landmarks, districts]) => {
           const landmarkPoints = (landmarks.features || [])
@@ -1259,14 +2154,163 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             }
           }));
 
-          setHistoricLandmarksData({
+          const result = {
             landmarks: { type: 'FeatureCollection', features: landmarkPoints },
             districts: { type: 'FeatureCollection', features: districtFeatures }
-          });
+          };
+          setCached('historic_landmarks', result);
+          setHistoricLandmarksData(result);
         })
         .catch(err => console.error("Error fetching historic landmarks data:", err));
     }
   }, [activeLayers.historicLandmarks, historicLandmarksData]);
+
+  useEffect(() => {
+    if (activeLayers.monuments && !osmMonumentsData) {
+      const overpassQuery = `[out:json][timeout:30];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["tourism"="artwork"]["artwork_type"~"statue|sculpture|bust|relief|installation"](area.dc);
+  way["tourism"="artwork"]["artwork_type"~"statue|sculpture|bust|relief|installation"](area.dc);
+  relation["tourism"="artwork"]["artwork_type"~"statue|sculpture|bust|relief|installation"](area.dc);
+  node["historic"~"^(memorial|monument)$"](area.dc);
+  way["historic"~"^(memorial|monument)$"](area.dc);
+  relation["historic"~"^(memorial|monument)$"](area.dc);
+);
+out center tags;`;
+
+      const cachedMonuments = getCached('osm_monuments');
+      if (cachedMonuments) { setOsmMonumentsData(cachedMonuments); return; }
+
+      fetchOverpassJson(overpassQuery)
+        .then((data) => {
+          const result = osmStatuesMemorialsToGeoJson(data.elements || []);
+          setCached('osm_monuments', result);
+          setOsmMonumentsData(result);
+        })
+        .catch((err) => console.error('Error fetching OSM statues and memorials data:', err));
+    }
+  }, [activeLayers.monuments, osmMonumentsData]);
+
+  useEffect(() => {
+    if (activeLayers.religiousInstitutions && !religiousInstitutionsData) {
+      const overpassQuery = `[out:json][timeout:90];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["amenity"="place_of_worship"](area.dc);
+  way["amenity"="place_of_worship"](area.dc);
+  relation["amenity"="place_of_worship"](area.dc);
+);
+out center tags;`;
+
+      const cachedReligious = getCached('osm_religious_institutions');
+      if (cachedReligious) { setReligiousInstitutionsData(cachedReligious); return; }
+
+      fetchOverpassJson(overpassQuery)
+        .then((data) => {
+          const result = osmPlacesOfWorshipToGeoJson(data.elements || []);
+          setCached('osm_religious_institutions', result);
+          setReligiousInstitutionsData(result);
+        })
+        .catch((err) => console.error('Error fetching religious institutions data:', err));
+    }
+  }, [activeLayers.religiousInstitutions, religiousInstitutionsData]);
+
+  useEffect(() => {
+    if (activeLayers.universities && !universitiesData) {
+      const overpassQuery = `[out:json][timeout:60];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["amenity"~"^(university|college)$"](area.dc);
+  way["amenity"~"^(university|college)$"](area.dc);
+  relation["amenity"~"^(university|college)$"](area.dc);
+  way["building"~"^(university|college)$"](area.dc);
+);
+out center geom tags;`;
+
+      const cachedUniversities = getCached('osm_universities');
+      if (cachedUniversities) { setUniversitiesData(cachedUniversities); return; }
+
+      fetchOverpassJson(overpassQuery)
+        .then((data) => {
+          const result = osmUniversitiesToGeoJson(data.elements || []);
+          setCached('osm_universities', result);
+          setUniversitiesData(result);
+        })
+        .catch((err) => console.error('Error fetching universities data:', err));
+    }
+  }, [activeLayers.universities, universitiesData]);
+
+  useEffect(() => {
+    if (!activeLayers.apartmentBuildings || apartmentBuildingsData) return;
+
+    const cached = getCached('apartment_buildings');
+    if (cached) { setApartmentBuildingsData(cached); return; }
+
+    setApartmentBuildingsError(null);
+    fetchApartmentBuildings(setApartmentBuildingsStatus)
+      .then(result => {
+        setCached('apartment_buildings', result);
+        setApartmentBuildingsData(result);
+        setApartmentBuildingsStatus(null);
+      })
+      .catch(err => {
+        console.error('[Apartment Buildings] fetch failed:', err);
+        setApartmentBuildingsError('Could not load apartment building data. Check the console for details.');
+        setApartmentBuildingsStatus(null);
+      });
+  }, [activeLayers.apartmentBuildings, apartmentBuildingsData]);
+
+  useEffect(() => {
+    if (activeLayers.emergencyRoutes && !emergencyRoutesData) {
+      const cached = getCached('emergency_routes');
+      if (cached) { setEmergencyRoutesData(cached); return; }
+
+      const snowBase = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Snow_WebMercator/MapServer';
+      const publicSafetyBase = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Public_Safety_WebMercator/MapServer';
+      const query = 'query?where=1%3D1&outFields=*&outSR=4326&f=geojson';
+
+      Promise.all([
+        fetchPagedArcGisGeoJson(`${snowBase}/19/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Snow Emergency Road' }
+          }))
+        })),
+        fetchPagedArcGisGeoJson(`${snowBase}/18/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Snow Emergency Ramp' }
+          }))
+        })),
+        fetchPagedArcGisGeoJson(`${snowBase}/17/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Snow Emergency Service Road' }
+          }))
+        })),
+        fetchPagedArcGisGeoJson(`${publicSafetyBase}/8/${query}`).then((data) => ({
+          ...data,
+          features: (data.features || []).map((feature) => ({
+            ...feature,
+            properties: { ...feature.properties, ROUTE_CLASS: 'Regional Evacuation Route' }
+          }))
+        }))
+      ])
+        .then((collections) => {
+          const result = {
+            type: 'FeatureCollection',
+            features: collections.flatMap((collection) => collection.features || [])
+          };
+          setCached('emergency_routes', result);
+          setEmergencyRoutesData(result);
+        })
+        .catch((err) => console.error('Error fetching emergency routes data:', err));
+    }
+  }, [activeLayers.emergencyRoutes, emergencyRoutesData]);
 
   useEffect(() => {
     if (activeLayers.propertyValues && !propertyValuesData) {
@@ -1340,10 +2384,11 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.bikeLanes && !bikeLanesData) {
-      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Bikes_Trails_WebMercator/MapServer/2/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
-        .then(res => res.json())
-        .then(data => setBikeLanesData(data))
-        .catch(err => console.error("Error fetching bike lanes data:", err));
+      fetchWithCache('bike_lanes', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Bikes_Trails_WebMercator/MapServer/2/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+          .then(res => res.json())
+      ).then(data => setBikeLanesData(data))
+       .catch(err => console.error("Error fetching bike lanes data:", err));
     }
   }, [activeLayers.bikeLanes, bikeLanesData]);
 
@@ -1381,6 +2426,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   }, [activeLayers.bus, busRoutesData]);
 
   useEffect(() => {
+    if (!activeLayers.bus) setSelectedBusRouteKey(null);
+  }, [activeLayers.bus]);
+
+  useEffect(() => {
     if (activeLayers.federal && !federalPropertyData) {
       import('../data/federal-property.json')
         .then(module => setFederalPropertyData(module.default))
@@ -1398,18 +2447,20 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.zoning && !zoningData) {
-      import('../data/dc-zoning.json')
-        .then(module => setZoningData(module.default))
+      fetch(`${import.meta.env.BASE_URL}dc-zoning.json`)
+        .then(res => res.json())
+        .then(data => setZoningData(data))
         .catch(err => console.error("Error loading zoning data:", err));
     }
   }, [activeLayers.zoning, zoningData]);
 
   useEffect(() => {
     if (activeLayers.wards && !wardsData) {
-      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries_WebMercator/MapServer/53/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=20')
-        .then(res => res.json())
-        .then(data => setWardsData(data))
-        .catch(err => console.error("Error fetching ward boundaries:", err));
+      fetchWithCache('wards', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries_WebMercator/MapServer/53/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=20')
+          .then(res => res.json())
+      ).then(data => setWardsData(data))
+       .catch(err => console.error("Error fetching ward boundaries:", err));
     }
   }, [activeLayers.wards, wardsData]);
 
@@ -1434,6 +2485,42 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         .catch((err) => console.error('Error fetching farmers market locations:', err));
     }
   }, [activeLayers.farmersMarkets, farmersMarketsData]);
+
+  useEffect(() => {
+    if (!activeLayers.restaurants || restaurantsData) return;
+
+    let cancelled = false;
+    Promise.all(
+      FOOD_VENDOR_LICENSE_LAYERS.map(({ id, genre }) =>
+        fetchPagedArcGisGeoJson(
+          `${FOOD_VENDOR_LICENSE_SERVICE}/${id}/query?where=1%3D1&outFields=*&outSR=4326&f=geojson`,
+          1000
+        ).then((data) =>
+          (data.features || []).map((feature) => ({
+            ...feature,
+            properties: {
+              ...feature.properties,
+              RESTAURANT_GENRE: genre
+            }
+          }))
+        )
+      )
+    )
+      .then((featureGroups) => {
+        if (cancelled) return;
+        setRestaurantsData({
+          type: 'FeatureCollection',
+          features: featureGroups.flat()
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Error fetching DC food vendor license data:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.restaurants, restaurantsData]);
 
   useEffect(() => {
     if (!activeLayers.treeCanopy || treeCanopyData) return;
@@ -1470,28 +2557,29 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.combinedSewer && !combinedSewerData) {
-      fetch(
-        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Stormwater_Management_WebMercator/MapServer/19/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
-      )
-        .then((res) => res.json())
-        .then((data) => setCombinedSewerData(data))
-        .catch((err) => console.error('Error fetching combined sewer sewershed data:', err));
+      fetchWithCache('combined_sewer', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Stormwater_Management_WebMercator/MapServer/19/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+          .then((res) => res.json())
+      ).then((data) => setCombinedSewerData(data))
+       .catch((err) => console.error('Error fetching combined sewer sewershed data:', err));
     }
   }, [activeLayers.combinedSewer, combinedSewerData]);
 
   useEffect(() => {
     if (activeLayers.wetland && !wetlandData) {
-      fetch(
-        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Water_WebMercator/MapServer/28/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
-      )
-        .then((res) => res.json())
-        .then((data) => setWetlandData(data))
-        .catch((err) => console.error('Error fetching wetland data:', err));
+      fetchWithCache('wetlands', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Water_WebMercator/MapServer/28/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+          .then((res) => res.json())
+      ).then((data) => setWetlandData(data))
+       .catch((err) => console.error('Error fetching wetland data:', err));
     }
   }, [activeLayers.wetland, wetlandData]);
 
   useEffect(() => {
     if (!activeLayers.emergencyMedical || emergencyMedicalData) return;
+
+    const cached = getCached('emergency_medical');
+    if (cached) { setEmergencyMedicalData(cached); return; }
 
     let cancelled = false;
     const fireUrl =
@@ -1574,10 +2662,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             };
           });
 
-        setEmergencyMedicalData({
+        const medResult = {
           type: 'FeatureCollection',
           features: [...fireFeatures, ...hospitalFeatures, ...urgentFeatures]
-        });
+        };
+        setCached('emergency_medical', medResult);
+        setEmergencyMedicalData(medResult);
       })
       .catch((err) => {
         if (!cancelled) console.error('Error fetching fire / hospital / urgent care data:', err);
@@ -1587,6 +2677,41 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
       cancelled = true;
     };
   }, [activeLayers.emergencyMedical, emergencyMedicalData]);
+
+  useEffect(() => {
+    if (!activeLayers.neighborhoods || !geoJsonData?.features?.length) return;
+    if (Object.keys(osmNeighborhoodAnchors).length > 0) return;
+
+    let cancelled = false;
+    const overpassQuery = `[out:json][timeout:25];
+(
+  node["place"~"^(neighbourhood|suburb|quarter)$"](38.79,-77.12,38.995,-76.91);
+  way["place"~"^(neighbourhood|suburb|quarter)$"](38.79,-77.12,38.995,-76.91);
+  relation["place"~"^(neighbourhood|suburb|quarter)$"](38.79,-77.12,38.995,-76.91);
+);
+out center tags;`;
+
+    fetchOverpassJson(overpassQuery)
+      .then((data) => {
+        if (cancelled) return;
+        const map = {};
+        for (const el of data.elements || []) {
+          const name = el.tags?.name;
+          const lat = el.lat ?? el.center?.lat;
+          const lon = el.lon ?? el.center?.lon;
+          if (!name || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+          const key = normalizeNeighborhoodKey(name);
+          if (!map[key]) map[key] = [];
+          map[key].push([lat, lon]);
+        }
+        setOsmNeighborhoodAnchors(map);
+      })
+      .catch((err) => console.error('Error fetching OSM neighborhood anchors:', err));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.neighborhoods, geoJsonData, osmNeighborhoodAnchors]);
 
   const neighborhoodColorMap = useMemo(() => {
     if (!geoJsonData || !geoJsonData.features) return {};
@@ -1610,8 +2735,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       neighborhoods.forEach((name, i) => {
         let pos = [center.lat, center.lng];
-        if (customOverrides[name]) {
-          pos = customOverrides[name].center;
+        const anchor = getNeighborhoodAnchor(name, [center.lat, center.lng]);
+        if (anchor) {
+          pos = anchor;
         } else if (N > 1) {
           const angle = (i / N) * Math.PI * 2;
           pos = [
@@ -1670,7 +2796,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
       console.error("COLOR MAP ERROR:", e);
       return {};
     }
-  }, [geoJsonData]);
+  }, [geoJsonData, getNeighborhoodAnchor]);
 
   const parksStyle = {
     fillColor: '#22c55e',
@@ -1699,7 +2825,81 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
     };
   };
 
+  const loadingLayerNames = useMemo(() => {
+    const names = [];
+    if (activeLayers.neighborhoods && !geoJsonData) names.push('Neighborhoods');
+    if ((activeLayers.parks || activeLayers.squares) && (!parksData || !squaresData)) names.push('Parks / Squares');
+    if (activeLayers.museums && !museumsData) names.push('Museums');
+    if (activeLayers.dcps && !dcpsSchoolsData) names.push('DC Public Schools');
+    if (activeLayers.librariesRecPools && !librariesRecPoolsData) names.push('Libraries & Rec Centers');
+    if (activeLayers.muralsPublicArt && !muralsPublicArtData) names.push('Murals & Public Art');
+    if (activeLayers.historicLandmarks && !historicLandmarksData) names.push('Historic Landmarks');
+    if (activeLayers.metro && (!metroLinesData || !metroStationsData)) names.push('Metro');
+    if (activeLayers.bus && !busRoutesData) names.push('Metrobus');
+    if (activeLayers.federal && (!federalPropertyData || !federalBuildingsData)) names.push('Federal Footprint');
+    if (activeLayers.zoning && !zoningData) names.push('Zoning');
+    if (activeLayers.wards && !wardsData) names.push('Wards');
+    if (activeLayers.floodZones && !floodZonesData) names.push('Flood Zones');
+    if (activeLayers.foodDeserts && !foodDesertsData) names.push('Food Deserts');
+    if (activeLayers.farmersMarkets && !farmersMarketsData) names.push('Farmers Markets');
+    if (activeLayers.restaurants && !restaurantsData) names.push('Restaurants');
+    if (activeLayers.treeCanopy && !treeCanopyData) names.push('Urban Tree Canopy');
+    if (activeLayers.combinedSewer && !combinedSewerData) names.push('Combined Sewer');
+    if (activeLayers.wetland && !wetlandData) names.push('Wetlands');
+    if (activeLayers.emergencyMedical && !emergencyMedicalData) names.push('Emergency Medical');
+    if (activeLayers.religiousInstitutions && !religiousInstitutionsData) names.push('Religious Institutions');
+    if (activeLayers.universities && !universitiesData) names.push('Universities');
+    if (activeLayers.emergencyRoutes && !emergencyRoutesData) names.push('Emergency Routes');
+    if (activeLayers.propertyValues && !propertyValuesData) names.push('Property Values');
+    if (activeLayers.crime && !crimeData) names.push('Crime');
+    if (activeLayers.bikeLanes && !bikeLanesData) names.push('Bike Lanes');
+    if (activeLayers.apartmentBuildings && !apartmentBuildingsData)
+      names.push(apartmentBuildingsStatus || 'Apartment Buildings');
+    return names;
+  }, [
+    activeLayers,
+    geoJsonData,
+    parksData,
+    squaresData,
+    museumsData,
+    dcpsSchoolsData,
+    librariesRecPoolsData,
+    muralsPublicArtData,
+    historicLandmarksData,
+    metroLinesData,
+    metroStationsData,
+    busRoutesData,
+    federalPropertyData,
+    federalBuildingsData,
+    zoningData,
+    wardsData,
+    floodZonesData,
+    foodDesertsData,
+    farmersMarketsData,
+    restaurantsData,
+    treeCanopyData,
+    combinedSewerData,
+    wetlandData,
+    emergencyMedicalData,
+    religiousInstitutionsData,
+    universitiesData,
+    emergencyRoutesData,
+    propertyValuesData,
+    crimeData,
+    bikeLanesData,
+    apartmentBuildingsData,
+    apartmentBuildingsStatus
+  ]);
+
+  const loadingSummary =
+    loadingLayerNames.length > 1
+      ? `Loading ${loadingLayerNames[0]} +${loadingLayerNames.length - 1} more...`
+      : loadingLayerNames.length === 1
+        ? `Loading ${loadingLayerNames[0]}...`
+        : '';
+
   return (
+    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
     <MapContainer 
       center={dcCenter} 
       zoom={13} 
@@ -1711,7 +2911,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
-      <MapEvents onMapClick={() => setSelectedNeighborhoods(new Set())} />
+      <MapEvents
+        onMapClick={() => {
+          setSelectedNeighborhoods(new Set());
+          setSelectedBusRouteKey(null);
+        }}
+      />
       
       {/* DC Boundary Layer */}
       {dcBoundary && (
@@ -1746,8 +2951,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             const bounds = layer.getBounds();
             const center = bounds.getCenter();
             
-            // Base radius related to the cluster's size
-            const radiusMeters = center.distanceTo(bounds.getNorthEast()) / 2;
+            const radiusFromBounds = center.distanceTo(bounds.getNorthEast()) / 2;
+            const radiusMeters = Math.min(radiusFromBounds, NEIGHBORHOOD_RADIUS_FALLBACK_MAX);
 
             const latDiff = bounds.getNorth() - bounds.getSouth();
             const lngDiff = bounds.getEast() - bounds.getWest();
@@ -1771,9 +2976,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               let pos = [center.lat, center.lng];
               let finalRadius = radiusMeters;
 
-              if (customOverrides[name]) {
-                pos = customOverrides[name].center;
-                finalRadius = customOverrides[name].radius;
+              const anchor = getNeighborhoodAnchor(name, [center.lat, center.lng]);
+              if (anchor) {
+                pos = anchor;
+                finalRadius = getNeighborhoodRadius(name, finalRadius);
               } else if (N > 1) {
                 const angle = (i / N) * Math.PI * 2;
                 pos = [
@@ -1843,7 +3049,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               <Circle
                 key={`synthetic-${name}`}
                 center={center}
-                radius={showNeighborhoodBackgrounds ? radius * (isSelected ? 1.5 : 1.2) : 1}
+                radius={showNeighborhoodBackgrounds ? Math.min(radius, NEIGHBORHOOD_RADIUS_OVERRIDE_MAX) * (isSelected ? 1.5 : 1.2) : 1}
                 pathOptions={{
                   color: showNeighborhoodBackgrounds ? (isSelected ? '#ffffff' : color) : 'transparent',
                   weight: showNeighborhoodBackgrounds ? (isSelected ? 2 : 0) : 0,
@@ -2404,41 +3610,53 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
       {/* Monuments & Memorials Layer */}
       {activeLayers.monuments && monumentsData && (
         <GeoJSON 
-          key={`monuments-${searchQuery}`}
-          data={monumentsData}
+          key={`monuments-${searchQuery}-${osmMonumentsData ? 'osm' : 'curated'}`}
+          data={combinedMonumentsData}
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
             const name = feature.properties?.NAME || "";
             const summary = feature.properties?.SUMMARY || "";
             const type = feature.properties?.TYPE || "";
-            return name.toLowerCase().includes(q) || summary.toLowerCase().includes(q) || type.toLowerCase().includes(q);
+            const source = feature.properties?.SOURCE || "";
+            const artist = feature.properties?.ARTIST || "";
+            const subject = feature.properties?.SUBJECT || "";
+            return [name, summary, type, source, artist, subject]
+              .some((value) => String(value || '').toLowerCase().includes(q));
           }}
           pointToLayer={(feature, latlng) => {
+            const fromOsm = feature.properties?.SOURCE === 'OpenStreetMap';
             return L.circleMarker(latlng, {
               pane: 'markerPane',
-              radius: 6,
-              fillColor: '#0d9488', // teal
-              color: '#14b8a6',
-              weight: 2,
+              radius: fromOsm ? 4.8 : 6,
+              fillColor: fromOsm ? '#14b8a6' : '#0d9488',
+              color: fromOsm ? '#ccfbf1' : '#14b8a6',
+              weight: fromOsm ? 1.5 : 2,
               opacity: 1,
               fillOpacity: 0.8
             });
           }}
           onEachFeature={(feature, layer) => {
-            const { NAME, TYPE, SUMMARY } = feature.properties;
+            const { NAME, TYPE, SUMMARY, SOURCE, OSM_ID } = feature.properties;
+            const fromOsm = SOURCE === 'OpenStreetMap';
+            const nameSafe = escapeHtml(NAME || 'Statue / Memorial');
+            const typeSafe = escapeHtml(TYPE || 'Statue / Memorial');
+            const summarySafe = escapeHtml(SUMMARY || '');
+            const sourceSafe = escapeHtml(OSM_ID ? `${SOURCE} ${OSM_ID}` : SOURCE || '');
+            const accent = fromOsm ? '#14b8a6' : '#0d9488';
             
             const tooltipContent = `
               <div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 600px;">
                 <div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid rgba(20, 184, 166, 0.3); padding-bottom: 4px;">
-                  <span style="color: #14b8a6; margin-right: 4px;">•</span>${NAME}
+                  <span style="color: ${accent}; margin-right: 4px;">•</span>${nameSafe}
                 </div>
-                <div style="font-size: 11px; font-weight: 600; color: #14b8a6; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-                  ${TYPE}
+                <div style="font-size: 11px; font-weight: 600; color: ${accent}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                  ${typeSafe}
                 </div>
                 <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.3;">
-                  ${SUMMARY}
+                  ${summarySafe}
                 </div>
+                ${sourceSafe ? `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">${sourceSafe}</div>` : ''}
               </div>
             `;
 
@@ -2502,6 +3720,79 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 sticky: true
               }
             );
+          }}
+        />
+      )}
+
+      {/* Live Music Layer */}
+      {activeLayers.liveMusic && (
+        <GeoJSON
+          key={`live-music-${searchQuery}`}
+          data={liveMusicData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [p.NAME, p.TYPE, p.SUMMARY, p.NEIGHBORHOOD]
+              .some((v) => String(v || "").toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            const type = String(feature.properties?.TYPE || "").toLowerCase();
+            const supperClub = type.includes("supper") || type.includes("restaurant") || type.includes("brunch");
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: supperClub ? 8 : 7,
+              fillColor: supperClub ? '#0f766e' : '#14b8a6',
+              color: '#99f6e4',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Live music venue');
+            const type = escapeHtml(p.TYPE || 'Live Music');
+            const summary = escapeHtml(p.SUMMARY || '');
+            const nbh = escapeHtml(p.NEIGHBORHOOD || '');
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: #0f766e;">🎷</span> ${name}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: #0f766e; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${type}${nbh ? ` · ${nbh}` : ''}
+                 </div>
+                 <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                   ${summary}
+                 </div>
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Focused on seated, intimate, restaurant, lounge, brunch, and listening-room music experiences.
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(10);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const type = String(feature.properties?.TYPE || "").toLowerCase();
+                const supperClub = type.includes("supper") || type.includes("restaurant") || type.includes("brunch");
+                l.setRadius(supperClub ? 8 : 7);
+                l.setStyle({ weight: 2 });
+              }
+            });
           }}
         />
       )}
@@ -2598,11 +3889,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           pointToLayer={(feature, latlng) => {
             const isParade = String(feature.properties?.TYPE || "").toLowerCase().includes("parade");
+            const timing = getFestivalParadeTiming(feature);
             return L.circleMarker(latlng, {
               pane: 'markerPane',
               radius: isParade ? 8 : 7,
-              fillColor: isParade ? '#f59e0b' : '#f97316',
-              color: '#fcd34d',
+              fillColor: timing.fillColor,
+              color: timing.strokeColor,
               weight: 2,
               opacity: 1,
               fillOpacity: 0.9
@@ -2610,23 +3902,29 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
           onEachFeature={(feature, layer) => {
             const { NAME, TYPE, SUMMARY, SEASON } = feature.properties;
+            const timing = getFestivalParadeTiming(feature);
             const typeSafe = escapeHtml(TYPE || 'Festival');
             const seasonSafe = escapeHtml(SEASON || '');
             const nameSafe = escapeHtml(NAME || 'Festival / Parade');
             const summarySafe = escapeHtml(SUMMARY || '');
+            const timingLabelSafe = escapeHtml(timing.label || '');
+            const timingStatusSafe = escapeHtml(timing.status || '');
             layer.bindTooltip(
               `<div style="font-family: 'Outfit', sans-serif; max-width: 420px;">
                  <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                   <span style="color: #f59e0b;">🎉</span> ${nameSafe}
+                   <span style="color: ${timing.fillColor};">🎉</span> ${nameSafe}
                  </div>
-                 <div style="font-weight: 600; font-size: 12px; color: #f59e0b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                 <div style="font-weight: 600; font-size: 12px; color: ${timing.fillColor}; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
                    ${typeSafe}${seasonSafe ? ` · ${seasonSafe}` : ''}
+                 </div>
+                 <div style="font-weight: 600; font-size: 12px; color: var(--text-primary); margin-bottom: 6px;">
+                   ${timingLabelSafe ? `${timingLabelSafe} · ` : ''}${timingStatusSafe}
                  </div>
                  <div style="font-weight: 400; font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
                    ${summarySafe}
                  </div>
                  <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
-                   Representative anchor locations; routes/footprints can vary by year.
+                   Color key: upcoming events shift amber to red as they get closer; passed events turn blue. Representative locations/routes can vary by year.
                  </div>
                </div>`,
               {
@@ -2648,7 +3946,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
                 const l = e.target;
                 const isParade = String(feature.properties?.TYPE || "").toLowerCase().includes("parade");
                 l.setRadius(isParade ? 8 : 7);
-                l.setStyle({ weight: 2 });
+                l.setStyle({ weight: 2, fillColor: timing.fillColor, color: timing.strokeColor });
               }
             });
           }}
@@ -2943,6 +4241,291 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           }}
         />
       )}
+
+      {/* Religious Institutions Layer */}
+      {activeLayers.religiousInstitutions && religiousInstitutionsData && (
+        <GeoJSON
+          key={`religious-institutions-${searchQuery}`}
+          data={religiousInstitutionsData}
+          style={() => ({})}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [
+              p.NAME,
+              p.CATEGORY,
+              p.RELIGION,
+              p.DENOMINATION,
+              p.WORSHIP_TYPE,
+              p.ADDRESS
+            ].some((v) => String(v || '').toLowerCase().includes(q));
+          }}
+          pointToLayer={(feature, latlng) => {
+            const style = getReligiousInstitutionStyle(feature.properties?.OSM_TAGS || {});
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: 5.5,
+              fillColor: style.fillColor,
+              color: style.color,
+              weight: 1.8,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const style = getReligiousInstitutionStyle(p.OSM_TAGS || {});
+            const name = escapeHtml(p.NAME || 'Place of Worship');
+            const category = escapeHtml(p.CATEGORY || style.category || 'Other');
+            const religion = escapeHtml(formatOsmTag(p.RELIGION));
+            const denomination = escapeHtml(formatOsmTag(p.DENOMINATION));
+            const worshipType = escapeHtml(formatOsmTag(p.WORSHIP_TYPE));
+            const address = escapeHtml(p.ADDRESS || '');
+            const osmId = escapeHtml(p.OSM_ID || '');
+            const details = [religion, denomination, worshipType].filter(Boolean).join(' · ');
+
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: ${style.fillColor};">✦</span> ${name}
+                 </div>
+                 <div style="font-weight: 700; font-size: 12px; color: ${style.fillColor}; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${category}
+                 </div>
+                 ${details ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35; margin-bottom: 3px;">${details}</div>` : ''}
+                 ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Address:</strong> ${address}</div>` : ''}
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Color is based on OSM religion / denomination tags.${osmId ? ` Source: ${osmId}` : ''}
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius(8);
+                l.setStyle({ weight: 3 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setRadius(5.5);
+                l.setStyle({ weight: 1.8, fillColor: style.fillColor, color: style.color });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Universities Layer */}
+      {activeLayers.universities && universitiesData && (
+        <GeoJSON
+          key={`universities-${searchQuery}`}
+          data={universitiesData}
+          filter={(feature) => {
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            const p = feature.properties || {};
+            return [
+              p.NAME,
+              p.UNIVERSITY,
+              p.FEATURE_KIND,
+              p.AMENITY,
+              p.BUILDING,
+              p.ADDRESS
+            ].some((v) => String(v || '').toLowerCase().includes(q));
+          }}
+          style={(feature) => {
+            const p = feature.properties || {};
+            const isBuilding = String(p.FEATURE_KIND || '').toLowerCase().includes('building');
+            return {
+              fillColor: p.COLOR || '#2563eb',
+              color: p.COLOR || '#2563eb',
+              weight: isBuilding ? 1.5 : 2.5,
+              opacity: isBuilding ? 0.72 : 0.9,
+              fillOpacity: isBuilding ? 0.32 : 0.18,
+              dashArray: isBuilding ? null : '5, 4'
+            };
+          }}
+          pointToLayer={(feature, latlng) => {
+            const p = feature.properties || {};
+            const isBuilding = String(p.FEATURE_KIND || '').toLowerCase().includes('building');
+            return L.circleMarker(latlng, {
+              pane: 'markerPane',
+              radius: isBuilding ? 5 : 7,
+              fillColor: p.COLOR || '#2563eb',
+              color: '#dbeafe',
+              weight: 2,
+              opacity: 1,
+              fillOpacity: 0.9
+            });
+          }}
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const color = p.COLOR || '#2563eb';
+            const name = escapeHtml(p.NAME || 'University / College');
+            const university = escapeHtml(p.UNIVERSITY || 'University / College');
+            const kind = escapeHtml(p.FEATURE_KIND || 'Campus Feature');
+            const address = escapeHtml(p.ADDRESS || '');
+            const osmId = escapeHtml(p.OSM_ID || '');
+            const isPolygon = feature.geometry?.type !== 'Point';
+
+            layer.bindTooltip(
+              `<div style="font-family: 'Outfit', sans-serif; max-width: 430px;">
+                 <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                   <span style="color: ${color};">🎓</span> ${name}
+                 </div>
+                 <div style="font-weight: 700; font-size: 12px; color: ${color}; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px;">
+                   ${university}
+                 </div>
+                 <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">
+                   <strong>Feature:</strong> ${kind}${isPolygon ? ' footprint' : ''}
+                 </div>
+                 ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;"><strong>Address:</strong> ${address}</div>` : ''}
+                 <div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                   Campus areas and buildings from OpenStreetMap.${osmId ? ` Source: ${osmId}` : ''}
+                 </div>
+               </div>`,
+              {
+                permanent: false,
+                direction: 'top',
+                className: 'custom-tooltip events-tooltip',
+                offset: [10, -20],
+                sticky: true
+              }
+            );
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                if (l.setRadius) l.setRadius(9);
+                l.setStyle({ weight: 3, fillOpacity: isPolygon ? 0.42 : 0.95 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const isBuilding = String(p.FEATURE_KIND || '').toLowerCase().includes('building');
+                if (l.setRadius) l.setRadius(isBuilding ? 5 : 7);
+                l.setStyle({
+                  weight: isBuilding ? 1.5 : 2.5,
+                  fillOpacity: isPolygon ? (isBuilding ? 0.32 : 0.18) : 0.9
+                });
+              }
+            });
+          }}
+        />
+      )}
+
+      {/* Apartment Buildings Layer */}
+      {activeLayers.apartmentBuildings && apartmentBuildingsError && (
+        <div style={{
+          position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8,
+          padding: '10px 16px', fontSize: 13, color: '#b91c1c', zIndex: 1000,
+          maxWidth: 360, textAlign: 'center', pointerEvents: 'none'
+        }}>
+          {apartmentBuildingsError}
+        </div>
+      )}
+      {activeLayers.apartmentBuildings && apartmentBuildingsData && (() => {
+        const aybValues = apartmentBuildingsData.features
+          .map(f => f.properties?.ayb)
+          .filter(v => v != null && v > 0)
+          .sort((a, b) => a - b);
+        const p5  = aybValues[Math.floor(aybValues.length * 0.05)] ?? aybValues[0];
+        const p95 = aybValues[Math.floor(aybValues.length * 0.95)] ?? aybValues[aybValues.length - 1];
+        const range = p95 - p5 || 1;
+
+        const getColor = (ayb) => {
+          const ratio = Math.max(0, Math.min(1, (ayb - p5) / range));
+          if (ayb < p5) return `hsl(0, 90%, ${Math.max(20, 50 - (p5 - ayb) * 0.5)}%)`;
+          return `hsl(${Math.round(ratio * 240)}, 85%, 50%)`;
+        };
+
+        return (
+          <GeoJSON
+            key={`apartmentBuildings-${searchQuery}`}
+            data={apartmentBuildingsData}
+            filter={(feature) => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              const p = feature.properties || {};
+              return [p.displayName, p.address, String(p.ayb || ''), String(p.unitCount || '')]
+                .some(v => String(v || '').toLowerCase().includes(q));
+            }}
+            pointToLayer={(feature, latlng) => {
+              const ayb = feature.properties?.ayb;
+              const color = getColor(ayb);
+              return L.circleMarker(latlng, {
+                pane: 'markerPane',
+                radius: 6,
+                fillColor: color,
+                color: '#fff',
+                weight: 1.5,
+                opacity: 1,
+                fillOpacity: 0.85
+              });
+            }}
+            onEachFeature={(feature, layer) => {
+              const p = feature.properties || {};
+              const ayb = p.ayb;
+              const color = getColor(ayb);
+              const displayName = escapeHtml(p.displayName || 'Apartment Building');
+              const address = p.address ? escapeHtml(p.address) : null;
+              const units = p.unitCount != null ? p.unitCount : '—';
+              const ssl = p.ssl ? escapeHtml(p.ssl) : null;
+              const source = p.source ? escapeHtml(p.source) : null;
+              const nameSource = p.nameSource ? escapeHtml(p.nameSource) : null;
+              const occupancy = p.occupancyType ? escapeHtml(p.occupancyType) : null;
+
+              layer.bindTooltip(
+                `<div style="font-family: 'Outfit', sans-serif; max-width: 320px;">
+                   <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                     <span style="color: ${color};">🏢</span> ${displayName}
+                   </div>
+                   ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">${address}</div>` : ''}
+                   <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin-top: 4px;">
+                     <strong>Units:</strong> ${units}${ayb ? ` &nbsp;·&nbsp; <strong>Built:</strong> ${ayb}` : ''}
+                   </div>
+                   ${occupancy ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;"><strong>Type:</strong> ${occupancy}</div>` : ''}
+                   ${ssl ? `<div style="font-size: 11px; color: var(--text-secondary); line-height: 1.45;"><strong>SSL:</strong> ${ssl}</div>` : ''}
+                   <div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">
+                     Color: <span style="color:${color};">■</span> oldest (red) → newest (blue)
+                     ${nameSource ? ` &nbsp;·&nbsp; name via ${nameSource}` : ''}
+                     ${source ? ` &nbsp;·&nbsp; ${source}` : ''}
+                   </div>
+                 </div>`,
+                {
+                  permanent: false,
+                  direction: 'top',
+                  className: 'custom-tooltip events-tooltip',
+                  offset: [10, -20],
+                  sticky: true
+                }
+              );
+              layer.on({
+                mouseover: (e) => {
+                  const l = e.target;
+                  if (l.setRadius) l.setRadius(9);
+                  l.setStyle({ weight: 2.5, fillOpacity: 1 });
+                  l.bringToFront();
+                },
+                mouseout: (e) => {
+                  const l = e.target;
+                  if (l.setRadius) l.setRadius(6);
+                  l.setStyle({ weight: 1.5, fillOpacity: 0.85 });
+                }
+              });
+            }}
+          />
+        );
+      })()}
 
       {/* Flood Zones Layer */}
       {activeLayers.floodZones && floodZonesData && (
@@ -3368,6 +4951,78 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
+      {activeLayers.restaurants && restaurantsData && (
+        <GeoJSON
+          key={`restaurants-${searchQuery}-${Array.from(hiddenRestaurantGenres || []).sort().join('|')}`}
+          data={restaurantsData}
+          filter={(feature) => {
+            const genre = feature.properties?.RESTAURANT_GENRE || 'Restaurant';
+            if (hiddenRestaurantGenres && hiddenRestaurantGenres.has(genre)) return false;
+            return restaurantFeatureMatchesSearch(feature, normalizedSearchQuery);
+          }}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, getRestaurantPointStyle(feature.properties))
+          }
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const genre = escapeHtml(p.RESTAURANT_GENRE || 'Restaurant');
+            const name = escapeHtml(p.Trade_Name || p.Corporate_Name || 'Food vendor');
+            const corporate = p.Trade_Name && p.Corporate_Name && p.Trade_Name !== p.Corporate_Name
+              ? escapeHtml(p.Corporate_Name)
+              : '';
+            const address = escapeHtml(p.MAR_MATCHADDRESS || p.Business_Address || '');
+            const ward = escapeHtml(p.MAR_WARD || '');
+            const anc = escapeHtml(p.MAR_ANC || '');
+            const zip = escapeHtml(p.MAR_ZIPCODE || '');
+            const license = escapeHtml(p.License__ || '');
+            const description = escapeHtml(p.Description || '');
+            const expiration = escapeHtml(p.Expiration_Date || '');
+            const fill = restaurantGenreColorMap[p.RESTAURANT_GENRE] || '#f97316';
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 320px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: ${fill}; margin-right: 6px;">●</span>${name}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 700; color: ${fill}; text-transform: uppercase; letter-spacing: 0.35px; margin-bottom: 6px;">${genre}</div>`
+            ];
+            if (corporate) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">${corporate}</div>`);
+            if (address) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">${address}${zip ? ` · ${zip}` : ''}</div>`);
+            if (ward || anc) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">${[ward, anc].filter(Boolean).join(' · ')}</div>`);
+            if (description) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${description}</div>`);
+            if (license || expiration) {
+              lines.push(
+                `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${license ? `License: ${license}` : ''}${license && expiration ? ' · ' : ''}${expiration ? `Expires: ${expiration}` : ''}</div>`
+              );
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">`,
+              `DC ArcGIS food-license records from the DCRA food distribution dataset; genre is based on license layer.`,
+              `</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius((p.RESTAURANT_GENRE === 'Restaurant' ? 7 : 6));
+                l.setStyle({ weight: 2.5, fillOpacity: 0.95 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle(getRestaurantPointStyle(p));
+                l.setRadius(getRestaurantPointStyle(p).radius);
+              }
+            });
+          }}
+        />
+      )}
+
       {activeLayers.treeCanopy && treeCanopyData && (
         <GeoJSON
           ref={treeCanopyLayerRef}
@@ -3659,6 +5314,74 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
         />
       )}
 
+      {activeLayers.emergencyRoutes && emergencyRoutesData && (
+        <GeoJSON
+          key={`emergency-routes-${searchQuery}`}
+          data={emergencyRoutesData}
+          filter={(feature) => emergencyRouteMatchesSearch(feature, normalizedSearchQuery)}
+          style={(feature) => getEmergencyRouteStyle(feature.properties)}
+          onEachFeature={(feature, layer) => {
+            const props = feature.properties || {};
+            const style = getEmergencyRouteStyle(props);
+            const routeClass = escapeHtml(props.ROUTE_CLASS || 'Emergency Route');
+            const roadName = escapeHtml(
+              props.NAME ||
+              [props.REGISTEREDNAME, props.STREETTYPE, props.QUADRANT].filter(Boolean).join(' ') ||
+              props.FULLSTREET ||
+              'Route segment'
+            );
+            const routeType = escapeHtml(props.ROUTE_TYPE || '');
+            const status = escapeHtml(props.STATUS || '');
+            const functionalClass = escapeHtml(props.FC || '');
+            const gisId = escapeHtml(props.GIS_ID || '');
+
+            const lines = [`<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 340px;">`];
+            lines.push(
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 2px; border-bottom: 1px solid ${style.color}; padding-bottom: 4px;">
+                 <span style="color: ${style.color}; margin-right: 4px;">━</span>${roadName}
+               </div>`
+            );
+            lines.push(
+              `<div style="font-size: 11px; font-weight: 700; color: ${style.color}; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                 ${routeClass}
+               </div>`
+            );
+            if (routeType) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">${routeType}</div>`);
+            if (status || functionalClass) {
+              lines.push(
+                `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35; margin-top: 4px;">
+                   ${status ? `<strong>Status:</strong> ${status}` : ''}${status && functionalClass ? '<br>' : ''}${functionalClass ? `<strong>Road class:</strong> ${functionalClass}` : ''}
+                 </div>`
+              );
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 7px; font-style: italic;">
+                 Official DCGIS snow emergency and regional evacuation route data.${gisId ? ` ${gisId}` : ''}
+               </div>`
+            );
+            lines.push(`</div>`);
+
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setStyle(getEmergencyRouteStyle(props, true));
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
+              },
+              mouseout: (e) => {
+                e.target.setStyle(getEmergencyRouteStyle(props));
+              }
+            });
+          }}
+        />
+      )}
+
       {activeLayers.bikeLanes && bikeLanesData && (
         <GeoJSON
           key="bikelanes"
@@ -3887,10 +5610,10 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
           key={`bus-routes-${searchQuery}`}
           data={busRoutesData}
           filter={(feature) => busRouteFeatureMatchesSearch(feature, normalizedSearchQuery)}
-          style={(feature) => getBusRouteLineStyle(feature)}
+          style={(feature) => getBusRouteLineStyle(feature, selectedBusRouteKey)}
           onEachFeature={(feature, layer) => {
             const props = feature.properties || {};
-            const lineStyle = getBusRouteLineStyle(feature);
+            const lineStyle = getBusRouteLineStyle(feature, selectedBusRouteKeyRef.current);
             const color = lineStyle.color;
             const route = escapeHtml(props.ROUTE || '');
             const desc = escapeHtml(props.DESCRIPTION || '');
@@ -3925,14 +5648,19 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               offset: [10, -20]
             });
             layer.on({
+              click: (e) => {
+                if (e.originalEvent) L.DomEvent.stopPropagation(e.originalEvent);
+                const k = getBusRouteSelectionKey(feature);
+                setSelectedBusRouteKey((prev) => (prev === k ? null : k));
+              },
               mouseover: (e) => {
                 const l = e.target;
-                const base = getBusRouteLineStyle(feature);
+                const base = getBusRouteLineStyle(feature, selectedBusRouteKeyRef.current);
                 l.setStyle({ ...base, weight: base.weight + 3, opacity: 1 });
                 if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
               },
               mouseout: (e) => {
-                e.target.setStyle(getBusRouteLineStyle(feature));
+                e.target.setStyle(getBusRouteLineStyle(feature, selectedBusRouteKeyRef.current));
               }
             });
           }}
@@ -4198,6 +5926,34 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
       <ZoomWidget isLeftAligned={isLeftAligned} />
     </MapContainer>
+    {loadingSummary && (
+      <div
+        style={{
+          position: 'absolute',
+          top: '16px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1200,
+          background: 'rgba(15, 23, 42, 0.78)',
+          color: '#e2e8f0',
+          border: '1px solid rgba(148, 163, 184, 0.35)',
+          borderRadius: '999px',
+          padding: '8px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          backdropFilter: 'blur(6px)',
+          boxShadow: '0 8px 30px rgba(2, 6, 23, 0.45)',
+          fontSize: '12px',
+          fontWeight: 600,
+          pointerEvents: 'none'
+        }}
+      >
+        <span className="loading-spinner" />
+        <span>{loadingSummary}</span>
+      </div>
+    )}
+    </div>
   );
 };
 

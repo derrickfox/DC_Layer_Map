@@ -3,99 +3,78 @@ import MapArea from './components/MapArea';
 import LayerControls from './components/LayerControls';
 import './index.css';
 
-const DEFAULT_VISIBLE_NEIGHBORHOODS = new Set([
-  'Adams Morgan',
-  'American University Park',
-  'Barnaby Woods',
-  'Berkley',
-  'Bloomingdale',
-  'Brightwood',
-  'Buzzard Point',
-  'Cardozo/Shaw',
-  'Cathedral Heights',
-  'Chevy Chase',
-  'Chinatown',
-  'Cleveland Park',
-  'Columbia Heights',
-  'Connecticut Avenue/K Street',
-  'Downtown',
-  'Dupont Circle',
-  'Foggy Bottom',
-  'Friendship Heights',
-  'Forest Hills',
-  'Foxhall Crescent',
-  'Foxhall Village',
-  'Georgetown',
-  'Glover Park',
-  'Burleith/Hillandale',
-  'Kalorama Heights',
-  'Observatory Circle',
-  'Logan Circle',
-  'Mt. Pleasant',
-  'Kent',
-  'North Cleveland Park',
-  'Palisades',
-  'Petworth',
-  'Shaw',
-  'Spring Valley',
-  'Takoma',
-  'Tenleytown',
-  'Truxton Circle',
-  'U Street Corridor',
-  'Union Station',
-  'Van Ness',
-  'Wesley Heights',
-  'Woodley Park',
-  'Brookland',
-  'Brentwood',
-  'Fort Lincoln',
-  'Fort Totten',
-  'Eckington',
-  'Edgewood',
-  'H Street Corridor',
-  'Ivy City',
-  'Langdon',
-  'Lamont Riggs',
-  'Le Droit Park',
-  'Michigan Park',
-  'Queens Chapel',
-  'Trinidad',
-  'Woodridge',
-  'Arboretum',
-  'Benning',
-  'Carver Langston',
-  'Deanwood',
-  'Historic Anacostia',
-  'Kenilworth',
-  'Kingman Park',
-  'River Terrace',
-  'Barracks Row',
-  'Barry Farm',
-  'Bellevue',
-  'Capitol Hill',
-  'Capitol View',
-  'Congress Heights',
-  'Crestwood',
-  'Fairlawn',
-  'Fort Dupont',
-  'Hill East',
-  'Hillcrest',
-  'National Mall',
-  'Navy Yard',
-  'Penn Branch',
-  'Randle Highlands',
-  'Shipley Terrace',
-  'Stanton Park',
-  'Southwest/Waterfront',
-  'Washington Highlands',
-  'Woodland/Fort Stanton'
-]);
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error('App render error:', error, info);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div
+          style={{
+            padding: 24,
+            fontFamily: 'system-ui, sans-serif',
+            maxWidth: 640,
+            lineHeight: 1.5
+          }}
+        >
+          <h1 style={{ fontSize: '1.25rem', marginTop: 0 }}>The map couldn’t load</h1>
+          <p style={{ color: '#444' }}>
+            Something threw an error while rendering. Check the browser console for details, then try a hard refresh.
+          </p>
+          <pre
+            style={{
+              background: '#f4f4f5',
+              padding: 12,
+              borderRadius: 8,
+              overflow: 'auto',
+              fontSize: 13
+            }}
+          >
+            {String(this.state.error?.message || this.state.error)}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const SYNTHETIC_NEIGHBORHOODS = [
   'U Street Corridor',
   'H Street Corridor',
   'Barracks Row',
-  'Hill East'
+  'Hill East',
+  '16th Street Heights',
+  'Hampshire Knolls',
+  'NOMA',
+  'BellAir'
+];
+
+const RESTAURANT_GENRES = [
+  'Bakery',
+  'Bed and Breakfast',
+  'Candy Manufacturing',
+  'Catering',
+  'Delicatessen',
+  'Food Product',
+  'Grocery Store',
+  'Ice Cream Manufacturer',
+  'Marine Food Wholesale',
+  'Marine Retail Food',
+  'Mobile Delicatessen',
+  'Public School Cafeteria',
+  'Restaurant'
 ];
 
 function App() {
@@ -104,17 +83,20 @@ function App() {
     neighborhoods: true,
     parks: false,
     squares: false,
-    museums: true,
+    museums: false,
     dcps: false,
     librariesRecPools: false,
     muralsPublicArt: false,
     historicLandmarks: false,
-    events: true,
+    events: false,
+    liveMusic: false,
     comedyVenues: false,
     festivalsParades: false,
     breweriesDistilleries: false,
-    monuments: true,
-    embassies: true,
+    monuments: false,
+    embassies: false,
+    religiousInstitutions: false,
+    universities: false,
     wards: false,
     floodZones: false,
     topography: false,
@@ -128,10 +110,13 @@ function App() {
     rentControlBuildings: false,
     publicHousing: false,
     farmersMarkets: false,
+    restaurants: false,
     bikeLanes: false,
+    emergencyRoutes: false,
     bus: false,
     metro: false,
-    zoning: false
+    zoning: false,
+    apartmentBuildings: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);
@@ -139,6 +124,7 @@ function App() {
   const [floodZonesData, setFloodZonesData] = useState(null);
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
+  const [hiddenRestaurantGenres, setHiddenRestaurantGenres] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [previousActiveLayers, setPreviousActiveLayers] = useState(null);
   const [layerSuspendSnapshot, setLayerSuspendSnapshot] = useState(null);
@@ -163,6 +149,15 @@ function App() {
             rawNames += ', Kent, Berkley, Dalecarlia';
             feature.properties.NBH_NAMES = rawNames;
           }
+          if (rawNames.includes('Carver Langston')) {
+            rawNames = rawNames.replace(/\bCarver Langston\b/g, 'Carver, Langston');
+            feature.properties.NBH_NAMES = rawNames;
+          }
+          // Normalize source typo so the UI and matching use the canonical name.
+          if (rawNames.includes('Lamont Riggs')) {
+            rawNames = rawNames.replace(/\bLamont Riggs\b/g, 'Lamond Riggs');
+            feature.properties.NBH_NAMES = rawNames;
+          }
 
           const names = rawNames
             .split(',')
@@ -176,7 +171,7 @@ function App() {
         
         const sortedNames = Array.from(allNames).sort();
         setNeighborhoodList(sortedNames);
-        setHiddenNeighborhoods(new Set(sortedNames.filter(name => !DEFAULT_VISIBLE_NEIGHBORHOODS.has(name))));
+        setHiddenNeighborhoods(new Set());
       })
       .catch(err => console.error("Error fetching neighborhoods GeoJSON:", err));
 
@@ -236,6 +231,26 @@ function App() {
     }
   };
 
+  const toggleRestaurantGenreVisibility = (name) => {
+    setHiddenRestaurantGenres(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(name)) {
+        newSet.delete(name);
+      } else {
+        newSet.add(name);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllRestaurantGenresVisibility = () => {
+    if (hiddenRestaurantGenres.size === RESTAURANT_GENRES.length && RESTAURANT_GENRES.length > 0) {
+      setHiddenRestaurantGenres(new Set());
+    } else {
+      setHiddenRestaurantGenres(new Set(RESTAURANT_GENRES));
+    }
+  };
+
   const handleSearchChange = (newQuery) => {
     if (searchQuery === '' && newQuery !== '') {
       // Starting a search: remember current layers
@@ -256,6 +271,7 @@ function App() {
           activeLayers={activeLayers} 
           geoJsonData={geoJsonData}
           hiddenNeighborhoods={hiddenNeighborhoods}
+          hiddenRestaurantGenres={hiddenRestaurantGenres}
           dcBoundary={dcBoundary}
           floodZonesData={floodZonesData}
           searchQuery={searchQuery}
@@ -273,6 +289,10 @@ function App() {
           hiddenNeighborhoods={hiddenNeighborhoods}
           toggleNeighborhoodVisibility={toggleNeighborhoodVisibility}
           toggleAllNeighborhoodsVisibility={toggleAllNeighborhoodsVisibility}
+          restaurantGenreList={RESTAURANT_GENRES}
+          hiddenRestaurantGenres={hiddenRestaurantGenres}
+          toggleRestaurantGenreVisibility={toggleRestaurantGenreVisibility}
+          toggleAllRestaurantGenresVisibility={toggleAllRestaurantGenresVisibility}
           searchQuery={searchQuery}
           setSearchQuery={handleSearchChange}
           isLeftAligned={isLeftAligned}
@@ -285,4 +305,10 @@ function App() {
   );
 }
 
-export default App;
+export default function AppWithErrorBoundary() {
+  return (
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
+  );
+}
