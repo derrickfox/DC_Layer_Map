@@ -9,6 +9,7 @@ import {
   LOCKED_NEIGHBORHOOD_ANCHORS
 } from '../data/lockedNeighborhoodAnchors.js';
 import { getCached, setCached, fetchWithCache } from '../utils/layerCache.js';
+import { fetchApartmentBuildings } from '../services/dcApartmentBuildingsService.js';
 
 // Fix for default marker icons in Vite + Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -1881,6 +1882,8 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaur
   const [universitiesData, setUniversitiesData] = useState(null);
   const [emergencyRoutesData, setEmergencyRoutesData] = useState(null);
   const [apartmentBuildingsData, setApartmentBuildingsData] = useState(null);
+  const [apartmentBuildingsStatus, setApartmentBuildingsStatus] = useState(null);
+  const [apartmentBuildingsError, setApartmentBuildingsError] = useState(null);
   const [osmMonumentsData, setOsmMonumentsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
@@ -2244,108 +2247,18 @@ out center geom tags;`;
     const cached = getCached('apartment_buildings');
     if (cached) { setApartmentBuildingsData(cached); return; }
 
-    const CAMA_URL = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Property_and_Land_WebMercator/MapServer/23/query';
-    const TAX_LOTS_URL = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Property_and_Land_WebMercator/MapServer/39/query';
-
-    // Step 1: Pull all apartment buildings (20+ units) from the Commercial CAMA table.
-    // Large apartment buildings are classified commercially in DC's tax system.
-    fetch(`${CAMA_URL}?where=NUM_UNITS%3E%3D20+AND+AYB+IS+NOT+NULL&outFields=SSL%2CAYB%2CNUM_UNITS&resultRecordCount=5000&f=json`)
-      .then(r => r.json())
-      .then(camaData => {
-        const records = camaData.features || [];
-        if (!records.length) return Promise.resolve({ sslMap: {}, batchResults: [] });
-
-        const sslMap = {};
-        records.forEach(({ attributes: a }) => {
-          if (a.SSL && a.AYB) sslMap[a.SSL] = { ayb: a.AYB, numUnits: a.NUM_UNITS };
-        });
-
-        // Step 2: Batch-query Tax Lots by SSL to get polygon geometry (then compute centroid).
-        const sslList = Object.keys(sslMap);
-        const BATCH = 150;
-        const batches = [];
-        for (let i = 0; i < sslList.length; i += BATCH) batches.push(sslList.slice(i, i + BATCH));
-
-        return Promise.all(
-          batches.map(batch => {
-            const sqlIn = batch.map(s => `'${s}'`).join(',');
-            return fetch(TAX_LOTS_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({
-                where: `SSL IN (${sqlIn})`,
-                outFields: 'SSL',
-                returnGeometry: true,
-                outSR: 4326,
-                f: 'json'
-              })
-            }).then(r => r.json());
-          })
-        ).then(batchResults => ({ sslMap, batchResults }));
-      })
-      .then(async ({ sslMap, batchResults }) => {
-        const features = [];
-        batchResults.forEach(result => {
-          (result.features || []).forEach(f => {
-            const ssl = f.attributes?.SSL;
-            const info = sslMap?.[ssl];
-            if (!info || !f.geometry?.rings?.length) return;
-
-            // Compute bounding-box centroid from the outer ring
-            const ring = f.geometry.rings[0];
-            let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
-            ring.forEach(([lng, lat]) => {
-              if (lng < minLng) minLng = lng;
-              if (lng > maxLng) maxLng = lng;
-              if (lat < minLat) minLat = lat;
-              if (lat > maxLat) maxLat = lat;
-            });
-
-            features.push({
-              type: 'Feature',
-              geometry: { type: 'Point', coordinates: [(minLng + maxLng) / 2, (minLat + maxLat) / 2] },
-              properties: { AYB: info.ayb, NUM_UNITS: info.numUnits, SSL: ssl }
-            });
-          });
-        });
-
-        // Best-effort: match each apartment to a named OSM building within 100m
-        try {
-          const osmQuery = '[out:json][timeout:30];(way[building][name](38.80,-77.12,38.99,-76.91);relation[building][name](38.80,-77.12,38.99,-76.91););out center tags;';
-          const osmResp = await fetch('https://overpass-api.de/api/interpreter', {
-            method: 'POST',
-            body: `data=${encodeURIComponent(osmQuery)}`
-          });
-          const osmData = await osmResp.json();
-          const namedBuildings = (osmData.elements || [])
-            .filter(el => el.tags?.name && (el.center || el.type === 'node'))
-            .map(el => ({
-              name: el.tags.name,
-              lat: el.center?.lat ?? el.lat,
-              lng: el.center?.lon ?? el.lon
-            }));
-
-          features.forEach(f => {
-            const [lng, lat] = f.geometry.coordinates;
-            let bestName = null;
-            let bestDist = 100; // meters
-            namedBuildings.forEach(b => {
-              const dlat = (b.lat - lat) * 111000;
-              const dlng = (b.lng - lng) * 111000 * Math.cos(lat * Math.PI / 180);
-              const dist = Math.sqrt(dlat * dlat + dlng * dlng);
-              if (dist < bestDist) { bestDist = dist; bestName = b.name; }
-            });
-            if (bestName) f.properties.OSM_NAME = bestName;
-          });
-        } catch (osmErr) {
-          console.warn('OSM building name lookup skipped:', osmErr);
-        }
-
-        const result = { type: 'FeatureCollection', features };
+    setApartmentBuildingsError(null);
+    fetchApartmentBuildings(setApartmentBuildingsStatus)
+      .then(result => {
         setCached('apartment_buildings', result);
         setApartmentBuildingsData(result);
+        setApartmentBuildingsStatus(null);
       })
-      .catch(err => console.error('Error fetching apartment buildings data:', err));
+      .catch(err => {
+        console.error('[Apartment Buildings] fetch failed:', err);
+        setApartmentBuildingsError('Could not load apartment building data. Check the console for details.');
+        setApartmentBuildingsStatus(null);
+      });
   }, [activeLayers.apartmentBuildings, apartmentBuildingsData]);
 
   useEffect(() => {
@@ -2940,6 +2853,8 @@ out center tags;`;
     if (activeLayers.propertyValues && !propertyValuesData) names.push('Property Values');
     if (activeLayers.crime && !crimeData) names.push('Crime');
     if (activeLayers.bikeLanes && !bikeLanesData) names.push('Bike Lanes');
+    if (activeLayers.apartmentBuildings && !apartmentBuildingsData)
+      names.push(apartmentBuildingsStatus || 'Apartment Buildings');
     return names;
   }, [
     activeLayers,
@@ -2971,7 +2886,9 @@ out center tags;`;
     emergencyRoutesData,
     propertyValuesData,
     crimeData,
-    bikeLanesData
+    bikeLanesData,
+    apartmentBuildingsData,
+    apartmentBuildingsStatus
   ]);
 
   const loadingSummary =
@@ -4506,9 +4423,19 @@ out center tags;`;
       )}
 
       {/* Apartment Buildings Layer */}
+      {activeLayers.apartmentBuildings && apartmentBuildingsError && (
+        <div style={{
+          position: 'absolute', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8,
+          padding: '10px 16px', fontSize: 13, color: '#b91c1c', zIndex: 1000,
+          maxWidth: 360, textAlign: 'center', pointerEvents: 'none'
+        }}>
+          {apartmentBuildingsError}
+        </div>
+      )}
       {activeLayers.apartmentBuildings && apartmentBuildingsData && (() => {
         const aybValues = apartmentBuildingsData.features
-          .map(f => f.properties?.AYB)
+          .map(f => f.properties?.ayb)
           .filter(v => v != null && v > 0)
           .sort((a, b) => a - b);
         const p5  = aybValues[Math.floor(aybValues.length * 0.05)] ?? aybValues[0];
@@ -4517,7 +4444,6 @@ out center tags;`;
 
         const getColor = (ayb) => {
           const ratio = Math.max(0, Math.min(1, (ayb - p5) / range));
-          // Outliers below p5 get darkened red instead of pure red
           if (ayb < p5) return `hsl(0, 90%, ${Math.max(20, 50 - (p5 - ayb) * 0.5)}%)`;
           return `hsl(${Math.round(ratio * 240)}, 85%, 50%)`;
         };
@@ -4530,11 +4456,11 @@ out center tags;`;
               if (!searchQuery) return true;
               const q = searchQuery.toLowerCase();
               const p = feature.properties || {};
-              return [p.ADDRESS, String(p.AYB || ''), String(p.NUM_UNITS || '')]
+              return [p.displayName, p.address, String(p.ayb || ''), String(p.unitCount || '')]
                 .some(v => String(v || '').toLowerCase().includes(q));
             }}
             pointToLayer={(feature, latlng) => {
-              const ayb = feature.properties?.AYB;
+              const ayb = feature.properties?.ayb;
               const color = getColor(ayb);
               return L.circleMarker(latlng, {
                 pane: 'markerPane',
@@ -4548,26 +4474,31 @@ out center tags;`;
             }}
             onEachFeature={(feature, layer) => {
               const p = feature.properties || {};
-              const ayb = p.AYB;
+              const ayb = p.ayb;
               const color = getColor(ayb);
-              const ssl = escapeHtml(p.SSL || '');
-              const units = p.NUM_UNITS != null ? p.NUM_UNITS : '—';
-              const buildingName = p.OSM_NAME ? escapeHtml(p.OSM_NAME) : null;
+              const displayName = escapeHtml(p.displayName || 'Apartment Building');
+              const address = p.address ? escapeHtml(p.address) : null;
+              const units = p.unitCount != null ? p.unitCount : '—';
+              const ssl = p.ssl ? escapeHtml(p.ssl) : null;
+              const source = p.source ? escapeHtml(p.source) : null;
+              const nameSource = p.nameSource ? escapeHtml(p.nameSource) : null;
+              const occupancy = p.occupancyType ? escapeHtml(p.occupancyType) : null;
 
               layer.bindTooltip(
                 `<div style="font-family: 'Outfit', sans-serif; max-width: 320px;">
                    <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                     <span style="color: ${color};">🏢</span> ${buildingName ?? 'Apartment Building'}
+                     <span style="color: ${color};">🏢</span> ${displayName}
                    </div>
-                   <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">
-                     <strong>Year built:</strong> ${ayb ?? '—'}
+                   ${address ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">${address}</div>` : ''}
+                   <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin-top: 4px;">
+                     <strong>Units:</strong> ${units}${ayb ? ` &nbsp;·&nbsp; <strong>Built:</strong> ${ayb}` : ''}
                    </div>
-                   <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">
-                     <strong>Units:</strong> ${units}
-                   </div>
+                   ${occupancy ? `<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;"><strong>Type:</strong> ${occupancy}</div>` : ''}
                    ${ssl ? `<div style="font-size: 11px; color: var(--text-secondary); line-height: 1.45;"><strong>SSL:</strong> ${ssl}</div>` : ''}
                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">
-                     Color: <span style="color:${color};">■</span> oldest (red) → newest (blue)${buildingName ? ' · name via OpenStreetMap' : ''}
+                     Color: <span style="color:${color};">■</span> oldest (red) → newest (blue)
+                     ${nameSource ? ` &nbsp;·&nbsp; name via ${nameSource}` : ''}
+                     ${source ? ` &nbsp;·&nbsp; ${source}` : ''}
                    </div>
                  </div>`,
                 {
