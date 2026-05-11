@@ -2283,7 +2283,7 @@ out center geom tags;`;
           })
         ).then(batchResults => ({ sslMap, batchResults }));
       })
-      .then(({ sslMap, batchResults }) => {
+      .then(async ({ sslMap, batchResults }) => {
         const features = [];
         batchResults.forEach(result => {
           (result.features || []).forEach(f => {
@@ -2308,6 +2308,38 @@ out center geom tags;`;
             });
           });
         });
+
+        // Best-effort: match each apartment to a named OSM building within 100m
+        try {
+          const osmQuery = '[out:json][timeout:30];(way[building][name](38.80,-77.12,38.99,-76.91);relation[building][name](38.80,-77.12,38.99,-76.91););out center tags;';
+          const osmResp = await fetch('https://overpass-api.de/api/interpreter', {
+            method: 'POST',
+            body: `data=${encodeURIComponent(osmQuery)}`
+          });
+          const osmData = await osmResp.json();
+          const namedBuildings = (osmData.elements || [])
+            .filter(el => el.tags?.name && (el.center || el.type === 'node'))
+            .map(el => ({
+              name: el.tags.name,
+              lat: el.center?.lat ?? el.lat,
+              lng: el.center?.lon ?? el.lon
+            }));
+
+          features.forEach(f => {
+            const [lng, lat] = f.geometry.coordinates;
+            let bestName = null;
+            let bestDist = 100; // meters
+            namedBuildings.forEach(b => {
+              const dlat = (b.lat - lat) * 111000;
+              const dlng = (b.lng - lng) * 111000 * Math.cos(lat * Math.PI / 180);
+              const dist = Math.sqrt(dlat * dlat + dlng * dlng);
+              if (dist < bestDist) { bestDist = dist; bestName = b.name; }
+            });
+            if (bestName) f.properties.OSM_NAME = bestName;
+          });
+        } catch (osmErr) {
+          console.warn('OSM building name lookup skipped:', osmErr);
+        }
 
         const result = { type: 'FeatureCollection', features };
         setCached('apartment_buildings', result);
@@ -4517,11 +4549,12 @@ out center tags;`;
               const color = getColor(ayb);
               const ssl = escapeHtml(p.SSL || '');
               const units = p.NUM_UNITS != null ? p.NUM_UNITS : '—';
+              const buildingName = p.OSM_NAME ? escapeHtml(p.OSM_NAME) : null;
 
               layer.bindTooltip(
                 `<div style="font-family: 'Outfit', sans-serif; max-width: 320px;">
                    <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                     <span style="color: ${color};">🏢</span> Apartment Building
+                     <span style="color: ${color};">🏢</span> ${buildingName ?? 'Apartment Building'}
                    </div>
                    <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">
                      <strong>Year built:</strong> ${ayb ?? '—'}
@@ -4531,7 +4564,7 @@ out center tags;`;
                    </div>
                    ${ssl ? `<div style="font-size: 11px; color: var(--text-secondary); line-height: 1.45;"><strong>SSL:</strong> ${ssl}</div>` : ''}
                    <div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">
-                     Color: <span style="color:${color};">■</span> oldest (red) → newest (blue)
+                     Color: <span style="color:${color};">■</span> oldest (red) → newest (blue)${buildingName ? ' · name via OpenStreetMap' : ''}
                    </div>
                  </div>`,
                 {
