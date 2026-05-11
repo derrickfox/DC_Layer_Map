@@ -8,6 +8,7 @@ import {
   LOCKED_NEIGHBORHOOD_ALIASES,
   LOCKED_NEIGHBORHOOD_ANCHORS
 } from '../data/lockedNeighborhoodAnchors.js';
+import { getCached, setCached, fetchWithCache } from '../utils/layerCache.js';
 
 // Fix for default marker icons in Vite + Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -23,6 +24,8 @@ let DefaultIcon = L.icon({
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
+
+const largePointCanvasRenderer = L.canvas({ padding: 0.5 });
 
 // Custom Canvas Layer to decode Mapzen Terrain-RGB and apply a Red-to-Blue heatmap
 const TerrainHeatmapLayer = L.GridLayer.extend({
@@ -913,9 +916,10 @@ const formatOsmTag = (value) => String(value || '')
   .replace(/\b\w/g, (char) => char.toUpperCase());
 
 const getReligiousCategory = (tags = {}) => {
-  const religion = String(tags.religion || '').toLowerCase();
-  const denomination = String(tags.denomination || tags['religion:denomination'] || '').toLowerCase();
-  const name = String(tags.name || '').toLowerCase();
+  const t = tags && typeof tags === 'object' && !Array.isArray(tags) ? tags : {};
+  const religion = String(t.religion || '').toLowerCase();
+  const denomination = String(t.denomination || t['religion:denomination'] || '').toLowerCase();
+  const name = String(t.name || '').toLowerCase();
   const haystack = `${religion} ${denomination} ${name}`;
 
   if (religion === 'jewish' || haystack.includes('synagogue')) return 'Jewish';
@@ -952,9 +956,18 @@ const getReligiousInstitutionStyle = (tags = {}) => {
 };
 
 const getOsmElementCoordinates = (element) => {
-  if (Number.isFinite(element.lon) && Number.isFinite(element.lat)) return [element.lon, element.lat];
-  if (element.center && Number.isFinite(element.center.lon) && Number.isFinite(element.center.lat)) {
-    return [element.center.lon, element.center.lat];
+  const num = (v) => {
+    const n = typeof v === 'number' ? v : parseFloat(v);
+    return Number.isFinite(n) ? n : NaN;
+  };
+  const lon = num(element?.lon);
+  const lat = num(element?.lat);
+  if (Number.isFinite(lon) && Number.isFinite(lat)) return [lon, lat];
+  const c = element?.center;
+  if (c) {
+    const clon = num(c.lon ?? c.lng);
+    const clat = num(c.lat);
+    if (Number.isFinite(clon) && Number.isFinite(clat)) return [clon, clat];
   }
   return null;
 };
@@ -1173,9 +1186,11 @@ const osmUniversitiesToGeoJson = (elements = []) => ({
 });
 
 const fetchOverpassJson = async (query) => {
+  // Prefer overpass-api.de first: the kumi mirror often sits behind a slow proxy and
+  // returns 504 after ~2 minutes while the same query succeeds on .de in seconds.
   const endpoints = [
-    'https://overpass.kumi.systems/api/interpreter',
-    'https://overpass-api.de/api/interpreter'
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter'
   ];
   let lastError = null;
 
@@ -1224,6 +1239,88 @@ const fetchPagedArcGisGeoJson = async (url, pageSize = 1000) => {
     ...(base || { type: 'FeatureCollection' }),
     type: 'FeatureCollection',
     features
+  };
+};
+
+const FOOD_VENDOR_LICENSE_LAYERS = [
+  { id: 0, genre: 'Bakery' },
+  { id: 1, genre: 'Bed and Breakfast' },
+  { id: 2, genre: 'Candy Manufacturing' },
+  { id: 3, genre: 'Catering' },
+  { id: 4, genre: 'Delicatessen' },
+  { id: 5, genre: 'Food Product' },
+  { id: 6, genre: 'Grocery Store' },
+  { id: 7, genre: 'Ice Cream Manufacturer' },
+  { id: 8, genre: 'Marine Food Wholesale' },
+  { id: 9, genre: 'Marine Retail Food' },
+  { id: 10, genre: 'Mobile Delicatessen' },
+  { id: 11, genre: 'Public School Cafeteria' },
+  { id: 12, genre: 'Restaurant' }
+];
+
+const FOOD_VENDOR_LICENSE_SERVICE =
+  'https://services.arcgis.com/neT9SoYxizqTHZPH/arcgis/rest/services/DCRA_Food_Distribution_Data/FeatureServer';
+
+const restaurantGenreColorMap = {
+  Bakery: '#d97706',
+  'Bed and Breakfast': '#7c3aed',
+  'Candy Manufacturing': '#ec4899',
+  Catering: '#f97316',
+  Delicatessen: '#b45309',
+  'Food Product': '#0891b2',
+  'Grocery Store': '#15803d',
+  'Ice Cream Manufacturer': '#38bdf8',
+  'Marine Food Wholesale': '#0f766e',
+  'Marine Retail Food': '#14b8a6',
+  'Mobile Delicatessen': '#ef4444',
+  'Public School Cafeteria': '#6366f1',
+  Restaurant: '#ea580c'
+};
+
+const restaurantGenreStrokeMap = {
+  Bakery: '#fbbf24',
+  'Bed and Breakfast': '#c4b5fd',
+  'Candy Manufacturing': '#f9a8d4',
+  Catering: '#fed7aa',
+  Delicatessen: '#fcd34d',
+  'Food Product': '#67e8f9',
+  'Grocery Store': '#86efac',
+  'Ice Cream Manufacturer': '#bae6fd',
+  'Marine Food Wholesale': '#99f6e4',
+  'Marine Retail Food': '#99f6e4',
+  'Mobile Delicatessen': '#fecaca',
+  'Public School Cafeteria': '#c7d2fe',
+  Restaurant: '#fdba74'
+};
+
+const restaurantFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.RESTAURANT_GENRE,
+    p.Trade_Name,
+    p.Corporate_Name,
+    p.Business_Address,
+    p.MAR_MATCHADDRESS,
+    p.Description,
+    p.License__,
+    p.MAR_WARD,
+    p.MAR_ANC,
+    p.MAR_ZIPCODE
+  ].some((value) => String(value || '').toLowerCase().includes(query));
+};
+
+const getRestaurantPointStyle = (props = {}) => {
+  const genre = props.RESTAURANT_GENRE || 'Restaurant';
+  return {
+    pane: 'markerPane',
+    renderer: largePointCanvasRenderer,
+    radius: genre === 'Restaurant' ? 5 : 4,
+    fillColor: restaurantGenreColorMap[genre] || '#f97316',
+    color: restaurantGenreStrokeMap[genre] || '#fed7aa',
+    weight: 1.5,
+    opacity: 1,
+    fillOpacity: 0.82
   };
 };
 
@@ -1750,7 +1847,7 @@ const hospitalCapabilityLine = (label, raw) => {
   return `${label}: ${v}`;
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
+const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaurantGenres, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
   const dcCenter = [38.9076, -77.0058]; // Eckington, NE DC
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -1774,6 +1871,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
   const [wardsData, setWardsData] = useState(null);
   const [foodDesertsData, setFoodDesertsData] = useState(null);
   const [farmersMarketsData, setFarmersMarketsData] = useState(null);
+  const [restaurantsData, setRestaurantsData] = useState(null);
   const [osmNeighborhoodAnchors, setOsmNeighborhoodAnchors] = useState({});
   const [treeCanopyData, setTreeCanopyData] = useState(null);
   const [combinedSewerData, setCombinedSewerData] = useState(null);
@@ -1873,9 +1971,16 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
+      const cached = getCached('parks_squares');
+      if (cached) {
+        setParksData(cached.parks);
+        setSquaresData(cached.squares);
+        return;
+      }
+
       const p1 = fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/9/query?where=1%3D1&outFields=*&outSR=4326&f=geojson').then(res => res.json());
       const p2 = fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Recreation_WebMercator/MapServer/10/query?where=1%3D1&outFields=*&outSR=4326&f=geojson').then(res => res.json());
-      
+
       Promise.all([p1, p2])
         .then(([localParks, nationalParks]) => {
           const allFeatures = [
@@ -1901,8 +2006,11 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             }
           });
 
-          setParksData({ type: "FeatureCollection", features: pFeatures });
-          setSquaresData({ type: "FeatureCollection", features: sFeatures });
+          const parks = { type: "FeatureCollection", features: pFeatures };
+          const squares = { type: "FeatureCollection", features: sFeatures };
+          setCached('parks_squares', { parks, squares });
+          setParksData(parks);
+          setSquaresData(squares);
         })
         .catch(err => console.error("Error fetching parks/squares data:", err));
     }
@@ -1910,36 +2018,45 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.museums && !museumsData) {
-      fetch('https://opendata.dc.gov/api/download/v1/items/2e65fc16edc3481989d2cc17e6f8c533/geojson?layers=54')
-        .then(res => res.json())
-        .then(data => {
-          data.features.push({
-            type: "Feature",
-            properties: {
-              DCGISPLACE_NAMES_PTNAME: "Daughters of the American Revolution Museum"
-            },
-            geometry: {
-              type: "Point",
-              coordinates: [-77.0395, 38.8923]
-            }
-          });
-          setMuseumsData(data);
-        })
-        .catch(err => console.error("Error fetching museums data:", err));
+      fetchWithCache('museums', () =>
+        fetch('https://opendata.dc.gov/api/download/v1/items/2e65fc16edc3481989d2cc17e6f8c533/geojson?layers=54')
+          .then(res => res.json())
+          .then(data => {
+            data.features.push({
+              type: "Feature",
+              properties: {
+                DCGISPLACE_NAMES_PTNAME: "Daughters of the American Revolution Museum"
+              },
+              geometry: {
+                type: "Point",
+                coordinates: [-77.0395, 38.8923]
+              }
+            });
+            return data;
+          })
+      ).then(data => setMuseumsData(data))
+       .catch(err => console.error("Error fetching museums data:", err));
     }
   }, [activeLayers.museums, museumsData]);
 
   useEffect(() => {
     if (activeLayers.dcps && !dcpsSchoolsData) {
-      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Education_WebMercator/MapServer/5/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
-        .then(res => res.json())
-        .then(data => setDcpsSchoolsData(data))
-        .catch(err => console.error("Error fetching DCPS schools data:", err));
+      fetchWithCache('dcps_schools', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Education_WebMercator/MapServer/5/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+          .then(res => res.json())
+      ).then(data => setDcpsSchoolsData(data))
+       .catch(err => console.error("Error fetching DCPS schools data:", err));
     }
   }, [activeLayers.dcps, dcpsSchoolsData]);
 
   useEffect(() => {
     if (activeLayers.librariesRecPools && !librariesRecPoolsData) {
+      const cached = getCached('libraries_rec_pools');
+      if (cached) {
+        setLibrariesRecPoolsData(cached);
+        return;
+      }
+
       // DC GIS "Swimming Pools" (MapServer/11) includes public *and* private residential pools
       // with no attribute to filter—so we only use DCPL libraries + DPR rec center points.
       // Public aquatics appear on rec centers via POOL / POOL_NAME.
@@ -1967,10 +2084,9 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
               AMENITY_SOURCE: 'DPR'
             }
           }));
-          setLibrariesRecPoolsData({
-            type: 'FeatureCollection',
-            features: [...libFeatures, ...recFeatures]
-          });
+          const combined = { type: 'FeatureCollection', features: [...libFeatures, ...recFeatures] };
+          setCached('libraries_rec_pools', combined);
+          setLibrariesRecPoolsData(combined);
         })
         .catch((err) => console.error('Error fetching libraries / recreation centers:', err));
     }
@@ -1986,6 +2102,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
 
   useEffect(() => {
     if (activeLayers.historicLandmarks && !historicLandmarksData) {
+      const cached = getCached('historic_landmarks');
+      if (cached) {
+        setHistoricLandmarksData(cached);
+        return;
+      }
+
       const fetchGeoJson = async (url, label) => {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`${label} request failed: ${res.status}`);
@@ -2028,10 +2150,12 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, dcBoundary, f
             }
           }));
 
-          setHistoricLandmarksData({
+          const result = {
             landmarks: { type: 'FeatureCollection', features: landmarkPoints },
             districts: { type: 'FeatureCollection', features: districtFeatures }
-          });
+          };
+          setCached('historic_landmarks', result);
+          setHistoricLandmarksData(result);
         })
         .catch(err => console.error("Error fetching historic landmarks data:", err));
     }
@@ -2051,9 +2175,14 @@ area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="
 );
 out center tags;`;
 
+      const cachedMonuments = getCached('osm_monuments');
+      if (cachedMonuments) { setOsmMonumentsData(cachedMonuments); return; }
+
       fetchOverpassJson(overpassQuery)
         .then((data) => {
-          setOsmMonumentsData(osmStatuesMemorialsToGeoJson(data.elements || []));
+          const result = osmStatuesMemorialsToGeoJson(data.elements || []);
+          setCached('osm_monuments', result);
+          setOsmMonumentsData(result);
         })
         .catch((err) => console.error('Error fetching OSM statues and memorials data:', err));
     }
@@ -2061,7 +2190,7 @@ out center tags;`;
 
   useEffect(() => {
     if (activeLayers.religiousInstitutions && !religiousInstitutionsData) {
-      const overpassQuery = `[out:json][timeout:25];
+      const overpassQuery = `[out:json][timeout:90];
 area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
 (
   node["amenity"="place_of_worship"](area.dc);
@@ -2070,9 +2199,14 @@ area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="
 );
 out center tags;`;
 
+      const cachedReligious = getCached('osm_religious_institutions');
+      if (cachedReligious) { setReligiousInstitutionsData(cachedReligious); return; }
+
       fetchOverpassJson(overpassQuery)
         .then((data) => {
-          setReligiousInstitutionsData(osmPlacesOfWorshipToGeoJson(data.elements || []));
+          const result = osmPlacesOfWorshipToGeoJson(data.elements || []);
+          setCached('osm_religious_institutions', result);
+          setReligiousInstitutionsData(result);
         })
         .catch((err) => console.error('Error fetching religious institutions data:', err));
     }
@@ -2090,9 +2224,14 @@ area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="
 );
 out center geom tags;`;
 
+      const cachedUniversities = getCached('osm_universities');
+      if (cachedUniversities) { setUniversitiesData(cachedUniversities); return; }
+
       fetchOverpassJson(overpassQuery)
         .then((data) => {
-          setUniversitiesData(osmUniversitiesToGeoJson(data.elements || []));
+          const result = osmUniversitiesToGeoJson(data.elements || []);
+          setCached('osm_universities', result);
+          setUniversitiesData(result);
         })
         .catch((err) => console.error('Error fetching universities data:', err));
     }
@@ -2100,6 +2239,9 @@ out center geom tags;`;
 
   useEffect(() => {
     if (activeLayers.emergencyRoutes && !emergencyRoutesData) {
+      const cached = getCached('emergency_routes');
+      if (cached) { setEmergencyRoutesData(cached); return; }
+
       const snowBase = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Snow_WebMercator/MapServer';
       const publicSafetyBase = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Public_Safety_WebMercator/MapServer';
       const query = 'query?where=1%3D1&outFields=*&outSR=4326&f=geojson';
@@ -2135,10 +2277,12 @@ out center geom tags;`;
         }))
       ])
         .then((collections) => {
-          setEmergencyRoutesData({
+          const result = {
             type: 'FeatureCollection',
             features: collections.flatMap((collection) => collection.features || [])
-          });
+          };
+          setCached('emergency_routes', result);
+          setEmergencyRoutesData(result);
         })
         .catch((err) => console.error('Error fetching emergency routes data:', err));
     }
@@ -2216,10 +2360,11 @@ out center geom tags;`;
 
   useEffect(() => {
     if (activeLayers.bikeLanes && !bikeLanesData) {
-      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Bikes_Trails_WebMercator/MapServer/2/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
-        .then(res => res.json())
-        .then(data => setBikeLanesData(data))
-        .catch(err => console.error("Error fetching bike lanes data:", err));
+      fetchWithCache('bike_lanes', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Transportation_Bikes_Trails_WebMercator/MapServer/2/query?where=1%3D1&outFields=*&outSR=4326&f=geojson')
+          .then(res => res.json())
+      ).then(data => setBikeLanesData(data))
+       .catch(err => console.error("Error fetching bike lanes data:", err));
     }
   }, [activeLayers.bikeLanes, bikeLanesData]);
 
@@ -2278,18 +2423,20 @@ out center geom tags;`;
 
   useEffect(() => {
     if (activeLayers.zoning && !zoningData) {
-      import('../data/dc-zoning.json')
-        .then(module => setZoningData(module.default))
+      fetch(`${import.meta.env.BASE_URL}dc-zoning.json`)
+        .then(res => res.json())
+        .then(data => setZoningData(data))
         .catch(err => console.error("Error loading zoning data:", err));
     }
   }, [activeLayers.zoning, zoningData]);
 
   useEffect(() => {
     if (activeLayers.wards && !wardsData) {
-      fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries_WebMercator/MapServer/53/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=20')
-        .then(res => res.json())
-        .then(data => setWardsData(data))
-        .catch(err => console.error("Error fetching ward boundaries:", err));
+      fetchWithCache('wards', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Administrative_Other_Boundaries_WebMercator/MapServer/53/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=20')
+          .then(res => res.json())
+      ).then(data => setWardsData(data))
+       .catch(err => console.error("Error fetching ward boundaries:", err));
     }
   }, [activeLayers.wards, wardsData]);
 
@@ -2314,6 +2461,42 @@ out center geom tags;`;
         .catch((err) => console.error('Error fetching farmers market locations:', err));
     }
   }, [activeLayers.farmersMarkets, farmersMarketsData]);
+
+  useEffect(() => {
+    if (!activeLayers.restaurants || restaurantsData) return;
+
+    let cancelled = false;
+    Promise.all(
+      FOOD_VENDOR_LICENSE_LAYERS.map(({ id, genre }) =>
+        fetchPagedArcGisGeoJson(
+          `${FOOD_VENDOR_LICENSE_SERVICE}/${id}/query?where=1%3D1&outFields=*&outSR=4326&f=geojson`,
+          1000
+        ).then((data) =>
+          (data.features || []).map((feature) => ({
+            ...feature,
+            properties: {
+              ...feature.properties,
+              RESTAURANT_GENRE: genre
+            }
+          }))
+        )
+      )
+    )
+      .then((featureGroups) => {
+        if (cancelled) return;
+        setRestaurantsData({
+          type: 'FeatureCollection',
+          features: featureGroups.flat()
+        });
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Error fetching DC food vendor license data:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.restaurants, restaurantsData]);
 
   useEffect(() => {
     if (!activeLayers.treeCanopy || treeCanopyData) return;
@@ -2350,28 +2533,29 @@ out center geom tags;`;
 
   useEffect(() => {
     if (activeLayers.combinedSewer && !combinedSewerData) {
-      fetch(
-        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Stormwater_Management_WebMercator/MapServer/19/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
-      )
-        .then((res) => res.json())
-        .then((data) => setCombinedSewerData(data))
-        .catch((err) => console.error('Error fetching combined sewer sewershed data:', err));
+      fetchWithCache('combined_sewer', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Stormwater_Management_WebMercator/MapServer/19/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+          .then((res) => res.json())
+      ).then((data) => setCombinedSewerData(data))
+       .catch((err) => console.error('Error fetching combined sewer sewershed data:', err));
     }
   }, [activeLayers.combinedSewer, combinedSewerData]);
 
   useEffect(() => {
     if (activeLayers.wetland && !wetlandData) {
-      fetch(
-        'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Water_WebMercator/MapServer/28/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500'
-      )
-        .then((res) => res.json())
-        .then((data) => setWetlandData(data))
-        .catch((err) => console.error('Error fetching wetland data:', err));
+      fetchWithCache('wetlands', () =>
+        fetch('https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Environment_Water_WebMercator/MapServer/28/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&resultRecordCount=500')
+          .then((res) => res.json())
+      ).then((data) => setWetlandData(data))
+       .catch((err) => console.error('Error fetching wetland data:', err));
     }
   }, [activeLayers.wetland, wetlandData]);
 
   useEffect(() => {
     if (!activeLayers.emergencyMedical || emergencyMedicalData) return;
+
+    const cached = getCached('emergency_medical');
+    if (cached) { setEmergencyMedicalData(cached); return; }
 
     let cancelled = false;
     const fireUrl =
@@ -2454,10 +2638,12 @@ out center geom tags;`;
             };
           });
 
-        setEmergencyMedicalData({
+        const medResult = {
           type: 'FeatureCollection',
           features: [...fireFeatures, ...hospitalFeatures, ...urgentFeatures]
-        });
+        };
+        setCached('emergency_medical', medResult);
+        setEmergencyMedicalData(medResult);
       })
       .catch((err) => {
         if (!cancelled) console.error('Error fetching fire / hospital / urgent care data:', err);
@@ -2481,8 +2667,7 @@ out center geom tags;`;
 );
 out center tags;`;
 
-    fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`)
-      .then((res) => res.json())
+    fetchOverpassJson(overpassQuery)
       .then((data) => {
         if (cancelled) return;
         const map = {};
@@ -2633,6 +2818,7 @@ out center tags;`;
     if (activeLayers.floodZones && !floodZonesData) names.push('Flood Zones');
     if (activeLayers.foodDeserts && !foodDesertsData) names.push('Food Deserts');
     if (activeLayers.farmersMarkets && !farmersMarketsData) names.push('Farmers Markets');
+    if (activeLayers.restaurants && !restaurantsData) names.push('Restaurants');
     if (activeLayers.treeCanopy && !treeCanopyData) names.push('Urban Tree Canopy');
     if (activeLayers.combinedSewer && !combinedSewerData) names.push('Combined Sewer');
     if (activeLayers.wetland && !wetlandData) names.push('Wetlands');
@@ -2664,6 +2850,7 @@ out center tags;`;
     floodZonesData,
     foodDesertsData,
     farmersMarketsData,
+    restaurantsData,
     treeCanopyData,
     combinedSewerData,
     wetlandData,
@@ -4032,6 +4219,7 @@ out center tags;`;
         <GeoJSON
           key={`religious-institutions-${searchQuery}`}
           data={religiousInstitutionsData}
+          style={() => ({})}
           filter={(feature) => {
             if (!searchQuery) return true;
             const q = searchQuery.toLowerCase();
@@ -4624,6 +4812,78 @@ out center tags;`;
                 const l = e.target;
                 l.setRadius(6);
                 l.setStyle({ weight: 2 });
+              }
+            });
+          }}
+        />
+      )}
+
+      {activeLayers.restaurants && restaurantsData && (
+        <GeoJSON
+          key={`restaurants-${searchQuery}-${Array.from(hiddenRestaurantGenres || []).sort().join('|')}`}
+          data={restaurantsData}
+          filter={(feature) => {
+            const genre = feature.properties?.RESTAURANT_GENRE || 'Restaurant';
+            if (hiddenRestaurantGenres && hiddenRestaurantGenres.has(genre)) return false;
+            return restaurantFeatureMatchesSearch(feature, normalizedSearchQuery);
+          }}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, getRestaurantPointStyle(feature.properties))
+          }
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const genre = escapeHtml(p.RESTAURANT_GENRE || 'Restaurant');
+            const name = escapeHtml(p.Trade_Name || p.Corporate_Name || 'Food vendor');
+            const corporate = p.Trade_Name && p.Corporate_Name && p.Trade_Name !== p.Corporate_Name
+              ? escapeHtml(p.Corporate_Name)
+              : '';
+            const address = escapeHtml(p.MAR_MATCHADDRESS || p.Business_Address || '');
+            const ward = escapeHtml(p.MAR_WARD || '');
+            const anc = escapeHtml(p.MAR_ANC || '');
+            const zip = escapeHtml(p.MAR_ZIPCODE || '');
+            const license = escapeHtml(p.License__ || '');
+            const description = escapeHtml(p.Description || '');
+            const expiration = escapeHtml(p.Expiration_Date || '');
+            const fill = restaurantGenreColorMap[p.RESTAURANT_GENRE] || '#f97316';
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 320px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: ${fill}; margin-right: 6px;">●</span>${name}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 700; color: ${fill}; text-transform: uppercase; letter-spacing: 0.35px; margin-bottom: 6px;">${genre}</div>`
+            ];
+            if (corporate) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">${corporate}</div>`);
+            if (address) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35;">${address}${zip ? ` · ${zip}` : ''}</div>`);
+            if (ward || anc) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">${[ward, anc].filter(Boolean).join(' · ')}</div>`);
+            if (description) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${description}</div>`);
+            if (license || expiration) {
+              lines.push(
+                `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${license ? `License: ${license}` : ''}${license && expiration ? ' · ' : ''}${expiration ? `Expires: ${expiration}` : ''}</div>`
+              );
+            }
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">`,
+              `DC ArcGIS food-license records from the DCRA food distribution dataset; genre is based on license layer.`,
+              `</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                l.setRadius((p.RESTAURANT_GENRE === 'Restaurant' ? 7 : 6));
+                l.setStyle({ weight: 2.5, fillOpacity: 0.95 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                l.setStyle(getRestaurantPointStyle(p));
+                l.setRadius(getRestaurantPointStyle(p).radius);
               }
             });
           }}
