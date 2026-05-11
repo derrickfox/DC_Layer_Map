@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap, Route } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap, Route, Utensils } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -35,7 +35,9 @@ const initialFilters = [
   { id: 'foodDeserts', label: 'Food Deserts (Low Food Access)', icon: ShoppingCart, color: '#d97706', activeClass: 'active-amber' },
   { id: 'rentControlBuildings', label: 'Rent Control Buildings', icon: Building, color: '#7c3aed', activeClass: 'active-purple' },
   { id: 'publicHousing', label: 'Public Housing', icon: Building2, color: '#1d4ed8', activeClass: 'active-blue' },
+  { id: 'apartmentBuildings', label: 'Apartment Buildings', icon: Building2, color: '#64748b', activeClass: 'active-slate' },
   { id: 'farmersMarkets', label: 'Farmers Markets', icon: Store, color: '#15803d', activeClass: 'active-green' },
+  { id: 'restaurants', label: 'Restaurants', icon: Utensils, color: '#f97316', activeClass: 'active-orange' },
   { id: 'propertyValues', label: 'Average Property Values', icon: DollarSign, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' }
 ];
@@ -49,6 +51,10 @@ const LayerControls = ({
   hiddenNeighborhoods = new Set(), 
   toggleNeighborhoodVisibility,
   toggleAllNeighborhoodsVisibility,
+  restaurantGenreList = [],
+  hiddenRestaurantGenres = new Set(),
+  toggleRestaurantGenreVisibility,
+  toggleAllRestaurantGenresVisibility,
   searchQuery,
   setSearchQuery,
   isLeftAligned,
@@ -57,6 +63,7 @@ const LayerControls = ({
   toggleNeighborhoodBackgrounds
 }) => {
   const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
+  const [isRestaurantsExpanded, setIsRestaurantsExpanded] = useState(false);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [filtersOrder, setFiltersOrder] = useState(initialFilters);
@@ -344,6 +351,7 @@ const LayerControls = ({
           const isActive = activeLayers[filter.id];
           const isDraggingOver = dragOverItemIndex === index;
           const Icon = filter.icon;
+          const isRestaurantFilter = filter.id === 'restaurants';
           
           return (
             <div
@@ -364,19 +372,101 @@ const LayerControls = ({
                 className={`glass-button ${isActive ? filter.activeClass : ''}`}
                 onClick={() => !isEditMode && toggleLayer(filter.id)}
                 style={{ 
-                  justifyContent: 'flex-start', 
+                  justifyContent: isRestaurantFilter ? 'space-between' : 'flex-start', 
                   padding: '12px 16px',
                   width: '100%',
                   cursor: isEditMode ? 'grab' : 'pointer',
                   border: isEditMode && isDraggingOver && draggedItemIndex !== index ? '1px dashed var(--accent-primary)' : ''
                 }}
               >
-                {isEditMode && (
-                  <GripVertical size={16} color="var(--text-secondary)" style={{ marginRight: '4px', cursor: 'grab' }} />
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                  {isEditMode && (
+                    <GripVertical size={16} color="var(--text-secondary)" style={{ marginRight: '4px', cursor: 'grab' }} />
+                  )}
+                  <Icon size={18} color={isActive ? "#ffffff" : filter.color} />
+                  {filter.label}
+                </span>
+                {isRestaurantFilter && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: '-4px' }}>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (toggleAllRestaurantGenresVisibility) toggleAllRestaurantGenresVisibility();
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', padding: '4px' }}
+                      title={hiddenRestaurantGenres.size === restaurantGenreList.length && restaurantGenreList.length > 0 ? "Show all restaurant genres" : "Hide all restaurant genres"}
+                    >
+                      {hiddenRestaurantGenres.size === restaurantGenreList.length && restaurantGenreList.length > 0 ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </span>
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsRestaurantsExpanded(!isRestaurantsExpanded);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', padding: '4px' }}
+                      title="Expand Restaurants"
+                    >
+                      {isRestaurantsExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                    </span>
+                  </span>
                 )}
-                <Icon size={18} color={isActive ? "#ffffff" : filter.color} />
-                {filter.label}
               </button>
+              {isRestaurantFilter && isRestaurantsExpanded && (
+                <div style={{ 
+                  maxHeight: '200px', 
+                  overflowY: 'auto', 
+                  background: 'rgba(255, 255, 255, 0.8)', 
+                  borderRadius: '8px',
+                  padding: '8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  marginTop: '4px'
+                }}>
+                  {restaurantGenreList.length === 0 ? (
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', padding: '8px', textAlign: 'center' }}>
+                      Loading restaurant genres...
+                    </div>
+                  ) : (
+                    restaurantGenreList.map(name => {
+                      const isHidden = hiddenRestaurantGenres.has(name);
+                      return (
+                        <div 
+                          key={name} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            color: isHidden ? 'var(--text-secondary)' : 'var(--text-primary)',
+                            background: 'transparent'
+                          }}
+                        >
+                          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                            {name}
+                          </span>
+                          <button
+                            onClick={() => toggleRestaurantGenreVisibility(name)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: isHidden ? 'var(--text-secondary)' : 'var(--text-primary)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              padding: '4px'
+                            }}
+                          >
+                            {isHidden ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

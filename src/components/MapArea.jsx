@@ -1880,6 +1880,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaur
   const [religiousInstitutionsData, setReligiousInstitutionsData] = useState(null);
   const [universitiesData, setUniversitiesData] = useState(null);
   const [emergencyRoutesData, setEmergencyRoutesData] = useState(null);
+  const [apartmentBuildingsData, setApartmentBuildingsData] = useState(null);
   const [osmMonumentsData, setOsmMonumentsData] = useState(null);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const treeCanopyLayerRef = useRef(null);
@@ -2236,6 +2237,84 @@ out center geom tags;`;
         .catch((err) => console.error('Error fetching universities data:', err));
     }
   }, [activeLayers.universities, universitiesData]);
+
+  useEffect(() => {
+    if (!activeLayers.apartmentBuildings || apartmentBuildingsData) return;
+
+    const cached = getCached('apartment_buildings');
+    if (cached) { setApartmentBuildingsData(cached); return; }
+
+    const CAMA_URL = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Property_and_Land_WebMercator/MapServer/23/query';
+    const TAX_LOTS_URL = 'https://maps2.dcgis.dc.gov/dcgis/rest/services/DCGIS_DATA/Property_and_Land_WebMercator/MapServer/39/query';
+
+    // Step 1: Pull all apartment buildings (20+ units) from the Commercial CAMA table.
+    // Large apartment buildings are classified commercially in DC's tax system.
+    fetch(`${CAMA_URL}?where=NUM_UNITS%3E%3D20+AND+AYB+IS+NOT+NULL&outFields=SSL%2CAYB%2CNUM_UNITS&resultRecordCount=5000&f=json`)
+      .then(r => r.json())
+      .then(camaData => {
+        const records = camaData.features || [];
+        if (!records.length) return Promise.resolve({ sslMap: {}, batchResults: [] });
+
+        const sslMap = {};
+        records.forEach(({ attributes: a }) => {
+          if (a.SSL && a.AYB) sslMap[a.SSL] = { ayb: a.AYB, numUnits: a.NUM_UNITS };
+        });
+
+        // Step 2: Batch-query Tax Lots by SSL to get polygon geometry (then compute centroid).
+        const sslList = Object.keys(sslMap);
+        const BATCH = 150;
+        const batches = [];
+        for (let i = 0; i < sslList.length; i += BATCH) batches.push(sslList.slice(i, i + BATCH));
+
+        return Promise.all(
+          batches.map(batch => {
+            const sqlIn = batch.map(s => `'${s}'`).join(',');
+            return fetch(TAX_LOTS_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                where: `SSL IN (${sqlIn})`,
+                outFields: 'SSL',
+                returnGeometry: true,
+                outSR: 4326,
+                f: 'json'
+              })
+            }).then(r => r.json());
+          })
+        ).then(batchResults => ({ sslMap, batchResults }));
+      })
+      .then(({ sslMap, batchResults }) => {
+        const features = [];
+        batchResults.forEach(result => {
+          (result.features || []).forEach(f => {
+            const ssl = f.attributes?.SSL;
+            const info = sslMap?.[ssl];
+            if (!info || !f.geometry?.rings?.length) return;
+
+            // Compute bounding-box centroid from the outer ring
+            const ring = f.geometry.rings[0];
+            let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+            ring.forEach(([lng, lat]) => {
+              if (lng < minLng) minLng = lng;
+              if (lng > maxLng) maxLng = lng;
+              if (lat < minLat) minLat = lat;
+              if (lat > maxLat) maxLat = lat;
+            });
+
+            features.push({
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [(minLng + maxLng) / 2, (minLat + maxLat) / 2] },
+              properties: { AYB: info.ayb, NUM_UNITS: info.numUnits, SSL: ssl }
+            });
+          });
+        });
+
+        const result = { type: 'FeatureCollection', features };
+        setCached('apartment_buildings', result);
+        setApartmentBuildingsData(result);
+      })
+      .catch(err => console.error('Error fetching apartment buildings data:', err));
+  }, [activeLayers.apartmentBuildings, apartmentBuildingsData]);
 
   useEffect(() => {
     if (activeLayers.emergencyRoutes && !emergencyRoutesData) {
@@ -4393,6 +4472,93 @@ out center tags;`;
           }}
         />
       )}
+
+      {/* Apartment Buildings Layer */}
+      {activeLayers.apartmentBuildings && apartmentBuildingsData && (() => {
+        const aybValues = apartmentBuildingsData.features
+          .map(f => f.properties?.AYB)
+          .filter(v => v != null && v > 0);
+        const minAyb = Math.min(...aybValues);
+        const maxAyb = Math.max(...aybValues);
+        const range = maxAyb - minAyb || 1;
+
+        const getColor = (ayb) => {
+          const ratio = (ayb - minAyb) / range;
+          return `hsl(${Math.round(ratio * 240)}, 85%, 50%)`;
+        };
+
+        return (
+          <GeoJSON
+            key={`apartmentBuildings-${searchQuery}`}
+            data={apartmentBuildingsData}
+            filter={(feature) => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase();
+              const p = feature.properties || {};
+              return [p.ADDRESS, String(p.AYB || ''), String(p.NUM_UNITS || '')]
+                .some(v => String(v || '').toLowerCase().includes(q));
+            }}
+            pointToLayer={(feature, latlng) => {
+              const ayb = feature.properties?.AYB;
+              const color = getColor(ayb);
+              return L.circleMarker(latlng, {
+                pane: 'markerPane',
+                radius: 6,
+                fillColor: color,
+                color: '#fff',
+                weight: 1.5,
+                opacity: 1,
+                fillOpacity: 0.85
+              });
+            }}
+            onEachFeature={(feature, layer) => {
+              const p = feature.properties || {};
+              const ayb = p.AYB;
+              const color = getColor(ayb);
+              const ssl = escapeHtml(p.SSL || '');
+              const units = p.NUM_UNITS != null ? p.NUM_UNITS : '—';
+
+              layer.bindTooltip(
+                `<div style="font-family: 'Outfit', sans-serif; max-width: 320px;">
+                   <div style="font-weight: 700; font-size: 15px; color: var(--text-primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                     <span style="color: ${color};">🏢</span> Apartment Building
+                   </div>
+                   <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">
+                     <strong>Year built:</strong> ${ayb ?? '—'}
+                   </div>
+                   <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">
+                     <strong>Units:</strong> ${units}
+                   </div>
+                   ${ssl ? `<div style="font-size: 11px; color: var(--text-secondary); line-height: 1.45;"><strong>SSL:</strong> ${ssl}</div>` : ''}
+                   <div style="font-size: 10px; color: var(--text-secondary); margin-top: 6px; font-style: italic;">
+                     Color: <span style="color:${color};">■</span> oldest (red) → newest (blue)
+                   </div>
+                 </div>`,
+                {
+                  permanent: false,
+                  direction: 'top',
+                  className: 'custom-tooltip events-tooltip',
+                  offset: [10, -20],
+                  sticky: true
+                }
+              );
+              layer.on({
+                mouseover: (e) => {
+                  const l = e.target;
+                  if (l.setRadius) l.setRadius(9);
+                  l.setStyle({ weight: 2.5, fillOpacity: 1 });
+                  l.bringToFront();
+                },
+                mouseout: (e) => {
+                  const l = e.target;
+                  if (l.setRadius) l.setRadius(6);
+                  l.setStyle({ weight: 1.5, fillOpacity: 0.85 });
+                }
+              });
+            }}
+          />
+        );
+      })()}
 
       {/* Flood Zones Layer */}
       {activeLayers.floodZones && floodZonesData && (

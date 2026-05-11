@@ -61,6 +61,22 @@ const SYNTHETIC_NEIGHBORHOODS = [
   'BellAir'
 ];
 
+const RESTAURANT_GENRES = [
+  'Bakery',
+  'Bed and Breakfast',
+  'Candy Manufacturing',
+  'Catering',
+  'Delicatessen',
+  'Food Product',
+  'Grocery Store',
+  'Ice Cream Manufacturer',
+  'Marine Food Wholesale',
+  'Marine Retail Food',
+  'Mobile Delicatessen',
+  'Public School Cafeteria',
+  'Restaurant'
+];
+
 function App() {
   const [activeLayers, setActiveLayers] = useState({
     historical: false,
@@ -94,11 +110,13 @@ function App() {
     rentControlBuildings: false,
     publicHousing: false,
     farmersMarkets: false,
+    restaurants: false,
     bikeLanes: false,
     emergencyRoutes: false,
     bus: false,
     metro: false,
-    zoning: false
+    zoning: false,
+    apartmentBuildings: false
   });
 
   const [geoJsonData, setGeoJsonData] = useState(null);
@@ -106,6 +124,7 @@ function App() {
   const [floodZonesData, setFloodZonesData] = useState(null);
   const [neighborhoodList, setNeighborhoodList] = useState([]);
   const [hiddenNeighborhoods, setHiddenNeighborhoods] = useState(new Set());
+  const [hiddenRestaurantGenres, setHiddenRestaurantGenres] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [previousActiveLayers, setPreviousActiveLayers] = useState(null);
   const [layerSuspendSnapshot, setLayerSuspendSnapshot] = useState(null);
@@ -212,6 +231,26 @@ function App() {
     }
   };
 
+  const toggleRestaurantGenreVisibility = (name) => {
+    setHiddenRestaurantGenres(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(name)) {
+        newSet.delete(name);
+      } else {
+        newSet.add(name);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllRestaurantGenresVisibility = () => {
+    if (hiddenRestaurantGenres.size === RESTAURANT_GENRES.length && RESTAURANT_GENRES.length > 0) {
+      setHiddenRestaurantGenres(new Set());
+    } else {
+      setHiddenRestaurantGenres(new Set(RESTAURANT_GENRES));
+    }
+  };
+
   const handleSearchChange = (newQuery) => {
     if (searchQuery === '' && newQuery !== '') {
       // Starting a search: remember current layers
@@ -232,6 +271,7 @@ function App() {
           activeLayers={activeLayers} 
           geoJsonData={geoJsonData}
           hiddenNeighborhoods={hiddenNeighborhoods}
+          hiddenRestaurantGenres={hiddenRestaurantGenres}
           dcBoundary={dcBoundary}
           floodZonesData={floodZonesData}
           searchQuery={searchQuery}
@@ -249,6 +289,10 @@ function App() {
           hiddenNeighborhoods={hiddenNeighborhoods}
           toggleNeighborhoodVisibility={toggleNeighborhoodVisibility}
           toggleAllNeighborhoodsVisibility={toggleAllNeighborhoodsVisibility}
+          restaurantGenreList={RESTAURANT_GENRES}
+          hiddenRestaurantGenres={hiddenRestaurantGenres}
+          toggleRestaurantGenreVisibility={toggleRestaurantGenreVisibility}
+          toggleAllRestaurantGenresVisibility={toggleAllRestaurantGenresVisibility}
           searchQuery={searchQuery}
           setSearchQuery={handleSearchChange}
           isLeftAligned={isLeftAligned}
