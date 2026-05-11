@@ -4509,13 +4509,16 @@ out center tags;`;
       {activeLayers.apartmentBuildings && apartmentBuildingsData && (() => {
         const aybValues = apartmentBuildingsData.features
           .map(f => f.properties?.AYB)
-          .filter(v => v != null && v > 0);
-        const minAyb = Math.min(...aybValues);
-        const maxAyb = Math.max(...aybValues);
-        const range = maxAyb - minAyb || 1;
+          .filter(v => v != null && v > 0)
+          .sort((a, b) => a - b);
+        const p5  = aybValues[Math.floor(aybValues.length * 0.05)] ?? aybValues[0];
+        const p95 = aybValues[Math.floor(aybValues.length * 0.95)] ?? aybValues[aybValues.length - 1];
+        const range = p95 - p5 || 1;
 
         const getColor = (ayb) => {
-          const ratio = (ayb - minAyb) / range;
+          const ratio = Math.max(0, Math.min(1, (ayb - p5) / range));
+          // Outliers below p5 get darkened red instead of pure red
+          if (ayb < p5) return `hsl(0, 90%, ${Math.max(20, 50 - (p5 - ayb) * 0.5)}%)`;
           return `hsl(${Math.round(ratio * 240)}, 85%, 50%)`;
         };
 
