@@ -111,6 +111,13 @@ function App() {
     publicHousing: false,
     farmersMarkets: false,
     restaurants: false,
+    // AI_CHANGE:
+    // Tool: Codex
+    // Model: GPT-5
+    // Timestamp: 2026-05-31T10:27:22-04:00
+    // Purpose: Tracks the Hotels layer toggle alongside the other map layers.
+    // Reason: The new hotel price-spectrum markers need to participate in global layer visibility state.
+    hotels: false,
     bikeLanes: false,
     emergencyRoutes: false,
     bus: false,
@@ -130,6 +137,14 @@ function App() {
   const [layerSuspendSnapshot, setLayerSuspendSnapshot] = useState(null);
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState(new Set());
   const [showNeighborhoodBackgrounds, setShowNeighborhoodBackgrounds] = useState(true);
+  // AI_CHANGE:
+  // Tool: Codex
+  // Model: GPT-5
+  // Timestamp: 2026-05-31T16:52:12-04:00
+  // Purpose: Stores state for the mile-marker origin tool shared by the toolbar and map.
+  // Reason: The new top-toolbar tool needs to toggle origin picking and keep the selected address/rings visible on the map.
+  const [isMileMarkerToolActive, setIsMileMarkerToolActive] = useState(false);
+  const [mileMarkerOrigin, setMileMarkerOrigin] = useState(null);
 
   const [isLeftAligned, setIsLeftAligned] = useState(false);
 
@@ -279,6 +294,9 @@ function App() {
           setSelectedNeighborhoods={setSelectedNeighborhoods}
           isLeftAligned={isLeftAligned}
           showNeighborhoodBackgrounds={showNeighborhoodBackgrounds}
+          mileMarkerToolActive={isMileMarkerToolActive}
+          mileMarkerOrigin={mileMarkerOrigin}
+          setMileMarkerOrigin={setMileMarkerOrigin}
         />
         <LayerControls 
           activeLayers={activeLayers} 
@@ -299,6 +317,10 @@ function App() {
           setIsLeftAligned={setIsLeftAligned}
           showNeighborhoodBackgrounds={showNeighborhoodBackgrounds}
           toggleNeighborhoodBackgrounds={() => setShowNeighborhoodBackgrounds(prev => !prev)}
+          isMileMarkerToolActive={isMileMarkerToolActive}
+          toggleMileMarkerTool={() => setIsMileMarkerToolActive(prev => !prev)}
+          hasMileMarkerOrigin={Boolean(mileMarkerOrigin)}
+          clearMileMarkerOrigin={() => setMileMarkerOrigin(null)}
         />
       </div>
     </>

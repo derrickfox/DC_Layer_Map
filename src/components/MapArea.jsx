@@ -8,6 +8,7 @@ import {
   LOCKED_NEIGHBORHOOD_ALIASES,
   LOCKED_NEIGHBORHOOD_ANCHORS
 } from '../data/lockedNeighborhoodAnchors.js';
+import hotelsData from '../data/hotels.js';
 import { getCached, setCached, fetchWithCache } from '../utils/layerCache.js';
 import { fetchApartmentBuildings } from '../services/dcApartmentBuildingsService.js';
 
@@ -666,11 +667,68 @@ const embassiesData = {
 
 const MapEvents = ({ onMapClick }) => {
   useMapEvents({
-    click: () => {
-      if (onMapClick) onMapClick();
+    click: (event) => {
+      if (onMapClick) onMapClick(event.latlng);
     },
   });
   return null;
+};
+
+// AI_CHANGE:
+// Tool: Codex
+// Model: GPT-5
+// Timestamp: 2026-05-31T16:52:12-04:00
+// Purpose: Supports the mile-marker origin tool with fixed mile radii, labels, and reverse geocoding.
+// Reason: Clicking a map origin should display its address and draw readable mile rings from that point.
+const MILE_IN_METERS = 1609.344;
+// AI_CHANGE:
+// Tool: Codex
+// Model: GPT-5
+// Timestamp: 2026-05-31T16:58:20-04:00
+// Purpose: Adds the 4-mile ring to the mile-marker tool.
+// Reason: Showing 1 through 5 miles continuously makes the distance markers easier to scan and compare.
+const MILE_MARKER_RINGS = [1, 2, 3, 4, 5];
+
+const mileMarkerLabelIcon = (label) => L.divIcon({
+  className: 'mile-marker-label',
+  html: `<span style="display:inline-flex;align-items:center;justify-content:center;padding:3px 7px;border-radius:999px;background:rgba(37,99,235,0.9);color:white;font:700 11px Outfit,system-ui,sans-serif;box-shadow:0 4px 14px rgba(15,23,42,0.25);white-space:nowrap;">${label}</span>`,
+  iconSize: [44, 20],
+  iconAnchor: [22, 10]
+});
+
+const getDestinationLatLng = ([lat, lng], distanceMeters, bearingDegrees) => {
+  const earthRadius = 6371000;
+  const bearing = bearingDegrees * Math.PI / 180;
+  const lat1 = lat * Math.PI / 180;
+  const lng1 = lng * Math.PI / 180;
+  const angularDistance = distanceMeters / earthRadius;
+  const lat2 = Math.asin(
+    Math.sin(lat1) * Math.cos(angularDistance)
+    + Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing)
+  );
+  const lng2 = lng1 + Math.atan2(
+    Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1),
+    Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2)
+  );
+  return [lat2 * 180 / Math.PI, lng2 * 180 / Math.PI];
+};
+
+const reverseGeocodeAddress = async (lat, lng) => {
+  const url = new URL('https://nominatim.openstreetmap.org/reverse');
+  url.searchParams.set('format', 'jsonv2');
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lon', String(lng));
+  url.searchParams.set('zoom', '18');
+  url.searchParams.set('addressdetails', '1');
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      Accept: 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error(`Reverse geocode failed: ${res.status}`);
+  const data = await res.json();
+  return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 };
 
 const NEIGHBORHOOD_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
@@ -1186,6 +1244,41 @@ const osmUniversitiesToGeoJson = (elements = []) => ({
     .filter(Boolean)
 });
 
+// AI_CHANGE:
+// Tool: Codex
+// Model: GPT-5
+// Timestamp: 2026-05-31T10:50:38-04:00
+// Purpose: Converts OpenStreetMap lodging records into hotel map features without requiring price estimates.
+// Reason: The Hotels layer should include broader hotel coverage, using blue markers for hotels that do not have a curated nightly-rate estimate.
+const osmHotelsToGeoJson = (elements = []) => ({
+  type: 'FeatureCollection',
+  features: elements
+    .map((element) => {
+      const coordinates = getOsmElementCenter(element);
+      if (!coordinates) return null;
+      const tags = element.tags || {};
+      const name = tags.name || tags.brand || tags.operator || tags['official_name'];
+      if (!name) return null;
+      return {
+        type: 'Feature',
+        properties: {
+          OSM_ID: `${element.type}/${element.id}`,
+          NAME: name,
+          TIER: formatOsmTag(tags.tourism || 'hotel'),
+          LODGING_TYPE: formatOsmTag(tags.tourism || 'hotel'),
+          NEIGHBORHOOD: '',
+          ADDRESS: [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' '),
+          WEBSITE: tags.website || tags['contact:website'] || '',
+          PHONE: tags.phone || tags['contact:phone'] || '',
+          SOURCE: 'OpenStreetMap',
+          OSM_TAGS: tags
+        },
+        geometry: { type: 'Point', coordinates }
+      };
+    })
+    .filter(Boolean)
+});
+
 const fetchOverpassJson = async (query) => {
   // Prefer overpass-api.de first: the kumi mirror often sits behind a slow proxy and
   // returns 504 after ~2 minutes while the same query succeeds on .de in seconds.
@@ -1323,6 +1416,117 @@ const getRestaurantPointStyle = (props = {}) => {
     opacity: 1,
     fillOpacity: 0.82
   };
+};
+
+// AI_CHANGE:
+// Tool: Codex
+// Model: GPT-5
+// Timestamp: 2026-05-31T10:27:22-04:00
+// Purpose: Defines hotel price-spectrum styling and search helpers for the Hotels layer.
+// Reason: Hotel markers need to encode relative nightly cost where cheaper hotels are red and more expensive hotels are green.
+const hotelEstimatedRates = hotelsData.features
+  .map((feature) => Number(feature.properties?.ESTIMATED_RATE_USD))
+  .filter(Number.isFinite);
+
+const HOTEL_MIN_RATE = Math.min(...hotelEstimatedRates);
+const HOTEL_MAX_RATE = Math.max(...hotelEstimatedRates);
+const HOTEL_UNKNOWN_RATE_COLOR = '#2563eb';
+
+const interpolateChannel = (start, end, ratio) => Math.round(start + (end - start) * ratio);
+
+const interpolateRgb = (start, end, ratio) => {
+  const clamped = Math.max(0, Math.min(1, ratio));
+  return `rgb(${interpolateChannel(start[0], end[0], clamped)}, ${interpolateChannel(start[1], end[1], clamped)}, ${interpolateChannel(start[2], end[2], clamped)})`;
+};
+
+const getHotelPriceRatio = (rate) => {
+  const value = Number(rate);
+  if (!Number.isFinite(value) || HOTEL_MAX_RATE === HOTEL_MIN_RATE) return 0;
+  return Math.max(0, Math.min(1, (value - HOTEL_MIN_RATE) / (HOTEL_MAX_RATE - HOTEL_MIN_RATE)));
+};
+
+const getHotelPriceColor = (rate) => {
+  if (!Number.isFinite(Number(rate))) return HOTEL_UNKNOWN_RATE_COLOR;
+  const ratio = getHotelPriceRatio(rate);
+  if (ratio < 0.5) {
+    return interpolateRgb([220, 38, 38], [245, 158, 11], ratio / 0.5);
+  }
+  return interpolateRgb([245, 158, 11], [22, 163, 74], (ratio - 0.5) / 0.5);
+};
+
+const formatHotelRate = (rate) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0
+}).format(rate);
+
+const hotelFeatureMatchesSearch = (feature, query) => {
+  if (!query) return true;
+  const p = feature.properties || {};
+  return [
+    p.NAME,
+    p.FORMER_NAME,
+    p.TIER,
+    p.LODGING_TYPE,
+    p.NEIGHBORHOOD,
+    p.ADDRESS,
+    p.WEBSITE,
+    p.PHONE,
+    p.ESTIMATED_RATE_USD
+  ].some((value) => String(value || '').toLowerCase().includes(query));
+};
+
+const getHotelPointStyle = (props = {}) => {
+  const fillColor = getHotelPriceColor(props.ESTIMATED_RATE_USD);
+  const ratio = getHotelPriceRatio(props.ESTIMATED_RATE_USD);
+  const hasRate = Number.isFinite(Number(props.ESTIMATED_RATE_USD));
+  return {
+    pane: 'markerPane',
+    renderer: largePointCanvasRenderer,
+    radius: hasRate ? 5 + ratio * 3 : 5,
+    fillColor,
+    color: '#ffffff',
+    weight: 1.75,
+    opacity: 1,
+    fillOpacity: hasRate ? 0.88 : 0.78
+  };
+};
+
+const normalizeHotelText = (value) => String(value || '')
+  .toLowerCase()
+  .replace(/^the\s+/, '')
+  .replace(/\b(hotel|inn|suites|suite|washington|dc|d\.c\.|georgetown)\b/g, ' ')
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim();
+
+const getHotelFeatureKey = (feature) => {
+  const p = feature.properties || {};
+  const name = normalizeHotelText(p.NAME);
+  const former = normalizeHotelText(p.FORMER_NAME);
+  const address = normalizeHotelText(p.ADDRESS);
+  return [name || former, address].filter(Boolean).join('|');
+};
+
+const areHotelFeaturesLikelySame = (a, b) => {
+  const aProps = a.properties || {};
+  const bProps = b.properties || {};
+  const aNames = [aProps.NAME, aProps.FORMER_NAME].map(normalizeHotelText).filter(Boolean);
+  const bNames = [bProps.NAME, bProps.FORMER_NAME].map(normalizeHotelText).filter(Boolean);
+  const nameMatches = aNames.some((aName) =>
+    bNames.some((bName) => aName === bName || aName.includes(bName) || bName.includes(aName))
+  );
+  if (!nameMatches) return false;
+
+  const aAddress = normalizeHotelText(aProps.ADDRESS);
+  const bAddress = normalizeHotelText(bProps.ADDRESS);
+  if (aAddress && bAddress && aAddress === bAddress) return true;
+
+  const aCoords = a.geometry?.coordinates;
+  const bCoords = b.geometry?.coordinates;
+  if (Array.isArray(aCoords) && Array.isArray(bCoords)) {
+    return getDistanceMeters(aCoords, bCoords) < 140;
+  }
+  return false;
 };
 
 const getEmergencyRouteStyle = (props = {}, highlight = false) => {
@@ -1848,7 +2052,22 @@ const hospitalCapabilityLine = (label, raw) => {
   return `${label}: ${v}`;
 };
 
-const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaurantGenres, dcBoundary, floodZonesData, searchQuery, selectedNeighborhoods, setSelectedNeighborhoods, isLeftAligned, showNeighborhoodBackgrounds }) => {
+const MapArea = ({
+  activeLayers,
+  geoJsonData,
+  hiddenNeighborhoods,
+  hiddenRestaurantGenres,
+  dcBoundary,
+  floodZonesData,
+  searchQuery,
+  selectedNeighborhoods,
+  setSelectedNeighborhoods,
+  isLeftAligned,
+  showNeighborhoodBackgrounds,
+  mileMarkerToolActive,
+  mileMarkerOrigin,
+  setMileMarkerOrigin
+}) => {
   const dcCenter = [38.9076, -77.0058]; // Eckington, NE DC
   const [parksData, setParksData] = useState(null);
   const [squaresData, setSquaresData] = useState(null);
@@ -1873,6 +2092,7 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaur
   const [foodDesertsData, setFoodDesertsData] = useState(null);
   const [farmersMarketsData, setFarmersMarketsData] = useState(null);
   const [restaurantsData, setRestaurantsData] = useState(null);
+  const [osmHotelsData, setOsmHotelsData] = useState(null);
   const [osmNeighborhoodAnchors, setOsmNeighborhoodAnchors] = useState({});
   const [treeCanopyData, setTreeCanopyData] = useState(null);
   const [combinedSewerData, setCombinedSewerData] = useState(null);
@@ -1960,6 +2180,27 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaur
       features: [...monumentsData.features, ...osmFeatures]
     };
   }, [osmMonumentsData]);
+  const combinedHotelsData = useMemo(() => {
+    const features = [...(hotelsData.features || [])];
+    const keys = new Set(features.map(getHotelFeatureKey).filter(Boolean));
+
+    for (const feature of osmHotelsData?.features || []) {
+      const key = getHotelFeatureKey(feature);
+      const duplicate = (key && keys.has(key)) || features.some((existing) => areHotelFeaturesLikelySame(existing, feature));
+      if (duplicate) continue;
+      if (key) keys.add(key);
+      features.push(feature);
+    }
+
+    return {
+      type: 'FeatureCollection',
+      properties: {
+        ...hotelsData.properties,
+        sourceNote: osmHotelsData ? 'Curated priced hotels plus OpenStreetMap lodging points.' : 'Curated priced hotels.'
+      },
+      features
+    };
+  }, [osmHotelsData]);
 
   const toggleNeighborhoodSelection = (name) => {
     setSelectedNeighborhoods(prev => {
@@ -1972,6 +2213,38 @@ const MapArea = ({ activeLayers, geoJsonData, hiddenNeighborhoods, hiddenRestaur
       return newSet;
     });
   };
+
+  const setMileMarkerFromLatLng = useCallback((latlng) => {
+    if (!latlng || !mileMarkerToolActive || !setMileMarkerOrigin) return;
+
+    const lat = latlng.lat;
+    const lng = latlng.lng;
+    setMileMarkerOrigin({
+      lat,
+      lng,
+      address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+      status: 'loading'
+    });
+
+    reverseGeocodeAddress(lat, lng)
+      .then((address) => {
+        setMileMarkerOrigin({
+          lat,
+          lng,
+          address,
+          status: 'ready'
+        });
+      })
+      .catch((err) => {
+        console.warn('Unable to reverse geocode mile marker origin:', err);
+        setMileMarkerOrigin({
+          lat,
+          lng,
+          address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+          status: 'error'
+        });
+      });
+  }, [mileMarkerToolActive, setMileMarkerOrigin]);
 
   useEffect(() => {
     if ((activeLayers.parks || activeLayers.squares) && !parksData && !squaresData) {
@@ -2523,6 +2796,38 @@ out center geom tags;`;
   }, [activeLayers.restaurants, restaurantsData]);
 
   useEffect(() => {
+    if (!activeLayers.hotels || osmHotelsData) return;
+
+    const cachedHotels = getCached('osm_hotels_lodging');
+    if (cachedHotels) { setOsmHotelsData(cachedHotels); return; }
+
+    let cancelled = false;
+    const overpassQuery = `[out:json][timeout:60];
+area["name"="District of Columbia"]["boundary"="administrative"]["admin_level"="4"]->.dc;
+(
+  node["tourism"~"^(hotel|motel|hostel|guest_house|apartment)$"](area.dc);
+  way["tourism"~"^(hotel|motel|hostel|guest_house|apartment)$"](area.dc);
+  relation["tourism"~"^(hotel|motel|hostel|guest_house|apartment)$"](area.dc);
+);
+out center geom tags;`;
+
+    fetchOverpassJson(overpassQuery)
+      .then((data) => {
+        if (cancelled) return;
+        const result = osmHotelsToGeoJson(data.elements || []);
+        setCached('osm_hotels_lodging', result);
+        setOsmHotelsData(result);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Error fetching OSM hotel/lodging data:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeLayers.hotels, osmHotelsData]);
+
+  useEffect(() => {
     if (!activeLayers.treeCanopy || treeCanopyData) return;
 
     let cancelled = false;
@@ -2843,6 +3148,7 @@ out center tags;`;
     if (activeLayers.foodDeserts && !foodDesertsData) names.push('Food Deserts');
     if (activeLayers.farmersMarkets && !farmersMarketsData) names.push('Farmers Markets');
     if (activeLayers.restaurants && !restaurantsData) names.push('Restaurants');
+    if (activeLayers.hotels && !osmHotelsData) names.push('Hotels');
     if (activeLayers.treeCanopy && !treeCanopyData) names.push('Urban Tree Canopy');
     if (activeLayers.combinedSewer && !combinedSewerData) names.push('Combined Sewer');
     if (activeLayers.wetland && !wetlandData) names.push('Wetlands');
@@ -2877,6 +3183,7 @@ out center tags;`;
     foodDesertsData,
     farmersMarketsData,
     restaurantsData,
+    osmHotelsData,
     treeCanopyData,
     combinedSewerData,
     wetlandData,
@@ -2912,9 +3219,10 @@ out center tags;`;
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       />
       <MapEvents
-        onMapClick={() => {
+        onMapClick={(latlng) => {
           setSelectedNeighborhoods(new Set());
           setSelectedBusRouteKey(null);
+          setMileMarkerFromLatLng(latlng);
         }}
       />
       
@@ -2931,6 +3239,47 @@ out center tags;`;
             dashArray: '8, 8'
           }}
         />
+      )}
+
+      {mileMarkerOrigin && (
+        <>
+          {MILE_MARKER_RINGS.map((miles) => {
+            const radiusMeters = miles * MILE_IN_METERS;
+            const labelPosition = getDestinationLatLng([mileMarkerOrigin.lat, mileMarkerOrigin.lng], radiusMeters, 72);
+            return (
+              <React.Fragment key={`mile-marker-${miles}`}>
+                <Circle
+                  center={[mileMarkerOrigin.lat, mileMarkerOrigin.lng]}
+                  radius={radiusMeters}
+                  pathOptions={{
+                    color: '#2563eb',
+                    weight: miles === 1 ? 2 : 1.5,
+                    opacity: 0.72,
+                    fillColor: '#2563eb',
+                    fillOpacity: 0.035,
+                    dashArray: miles === 5 ? '8, 6' : miles === 3 ? '6, 5' : '4, 5'
+                  }}
+                  interactive={false}
+                />
+                <Marker position={labelPosition} icon={mileMarkerLabelIcon(`${miles} mi`)} interactive={false} />
+              </React.Fragment>
+            );
+          })}
+          <Circle
+            center={[mileMarkerOrigin.lat, mileMarkerOrigin.lng]}
+            radius={70}
+            pathOptions={{
+              color: '#1d4ed8',
+              weight: 3,
+              fillColor: '#2563eb',
+              fillOpacity: 0.85
+            }}
+          >
+            <Tooltip permanent direction="top" offset={[0, -8]} className="custom-tooltip">
+              Origin
+            </Tooltip>
+          </Circle>
+        </>
       )}
       
 
@@ -5023,6 +5372,71 @@ out center tags;`;
         />
       )}
 
+      {activeLayers.hotels && (
+        <GeoJSON
+          key={`hotels-${searchQuery}-${osmHotelsData ? 'osm' : 'curated'}`}
+          data={combinedHotelsData}
+          filter={(feature) => hotelFeatureMatchesSearch(feature, normalizedSearchQuery)}
+          pointToLayer={(feature, latlng) =>
+            L.circleMarker(latlng, getHotelPointStyle(feature.properties))
+          }
+          onEachFeature={(feature, layer) => {
+            const p = feature.properties || {};
+            const name = escapeHtml(p.NAME || 'Hotel');
+            const tier = escapeHtml(p.TIER || 'Hotel');
+            const formerName = escapeHtml(p.FORMER_NAME || '');
+            const neighborhood = escapeHtml(p.NEIGHBORHOOD || '');
+            const address = escapeHtml(p.ADDRESS || '');
+            const website = escapeHtml(p.WEBSITE || '');
+            const phone = escapeHtml(p.PHONE || '');
+            const rate = Number(p.ESTIMATED_RATE_USD);
+            const hasRate = Number.isFinite(rate);
+            const formattedRate = hasRate ? formatHotelRate(rate) : 'Unknown rate';
+            const fill = getHotelPriceColor(rate);
+            const lines = [
+              `<div style="font-family: 'Outfit', sans-serif; padding: 4px; max-width: 320px;">`,
+              `<div style="font-weight: 700; font-size: 14px; color: var(--text-primary); margin-bottom: 4px;">`,
+              `<span style="color: ${fill}; margin-right: 6px;">●</span>${name}`,
+              `</div>`,
+              `<div style="font-size: 11px; font-weight: 700; color: ${fill}; text-transform: uppercase; letter-spacing: 0.35px; margin-bottom: 6px;">${tier}</div>`,
+              `<div style="font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.3;">${hasRate ? 'Estimated nightly rate' : 'Nightly rate'}: ${formattedRate}</div>`
+            ];
+            if (formerName) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Formerly: ${formerName}</div>`);
+            if (address) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.35; margin-top: 5px;">${address}</div>`);
+            if (neighborhood) lines.push(`<div style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">${neighborhood}</div>`);
+            if (phone) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px;">${phone}</div>`);
+            if (website) lines.push(`<div style="font-size: 11px; color: var(--text-secondary); margin-top: 5px; word-break: break-all;">${website}</div>`);
+            lines.push(
+              `<div style="font-size: 10px; color: var(--text-secondary); margin-top: 8px; font-style: italic;">`,
+              `Red means lower estimated rate; green means higher estimated rate; blue means no price estimate. Estimates are representative and not live booking prices.`,
+              `</div></div>`
+            );
+            layer.bindTooltip(lines.join(''), {
+              permanent: false,
+              direction: 'top',
+              className: 'custom-tooltip',
+              sticky: true,
+              offset: [10, -20]
+            });
+            layer.on({
+              mouseover: (e) => {
+                const l = e.target;
+                const style = getHotelPointStyle(p);
+                l.setRadius(style.radius + 2);
+                l.setStyle({ weight: 3, fillOpacity: 1 });
+                l.bringToFront();
+              },
+              mouseout: (e) => {
+                const l = e.target;
+                const style = getHotelPointStyle(p);
+                l.setStyle(style);
+                l.setRadius(style.radius);
+              }
+            });
+          }}
+        />
+      )}
+
       {activeLayers.treeCanopy && treeCanopyData && (
         <GeoJSON
           ref={treeCanopyLayerRef}
@@ -5926,6 +6340,122 @@ out center tags;`;
 
       <ZoomWidget isLeftAligned={isLeftAligned} />
     </MapContainer>
+    {(mileMarkerToolActive || mileMarkerOrigin) && (
+      <div
+        style={{
+          position: 'absolute',
+          top: '24px',
+          left: isLeftAligned ? 'auto' : '24px',
+          right: isLeftAligned ? '24px' : 'auto',
+          zIndex: 1100,
+          width: 'min(340px, calc(100vw - 48px))',
+          background: 'rgba(255, 255, 255, 0.9)',
+          border: mileMarkerToolActive ? '1px solid rgba(37, 99, 235, 0.35)' : '1px solid rgba(15, 23, 42, 0.12)',
+          borderRadius: '8px',
+          padding: '12px 14px',
+          boxShadow: '0 12px 32px rgba(15, 23, 42, 0.16)',
+          backdropFilter: 'blur(8px)',
+          color: 'var(--text-primary)',
+          fontFamily: "'Outfit', sans-serif"
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              Mile Marker Tool
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.35, marginTop: '5px' }}>
+              {mileMarkerOrigin
+                ? (mileMarkerOrigin.status === 'loading' ? 'Finding address...' : mileMarkerOrigin.address)
+                : 'Click the map to set an origin and draw 1, 2, 3, and 5 mile rings.'}
+            </div>
+          </div>
+          {setMileMarkerOrigin && mileMarkerOrigin && (
+            <button
+              type="button"
+              onClick={() => setMileMarkerOrigin(null)}
+              style={{
+                background: 'rgba(15, 23, 42, 0.06)',
+                border: '1px solid rgba(15, 23, 42, 0.1)',
+                borderRadius: '999px',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                width: '26px',
+                height: '26px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '0 0 auto'
+              }}
+              title="Clear mile markers"
+            >
+              x
+            </button>
+          )}
+        </div>
+        {mileMarkerOrigin && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+            {MILE_MARKER_RINGS.map((miles) => (
+              <span
+                key={`mile-chip-${miles}`}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#1d4ed8',
+                  background: 'rgba(37, 99, 235, 0.1)',
+                  border: '1px solid rgba(37, 99, 235, 0.18)',
+                  borderRadius: '999px',
+                  padding: '3px 8px'
+                }}
+              >
+                {miles} mi
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+    {activeLayers.hotels && (
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '24px',
+          left: isLeftAligned ? 'auto' : '24px',
+          right: isLeftAligned ? '24px' : 'auto',
+          zIndex: 1100,
+          width: '220px',
+          background: 'rgba(255, 255, 255, 0.88)',
+          border: '1px solid rgba(15, 23, 42, 0.12)',
+          borderRadius: '8px',
+          padding: '10px 12px',
+          boxShadow: '0 10px 30px rgba(15, 23, 42, 0.16)',
+          backdropFilter: 'blur(8px)',
+          color: 'var(--text-primary)',
+          fontFamily: "'Outfit', sans-serif",
+          pointerEvents: 'none'
+        }}
+      >
+        <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '8px' }}>
+          Hotel Estimated Rate
+        </div>
+        <div
+          style={{
+            height: '10px',
+            borderRadius: '999px',
+            background: 'linear-gradient(90deg, #dc2626 0%, #f59e0b 50%, #16a34a 100%)',
+            border: '1px solid rgba(15, 23, 42, 0.12)'
+          }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+          <span>{formatHotelRate(HOTEL_MIN_RATE)}</span>
+          <span>{formatHotelRate(HOTEL_MAX_RATE)}</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: HOTEL_UNKNOWN_RATE_COLOR, display: 'inline-block' }} />
+          <span>Unknown rate</span>
+        </div>
+      </div>
+    )}
     {loadingSummary && (
       <div
         style={{

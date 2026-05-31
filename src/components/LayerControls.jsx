@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap, Route, Utensils } from 'lucide-react';
+import { Layers, History, Map, ChevronDown, ChevronUp, Eye, EyeOff, TreePine, CircleDot, Landmark, Ticket, Flag, Globe, Search, Waves, Mountain, DollarSign, ShieldAlert, Bike, ArrowLeftRight, GripVertical, Palette, Pencil, Check, X, TrainFront, Building2, Building, ScrollText, School, Vote, BookOpen, ShoppingCart, Bus, Store, Leaf, CloudRain, Droplets, Ambulance, Music2, Church, GraduationCap, Route, Utensils, Hotel, Ruler } from 'lucide-react';
 
 const initialFilters = [
   { id: 'museums', label: 'Museums', icon: Landmark, color: '#a78bfa', activeClass: 'active-purple' },
@@ -38,6 +38,13 @@ const initialFilters = [
   { id: 'apartmentBuildings', label: 'Apartment Buildings', icon: Building2, color: '#64748b', activeClass: 'active-slate' },
   { id: 'farmersMarkets', label: 'Farmers Markets', icon: Store, color: '#15803d', activeClass: 'active-green' },
   { id: 'restaurants', label: 'Restaurants', icon: Utensils, color: '#f97316', activeClass: 'active-orange' },
+  // AI_CHANGE:
+  // Tool: Codex
+  // Model: GPT-5
+  // Timestamp: 2026-05-31T10:27:22-04:00
+  // Purpose: Adds Hotels to the selectable layer list using the app's existing filter-button pattern.
+  // Reason: The map needs a dedicated hotel layer that users can toggle independently from restaurants and other business layers.
+  { id: 'hotels', label: 'Hotels', icon: Hotel, color: '#16a34a', activeClass: 'active-green' },
   { id: 'propertyValues', label: 'Average Property Values', icon: DollarSign, color: '#10b981', activeClass: 'active-emerald' },
   { id: 'crime', label: 'Crime Index', icon: ShieldAlert, color: '#e11d48', activeClass: 'active-rose' }
 ];
@@ -60,7 +67,11 @@ const LayerControls = ({
   isLeftAligned,
   setIsLeftAligned,
   showNeighborhoodBackgrounds,
-  toggleNeighborhoodBackgrounds
+  toggleNeighborhoodBackgrounds,
+  isMileMarkerToolActive,
+  toggleMileMarkerTool,
+  hasMileMarkerOrigin,
+  clearMileMarkerOrigin
 }) => {
   const [isNeighborhoodsExpanded, setIsNeighborhoodsExpanded] = useState(false);
   const [isRestaurantsExpanded, setIsRestaurantsExpanded] = useState(false);
@@ -118,12 +129,18 @@ const LayerControls = ({
         transition: 'all 0.3s ease'
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isPanelCollapsed ? '0' : '8px' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+      {/* AI_CHANGE:
+          Tool: Codex
+          Model: GPT-5
+          Timestamp: 2026-05-31T17:01:44-04:00
+          Purpose: Splits the panel title and toolbar buttons into separate rows.
+          Reason: The added top-toolbar tools were crowding and wrapping the "DC Layer Lab" label. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: isPanelCollapsed ? '0' : '8px' }}>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, lineHeight: 1.1 }}>
           <Layers size={24} className="text-gradient" />
           <span className="text-gradient">DC Layer Lab</span>
         </h2>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
           {onToggleSuspendAllLayers && (
             <button 
               type="button"
@@ -142,6 +159,52 @@ const LayerControls = ({
               title={layersSuspended ? 'Restore layers' : 'Hide all layers'}
             >
               {layersSuspended ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
+          )}
+          {/* AI_CHANGE:
+              Tool: Codex
+              Model: GPT-5
+              Timestamp: 2026-05-31T16:52:12-04:00
+              Purpose: Adds a top-toolbar mile-marker tool toggle.
+              Reason: Users need a quick way to set an origin and draw distance rings from it without hunting through the layer list. */}
+          {toggleMileMarkerTool && (
+            <button
+              type="button"
+              onClick={toggleMileMarkerTool}
+              style={{
+                background: isMileMarkerToolActive ? 'rgba(37, 99, 235, 0.22)' : 'rgba(255, 255, 255, 0.05)',
+                border: isMileMarkerToolActive ? '1px solid rgba(37, 99, 235, 0.55)' : '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px',
+                color: isMileMarkerToolActive ? '#2563eb' : 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title={isMileMarkerToolActive ? 'Click the map to place mile markers' : 'Mile marker origin tool'}
+            >
+              <Ruler size={16} />
+            </button>
+          )}
+          {hasMileMarkerOrigin && clearMileMarkerOrigin && (
+            <button
+              type="button"
+              onClick={clearMileMarkerOrigin}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Clear mile markers"
+            >
+              <X size={16} />
             </button>
           )}
           <button 
